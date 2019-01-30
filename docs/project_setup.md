@@ -1,0 +1,539 @@
+# SALT/SAAO Data Archive API Server Setup
+
+# Setting up Prisma
+This Prisma setup follows the steps defined in the Prisma website 
+[get-started](https://www.prisma.io/docs/get-started/01-setting-up-prisma-demo-server-TYPESCRIPT-t001/).
+
+# Install the Prisma CLI
+The [Prisma CLI](https://www.prisma.io/docs/prisma-cli-and-configuration/using-the-prisma-cli-alx4/)
+is used for various Prisma workflows and for the case of the SALT/SAAO Data Archive API it is installed using the 
+Node Package Manager [NPM](https://www.npmjs.com/).
+This installation assumes you have [node.js](https://nodejs.org/en/) installed which shipes with NPM for installing node packages.
+
+Execute the following command for Prisma CLI to be installed globally.
+```
+npm install -g prisma
+```
+
+# Creating directory for Prisma
+Choose where you going to locate the project directory and create the following folders for locating Prisma.
+
+```sh
+mkdir data-archive-backend
+mkdir data-archive-backend/src
+cd data-archive-backend/src
+```
+
+Make sure you are in the src directory, then initialise Prisma.
+
+```
+prisma init
+```
+
+When asked where to set up the new Prisma server, choose the appropriate option for your setup. 
+
+Choose Prisma TypeScript Client as the language for the generated client.
+
+Open the generated ```prisma.yml``` file and add or update the following lines.
+
+```yml
+# To generate the *prisma.graphql* file
+generate:
+    - generator: graphql-schema
+      output: ../src/generated/
+
+# This ensures that the Prisma client is updated whenever the datamodel changes
+hooks:
+    post-deploy:
+      - prisma generate
+```
+
+When all of the above is set correctly, we can now deploy the Prisma servise to the chosen server option.
+Execute the following command to deploy Prisma service.
+
+```
+prisma deploy
+```
+
+## Adding dependencies
+
+Navigate to the root directory of the project and initialise the code as an npm package.
+To do that, execute the following commands and answer all the quetion asked.
+
+```sh
+cd ..
+npm init
+```
+
+Intall these required external packages by executing the following commands
+
+```
+npm install --save typescript ts-node prisma-client-lib @types/graphql
+```
+
+Create the file named ```tsconfig.json``` which contains all the TypeScripts compiler options.
+Make sure to enable the following compiler options (you can enable more acoording to the project setup).
+
+```json
+{
+  "compilerOptions": {
+    /* Basic Options */
+    "target": "es5",                          /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'. */
+    "module": "commonjs",                     /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
+    "lib": [
+      "es2015", 
+      "esnext.asynciterable"
+    ],
+    "noEmitOnError": true,                    /* Enable do not emit outputs if any errors were reported. */
+    ...
+  }       
+}
+```
+
+Create a file named ```index.ts``` in the ```src``` directory.
+
+```sh
+touch src/index.ts
+```
+
+Add the following content for testing if the Prisma server was set successfuly.
+
+```typescript
+import { prisma } from './generated/prisma-client';
+
+// A `main` function so that we can use async/await
+async function main() {
+    // Create a new user called `Alice`
+    const newUser = await prisma.createUser({ name: 'Alice'})
+
+    console.log(`Created new user: ${newUser.name} (ID: ${newUser.id})`)
+
+    // Read all users from the database and print them to the console
+    const allUsers = await prisma.users()
+    console.log(allUsers)
+}
+main().catch(e => console.error(e))
+```
+
+Run the ```src/index.ts``` file.
+
+```
+node_modules/.bin/ts-node src/index.ts
+```
+
+If ran successfully, a success message will display as consoled. To fully confirm everything ran correctly, 
+You can check by pointing your browser to your service on prisma.io, signing in and selecting your service.
+
+## Making it prettier
+
+As proper code formatting and linting tends to be a good idea, let us add [Prettier](https://prettier.io/) and [TSLint](https://palantir.github.io/tslint/).
+
+Execute the following command.
+
+```
+npm install --save-dev prettier tslint tslint-config-prettier
+```
+
+The tslint-config-prettier package helps to ensure that Prettier and TSLint play along nicely.
+
+We need some configuration for TSLint. Add a file ```tslint.json``` in the root directory,
+
+```sh
+touch tslint.json
+```
+
+and add the following content.
+
+```json
+{
+    "extends": ["tslint:latest", "tslint-config-prettier"],
+    "linterOptions": {
+        "exclude": ["src/generated/**/*"]
+    },
+    "rules": {
+        "member-access": {
+            "severity": "off"
+        }
+    }
+}
+```
+
+Refer to [TSLint’s documentation](https://palantir.github.io/tslint/rules/) for more detailed rules.
+
+We should exclude the files automatically generated by Prisma from any
+formatting. This is achieved by creating a file ```.prettierignore```  in the project root directory.
+
+```sh
+tousch .prettierignore
+```
+
+add the following line in the file (You can add more according to the project setup).
+
+```
+src/generated/**/*
+```
+
+Refer to [Prettier’s documentation](https://prettier.io/docs/en/configuration.html) for more Prettier configuration options.
+
+In order to make sure that commited files are formated properly, a [Husky](https://github.com/typicode/husky) package is added alond with the lint-stage. Before adding Husky, you must make sure that the git repository is initailed.
+
+```
+git init # if not done already
+npm install --save-dev husky lint-staged
+```
+
+Add Husky and lint-staged related configuration details to the package.json file.
+
+```json
+ ...
+ "husky": {
+    "hooks": {
+        "pre-commit": "lint-staged"
+    }
+    },
+ "lint-staged": {
+    "src/**/*.{js,ts,tsx,json,css,graphql,md}": [
+        "prettier --write",
+        "git add"
+    ]
+ },
+ ...
+}
+```
+
+Now Prettier should be called on the committed files whenever you make a commit. 
+
+## Data model
+
+The default data model created by Prisma just contains a ```User``` type.
+Check the ```src/datamodel.prisma``` file content.
+
+Every time this file is changed, you must re-deploy to prisma for updates to reflects.
+
+# Creating a GraphQL server
+
+With a data model in place, we might as well use it. So we need a
+GraphQL server. GraphQL-Yoga comes to the rescue.
+
+## Installing GraphQL-Yoga server.
+
+```
+npm install --save graphql-yoga
+```
+
+Create a GraphQL schema file to define the shemas,
+
+```sh
+touch src/schema.graphql
+```
+
+and add the following content.
+
+```graphql
+# import * from './generated/prisma.graphql'
+
+type Query {
+  user(id: ID!): User
+  users(limit: Int): [User]!
+}
+
+type Mutation {
+  addUser(name: String!): User!
+}
+```
+
+Also add the folder for ```src/resolvers``` and the resolvers in it.
+
+```sh
+mkdir src/resolvers
+cd src/resolvers
+touch index.ts Mutation.ts Query.ts
+```
+
+Add the following content in the files respectively
+
+```typescript
+// src/resolvers/index.ts
+import { Mutation } from "./Mutation";
+import { Query } from "./Query";
+
+// Defining resolvers
+const resolvers = {
+  Mutation,
+  Query
+};
+
+export default resolvers;
+
+// src/resolvers/Mutation.ts
+import { Prisma } from "../generated/prisma-client";
+
+// Defining  Mutation methods
+const Mutation = {
+  // Mutation for creating the user
+  async addUser(root: any, args: any, ctx: { prisma: Prisma }) {
+    return await ctx.prisma.createUser({
+      name: args.name
+    });
+  }
+};
+
+export { Mutation };
+
+// src/resolvers/Query.ts
+import { Prisma } from "../generated/prisma-client";
+
+// Defining Query methods
+const Query = {
+  // Query for users
+  users(root: any, args: any, ctx: { prisma: Prisma }) {
+    const limit = args.limit ? Math.min(args.limit, 5) : 3;
+    return ctx.prisma.users({
+      first: limit,
+      orderBy: "createdAt_DESC"
+    });
+  }
+};
+
+export { Query };
+```
+
+Finally, replace the content of ```src/index.ts``` with the following.
+
+```typescript
+import { GraphQLServer } from "graphql-yoga";
+import { prisma } from "./generated/prisma-client";
+import * as Sentry from "@sentry/node"
+import dotenv from "dotenv";
+import resolvers from "./resolvers";
+
+// Config dotenv
+dotenv.config();
+
+// Setting up Sentry
+Sentry.init({
+    dsn: process.env.SENTRY_DSN
+  });
+
+// Creating server options
+const serverOptions = {
+  context: {
+    prisma
+  },
+  resolvers,
+  typeDefs: "./src/schema.graphql"
+};
+
+// Instatiating GraphQL-Yoga server
+const server = new GraphQLServer(serverOptions);
+
+// Starting the server with the cors enabled
+server.start(
+  {
+    cors: {
+      credentials: true,
+      origin: process.env.FRONTEND_URL
+    }
+  },
+  () =>
+    console.log(
+      `The server is listening on http://localhost:${process.env.PORT}`
+    )
+);
+
+export { server };
+```
+
+We should be set to go and start the server, but before that we need to install more packages.
+
+### Sentry
+
+Installing a [Sentry](https://docs.sentry.io/) package, an open-source error tracking tool that helps you monitor and fix crashes in real time.
+
+```
+npm install  @sentry/node
+```
+
+### Dotenv
+
+Installing a [Dotenv](https://www.npmjs.com/package/dotenv) package, a zero-dependency module that loads environment variables from a .env file into process.env.
+
+```
+npm install dotenv @types/dotenv
+```
+
+### Nodemon
+
+Installing a [nodemon](https://www.npmjs.com/package/nodemon) package, a tool that helps develop node.js based applications by automatically restarting the node application when file changes in the directory are detected.
+
+### Jest
+
+Installing [Jest](https://basarat.gitbooks.io/typescript/docs/testing/jest.html) package for testing the code.
+
+```
+npm i jest @types/jest ts-jest -D^C
+```
+
+#### Config Jest
+
+Add the following jest.config.js file to the root of your project
+
+```javascript
+module.exports = {
+    "roots": [
+        "<rootDir>"
+    ],
+    "transform": {
+        "^.+\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.tsx?$",
+    "moduleFileExtensions": [
+        "ts",
+        "tsx",
+        "js",
+        "jsx",
+        "json",
+        "node"
+    ],
+}
+```
+
+### Husky
+
+Install the [Husky](https://prettier.io/docs/en/precommit.html) package, used to make sure that committed files are formatted properly. 
+**You must have created a git repository before installing Husky**.
+
+```
+git init # if not done already
+npm install --save-dev husky lint-staged
+```
+
+#### Config Husky
+
+Add Husky and lint-staged related configuration details to the package.json file.
+
+```json
+{
+  ...
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+ "lint-staged": {
+    "src/**/*.{js,ts,tsx,json,css,graphql,md}": [
+      "prettier --write",
+      "git add"
+    ]
+  },
+  ...
+}
+```
+
+Then as a final step, for proper setting the project, we must include the ```.env``` file in the root directory, which will hold all the secrete values and must never be public.
+
+```sh
+touch .env
+```
+
+Then add the neccessary key value pairs content (At minimum, add the following, and you may add more as per the project setup).
+
+```
+- FRONTEND_URL="The front end url the will be accessing the api endpoint"
+- PRISMA_ENDPOINT="put in the generated prisma endpoint after running prisma init"
+- PRISMA_SECRET="any-prisma-key"
+- APP_SECRET="any-app-secrete-key"
+- PORT=an unused port
+- SENTRY_DSN="Sentry url"
+```
+
+We need to add the scripts commands to run the project. Edit the ```package.json``` file with the following content.
+
+```json
+"scripts": {
+    "deploy": "cd src/; prisma deploy --env-file ../.env",
+    "dev": "nodemon -e ts,graphql -x ts-node -r dotenv/config src/index.ts",
+    "start": "ts-node -r dotenv/config src/index.ts",
+    "test": "jest",
+    "format": "prettier --write 'src/**/*.{js,ts,tsx,json,graphql}'",
+    "lint": "tslint 'src/**/*.{ts,tsx}'",
+    "lint:fix": "tslint --fix 'src/**/*.{ts,tsx}'"
+  },
+```
+
+Now, can run the following commands:
+
+To deploy the prisma service
+
+```
+npm run deploy
+```
+
+To start the server in the development mode
+
+```
+npm run dev
+```
+
+To start the server in the production mode
+
+```
+npm run start
+```
+
+To test the server in the development mode
+
+```
+npm run test
+```
+
+To format the files with prettier and tslint.
+
+```
+npm run format
+```
+
+To check if tslint rules are fulfilled.
+
+```
+npm run lint
+```
+
+# The Fianl Project Structure
+
+If followed as detailed above, the final project structure should look like (see below).
+
+```
+data-archive-backend
+├── README.md
+├── node_modules
+├── package.json
+├── tsconfig.json
+├── tslint.json
+├── jest.config.js
+├── .env
+├── .travis.yml
+├── .prettierignore
+├── .gitignore
+├── docs
+|   ├── project_setup.md
+|   ├── server_setup.md
+├── __tests__
+│   ├── filename1.spec.ts
+|   ├── filename2.spec.ts
+└── src
+    ├── index.ts
+    ├── resolvers.ts
+    ├── datamodel.prisma
+    ├── schema.graphql
+    ├── prisma.yml
+    ├── generated
+    |   ├── prisma.graphql
+    |   └── prisma-client
+    |       ├── index.ts
+    |       ├── prisma-schema.ts
+    └── resolvers
+        ├── index.ts
+        ├── Mutations.ts
+        ├── Query.ts
+```
