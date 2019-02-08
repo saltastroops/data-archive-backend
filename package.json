@@ -10,7 +10,7 @@
     "start": "pm2 start src/index.ts --node-args='-r dotenv/config'",
     "deploy": "cd src/; prisma deploy --env-file ../.env",
     "dev": "nodemon -e ts,graphql -x ts-node -r dotenv/config src/index.ts",
-    "test": "NODE_ENV=test jest --coverage",
+    "test": "jest --coverage",
     "format": "prettier --write 'src/**/*.{js,ts,tsx,json,graphql}'",
     "lint": "tslint 'src/**/*.{ts,tsx}'",
     "lint:fix": "tslint --fix 'src/**/*.{ts,tsx}'"
@@ -65,6 +65,23 @@
     "src/**/*.{js,ts,tsx,json,css,graphql,md}": [
       "prettier --write",
       "git add"
+    ]
+  },
+  "jest": {
+    "roots": [
+      "<rootDir>"
+    ],
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.tsx?$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
     ]
   }
 }

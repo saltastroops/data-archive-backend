@@ -1,6 +1,5 @@
 import request from "supertest";
 import { createServer } from "../src/createServer";
-import { resolvers } from "../src/resolvers/index";
 import { prisma } from "../src/generated/prisma-client";
 
 // Creating an authenticated agent for making subsequent requests
@@ -22,23 +21,19 @@ beforeAll(() => {
     username: "test",
     password: "test"
   }]);
+
+  // Mocking the user query
+  prisma.user = jest.fn(async () => await {
+      id: "1",
+      name: "Test",
+      username: "test",
+      password: "test"
+    }
+  )
 })
 
 describe('logging out', () => {
   it('should logout the user that was logged in', async () => {
-    // Mocking the user query
-    resolvers.Query.user = jest.fn(async () => {
-      if (!JSON.parse(response.text).data.user) {
-        throw new Error("You must be logged in to call this query");
-      }
-      return await {
-        id: "1",
-        name: "Test",
-        username: "test",
-        password: "test"
-      }
-    })
-
     // Logs and thenticating the user
     const agent = await authenticatedAgent('test', 'test');
 
@@ -73,20 +68,7 @@ describe('logging out', () => {
 });
 
 describe('user query', () => {
-  it('should return an error if the user is not logged in', async () => {
-    // Mocking the user query
-    resolvers.Query.user = jest.fn(async () => {
-      if (!JSON.parse(response.text).data.user) {
-        throw new Error("You must be logged in to call this query");
-      }
-      return await {
-        id: "1",
-        name: "Test",
-        username: "test",
-        password: "test"
-      }
-    })
-    
+  it('should return an error if the user is not logged in', async () => {  
     const server = (await createServer()).createHttpServer({});
     // An unauthenticated user attempt to perfom user query
     const response = await request.agent(server)
@@ -101,18 +83,26 @@ describe('user query', () => {
     // Expect an error thrown for unauthenticated user
     expect(JSON.parse(response.text).errors.length).toBe(1);
   })
-  
-  it('returns the logged in user', async () => {
-    // Mocking the user query
-    resolvers.Query.user = jest.fn(async () => {
-      return await {
-        id: "1",
-        name: "Test",
-        username: "test",
-        password: "test"
-      }
-    })
 
+  it('should return error if the user passed in invalid credentials', async () => {
+    // Authenticating the user
+    const agent = await authenticatedAgent('test', 'wrong');
+    
+    // unauthenticated user make a user query
+    const response = await agent.post('/')
+      .send({
+        query: `query { 
+          user { 
+            name 
+          } 
+        }`
+      });
+
+    // Expect an error thrown for unauthenticated user
+    expect(JSON.parse(response.text).errors.length).toBe(1);
+  })
+  
+  it('should return the logged in user', async () => {
     // Authenticating the user
     const agent = await authenticatedAgent('test', 'test');
     

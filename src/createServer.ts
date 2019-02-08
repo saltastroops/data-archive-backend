@@ -23,7 +23,7 @@ const createServer = async () => {
         // Only retrieving a user with the supplied username.
         const user = (await prisma.users({ where: { username, password } }))[0];
         // Check if the user exist and return it content for use in subsequent request.
-        if (user) {
+        if (user && user.password === password) {
           done(null, { id: user.id, name: user.name, username: user.username });
         } else {
           done(null, false);
@@ -75,7 +75,7 @@ const createServer = async () => {
     done(null, user.id);
   });
 
-  passport.deserializeUser(async (id: any, done) => {
+  passport.deserializeUser(async (id: string, done) => {
     const user = (await prisma.users({ where: { id } }))[0];
     done(
       null,
@@ -104,7 +104,7 @@ const createServer = async () => {
   });
 
   // Logout endpoint.
-  server.express.post("/logout", (req, res, next) => {
+  server.express.post("/logout", (req, res) => {
     req.logout();
     res.send("You have been logged out");
   });
