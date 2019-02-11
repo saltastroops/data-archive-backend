@@ -8,7 +8,7 @@ async function authenticatedAgent(username: string, password: string) {
   const server = (await createServer()).createHttpServer({});
   const authenticatedAgent = request.agent(server);
   const response = await authenticatedAgent
-    .post('/login')
+    .post('/auth/login')
     .send({ username, password});
 
   return authenticatedAgent;
@@ -53,7 +53,7 @@ describe('logging in', () => {
     // User logging in.
     const authenticatedAgent = request.agent(server);
     
-    response = await authenticatedAgent.post('/login')
+    response = await authenticatedAgent.post('/auth/login')
     .send({ username: 'test', password: 'test'});
     
     // Expect the user to be authenticated.
@@ -94,7 +94,7 @@ describe('logging out', () => {
     expect(JSON.parse(response.text).data.user.name).toEqual("Test");
 
     // Logs out the user
-    response = await agent.post('/logout');
+    response = await agent.post('/auth/logout');
 
     // expect the user has been logged out.
     expect(response.text).toEqual('You have been logged out');
@@ -113,3 +113,32 @@ describe('logging out', () => {
     expect(JSON.parse(response.text).errors.length).toBe(1);
   });
 });
+
+describe('Invalid credentials', () => {
+  it('should return an unauthenticated error message and staus code', async () => {
+    const server = (await createServer()).createHttpServer({});
+    // User logging in with invalid credentials.
+    const authenticatedAgent = request.agent(server);
+    
+    let response = await authenticatedAgent.post('/auth/login')
+    .send({ username: 'test', password: 'wrong'});
+    
+    // Expect the user unauthenticated status code
+    expect(response.status).toEqual(401);
+    // Expect the user unauthenticated message.
+    expect(response.text).toEqual('Username or password wrong');
+
+    // Authenticated user
+    response = await authenticatedAgent.post('/')
+      .send({
+        query: `query { 
+          user { 
+            name 
+          } 
+        }`
+      });
+
+    // Expect an error message for an unauthenticated user.
+    expect(JSON.parse(response.text).errors.length).toBe(1);
+  })
+})

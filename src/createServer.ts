@@ -85,14 +85,14 @@ const createServer = async () => {
   });
 
   // Login authenticator endpoint by means of passport local athenticate function.
-  server.express.post("/login", (req, res, next) => {
+  server.express.post("/auth/login", (req, res, next) => {
     passport.authenticate("local", (err, user) => {
       if (err) {
         return res
           .status(500)
           .send("Authentication failure due to an internal server error");
       } else if (!user) {
-        return res.status(400).send("Username or password wrong");
+        return res.status(401).send("Username or password wrong");
       } else {
         req.login(user, error => {
           if (error) {
@@ -105,7 +105,7 @@ const createServer = async () => {
   });
 
   // Logout endpoint.
-  server.express.post("/logout", (req, res) => {
+  server.express.post("/auth/logout", (req, res) => {
     req.logout();
     res.send("You have been logged out");
   });
