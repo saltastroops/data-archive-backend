@@ -4,7 +4,7 @@ const launchServer = async () => {
   // Instatiate the server
   const server = createServer();
 
-  // Starting the server with the cors enabled
+  // Start the server with CORS enabled
   (await server).start({
     cors: {
       credentials: true,

@@ -7,23 +7,25 @@ import passportLocal from "passport-local";
 import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
 
-// Setting up Sentry
+// Set up Sentry
 Sentry.init({
   dsn: process.env.SENTRY_DSN
 });
 
-// Creating a GraphQL-Yoga server
+// Create a GraphQL-Yoga server
 const createServer = async () => {
-  // Setting up passport for managing user authentication
+  // Set up passport for managing user authentication
   passport.use(
-    // Using a passport local strategy for controling user logging in
+    // Authenticate against a username and password
     new passportLocal.Strategy(
       { usernameField: "username", passwordField: "password" },
       async (username, password, done) => {
-        // Only retrieving a user with the supplied username.
+        // Retrieve the user with the supplied username
         const user = (await prisma.users({ where: { username, password } }))[0];
-        // Check if the user exist and return it content for use in subsequent request.
+
+        // Check that the user exists and the password is correct.
         if (user && user.password === password) {
+          // Store user details for later use
           done(null, { id: user.id, name: user.name, username: user.username });
         } else {
           done(null, false);
@@ -32,7 +34,7 @@ const createServer = async () => {
     )
   );
 
-  // Creating the server, adding the options for context, resolvers and typeDefs.
+  // Create the server
   const server = new GraphQLServer({
     context: (req: any) => ({
       prisma,
@@ -42,10 +44,10 @@ const createServer = async () => {
     typeDefs: "./src/schema.graphql"
   });
 
-  // Make the server use the body parser for handlin JSON format.
+  // Handle JSON input
   server.express.use(bodyParser.json());
 
-  // Make the server use the persisted session for subsequents request.
+  // Make the server use the persisted session for subsequent requests
   server.express.use(
     session({
       cookie: {
@@ -66,11 +68,13 @@ const createServer = async () => {
   );
 
   // NB! Make sure this comes after the express session
-  // Initializing the use of passport with the session.
+  // Initialise the use of passport with the session
   server.express.use(passport.initialize());
   server.express.use(passport.session());
 
-  // Serializing and deserializing for every request to authenticate user session.
+  // Serialize and deserialize for every request. Only the user id is stored
+  // in the session.
+
   passport.serializeUser((user: { id: string }, done) => {
     done(null, user.id);
   });
@@ -83,7 +87,7 @@ const createServer = async () => {
     );
   });
 
-  // Login authenticator endpoint by means of passport local athenticate function.
+  // Login endpoint
   server.express.post("/login", (req, res, next) => {
     passport.authenticate("local", (err, user) => {
       if (err) {
@@ -103,7 +107,7 @@ const createServer = async () => {
     })(req, res, next);
   });
 
-  // Logout endpoint.
+  // Logout endpoint
   server.express.post("/logout", (req, res) => {
     req.logout();
     res.send("You have been logged out");
