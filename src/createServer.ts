@@ -8,16 +8,16 @@ import passportLocal from "passport-local";
 import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
 
-// Setting up Sentry
+// Set up Sentry
 Sentry.init({
   dsn: process.env.SENTRY_DSN
 });
 
-// Creating a GraphQL-Yoga server
+// Create a GraphQL-Yoga server
 const createServer = async () => {
-  // Setting up passport for managing user authentication
+  // Set up passport for managing user authentication
   passport.use(
-    // Using a passport local strategy for controling user logging in
+    // Authenticate against a username and password
     new passportLocal.Strategy(
       { usernameField: "username", passwordField: "password" },
       async (username, password, done) => {
@@ -33,7 +33,7 @@ const createServer = async () => {
     )
   );
 
-  // Creating the server, adding the options for context, resolvers and typeDefs.
+  // Create the server
   const server = new GraphQLServer({
     context: (req: any) => ({
       prisma,
@@ -43,10 +43,10 @@ const createServer = async () => {
     typeDefs: "./src/schema.graphql"
   });
 
-  // Make the server use the body parser for handlin JSON format.
+  // Handle JSON input
   server.express.use(bodyParser.json());
 
-  // Make the server use the persisted session for subsequents request.
+  // Make the server use the persisted session for subsequent requests
   server.express.use(
     session({
       cookie: {
@@ -67,11 +67,13 @@ const createServer = async () => {
   );
 
   // NB! Make sure this comes after the express session
-  // Initializing the use of passport with the session.
+  // Initialise the use of passport with the session
   server.express.use(passport.initialize());
   server.express.use(passport.session());
 
-  // Serializing and deserializing for every request to authenticate user session.
+  // Serialize and deserialize for every request. Only the user id is stored
+  // in the session.
+
   passport.serializeUser((user: { id: string }, done) => {
     done(null, user.id);
   });
