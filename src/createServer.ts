@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/node";
+import bcrypt from "bcrypt";
 import bodyParser from "body-parser";
 import session from "express-session";
 import { GraphQLServer } from "graphql-yoga";
@@ -21,9 +22,9 @@ const createServer = async () => {
       { usernameField: "username", passwordField: "password" },
       async (username, password, done) => {
         // Only retrieving a user with the supplied username.
-        const user = (await prisma.users({ where: { username, password } }))[0];
+        const user = (await prisma.users({ where: { username } }))[0];
         // Check if the user exist and return it content for use in subsequent request.
-        if (user && user.password === password) {
+        if (user && (await bcrypt.compare(password, user.password))) {
           done(null, { id: user.id, name: user.name, username: user.username });
         } else {
           done(null, false);
@@ -59,7 +60,7 @@ const createServer = async () => {
       resave: true,
       rolling: false,
       saveUninitialized: true,
-      secret: "keyboard cat",
+      secret: "" + process.env.SESSION_SECRET,
       store: new session.MemoryStore(),
       unset: "keep"
     })
@@ -113,4 +114,4 @@ const createServer = async () => {
   return server;
 };
 
-export { createServer };
+export default createServer;

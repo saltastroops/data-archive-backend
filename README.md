@@ -32,6 +32,7 @@ Variable | Description | Example
 FRONTEND_URL | The URL of the frontend accessing this server | https://ssda.saao.ac.za
 PRISMA_ENDPOINT | The URL of the Prisma server | https://ssdadb.saao.ac.za
 PRISMA_SECRET | The secret key for the Prisma server | topsecretkey
+SESSION_SECRET | The secret key for the cookie's session ID | anothertopsecretkey
 APP_SECRET | The secret key for this server | anothertopsecretkey
 PORT | Port on which the server should be listening | 443
 SENTRY_DSN | The Sentry DSN (Data Source Name) | https://d6251ee8232d4au0b57cbhy38c059af6@sentry.io/237524

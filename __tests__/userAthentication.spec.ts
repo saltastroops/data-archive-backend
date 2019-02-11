@@ -1,6 +1,7 @@
 import request from "supertest";
-import { createServer } from "../src/createServer";
 import { prisma } from "../src/generated/prisma-client";
+import bcrypt from "bcrypt";
+import createServer from "../src/createServer";
 
 // Creating an authenticated agent for making subsequent requests
 async function authenticatedAgent(username: string, password: string) {
@@ -19,7 +20,7 @@ beforeAll(() => {
     id: "1",
     name: "Test",
     username: "test",
-    password: "test"
+    password: await bcrypt.hash("test", 10)
   }]);
 
   // Mocking the user query
@@ -27,10 +28,51 @@ beforeAll(() => {
       id: "1",
       name: "Test",
       username: "test",
-      password: "test"
+      password: await bcrypt.hash("test", 10)
     }
   )
 })
+
+describe('logging in', () => {
+  it('should log in the user', async () => {
+    const server = (await createServer()).createHttpServer({});
+
+    // Not yet authenticated user
+    let response = await request.agent(server).post('/')
+      .send({
+        query: `query { 
+          user { 
+            name 
+          } 
+        }`
+      });
+
+    // Expect an error message for an unauthenticated user.
+    expect(JSON.parse(response.text).errors.length).toBe(1);
+    
+    // User logging in.
+    const authenticatedAgent = request.agent(server);
+    
+    response = await authenticatedAgent.post('/login')
+    .send({ username: 'test', password: 'test'});
+    
+    // Expect the user to be authenticated.
+    expect(response.text).toEqual('You have been logged in');
+
+    // Authenticated user
+    response = await authenticatedAgent.post('/')
+      .send({
+        query: `query { 
+          user { 
+            name 
+          } 
+        }`
+      });
+
+    // Expect the name of the user to be the one of the authenticated user.
+    expect(JSON.parse(response.text).data.user.name).toEqual("Test");
+  })
+});
 
 describe('logging out', () => {
   it('should logout the user that was logged in', async () => {
@@ -48,8 +90,13 @@ describe('logging out', () => {
         }`
       });
 
+    // Expect the name of the user to be the one of the authenticated user.
+    expect(JSON.parse(response.text).data.user.name).toEqual("Test");
+
     // Logs out the user
     response = await agent.post('/logout');
+
+    // expect the user has been logged out.
     expect(response.text).toEqual('You have been logged out');
 
     // The user is not logged in any longer
@@ -62,61 +109,7 @@ describe('logging out', () => {
         }`
       });
 
-    // Expect an error was thrown
+    // Expect an error message for an unauthenticated user.
     expect(JSON.parse(response.text).errors.length).toBe(1);
   });
-});
-
-describe('user query', () => {
-  it('should return an error if the user is not logged in', async () => {  
-    const server = (await createServer()).createHttpServer({});
-    // An unauthenticated user attempt to perfom user query
-    const response = await request.agent(server)
-      .post('/')
-      .send({
-        query: `query { 
-          user { 
-            name 
-          } 
-        }`
-      });
-    // Expect an error thrown for unauthenticated user
-    expect(JSON.parse(response.text).errors.length).toBe(1);
-  })
-
-  it('should return error if the user passed in invalid credentials', async () => {
-    // Authenticating the user
-    const agent = await authenticatedAgent('test', 'wrong');
-    
-    // unauthenticated user make a user query
-    const response = await agent.post('/')
-      .send({
-        query: `query { 
-          user { 
-            name 
-          } 
-        }`
-      });
-
-    // Expect an error thrown for unauthenticated user
-    expect(JSON.parse(response.text).errors.length).toBe(1);
-  })
-  
-  it('should return the logged in user', async () => {
-    // Authenticating the user
-    const agent = await authenticatedAgent('test', 'test');
-    
-    // Authenticated user make a user query
-    const response = await agent.post('/')
-      .send({
-        query: `query { 
-          user { 
-            name 
-          } 
-        }`
-      });
-
-    // Expect the name of the user to be the on of the authenticated user.
-    expect(JSON.parse(response.text).data.user.name).toEqual("Test");
-  })
 });

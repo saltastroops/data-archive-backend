@@ -1,4 +1,4 @@
-import { createServer } from "./createServer";
+import createServer from "./createServer";
 
 const launchServer = async () => {
   // Instatiate the server

@@ -10,7 +10,9 @@
     "start": "pm2 start src/index.ts --node-args='-r dotenv/config'",
     "deploy": "cd src/; prisma deploy --env-file ../.env",
     "dev": "nodemon -e ts,graphql -x ts-node -r dotenv/config src/index.ts",
-    "test": "jest --coverage",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "test:watch": "jest --watch",
     "format": "prettier --write 'src/**/*.{js,ts,tsx,json,graphql}'",
     "lint": "tslint 'src/**/*.{ts,tsx}'",
     "lint:fix": "tslint --fix 'src/**/*.{ts,tsx}'"
@@ -27,6 +29,7 @@
   "homepage": "https://github.com/chynamyerz/ssda-server#readme",
   "dependencies": {
     "@sentry/node": "^4.5.3",
+    "@types/bcrypt": "^3.0.0",
     "@types/body-parser": "^1.17.0",
     "@types/dotenv": "^6.1.0",
     "@types/express-session": "^1.15.11",
@@ -34,6 +37,7 @@
     "@types/passport": "^1.0.0",
     "@types/passport-local": "^1.0.33",
     "@types/supertest": "^2.0.7",
+    "bcrypt": "^3.0.4",
     "body-parser": "^1.18.3",
     "dotenv": "^6.2.0",
     "express-session": "^1.15.6",
