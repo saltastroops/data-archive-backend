@@ -1,3 +1,5 @@
+jest.mock('../src/generated/prisma-client');
+
 import request from "supertest";
 import { prisma } from "../src/generated/prisma-client";
 import bcrypt from "bcrypt";
@@ -16,13 +18,18 @@ async function authenticatedAgent(username: string, password: string) {
 
 beforeAll(() => {
   // Mocking the user query
-  prisma.user = jest.fn(async () => await {
+  (prisma.user as any).mockImplementation(async () => await {
       id: "1",
       name: "Test",
       username: "test",
       password: await bcrypt.hash("test", 10)
     }
   )
+});
+
+afterAll(() => {
+  // Cleaning up
+  (prisma.user as any).mockReset();
 });
 
 describe('/auth/login', () => {

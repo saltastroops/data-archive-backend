@@ -1,4 +1,6 @@
-// Generating mocked prisma.
-const prisma = jest.genMockFromModule('../index')
+const prisma: any = jest.genMockFromModule('..');
 
-export default prisma
+// add required fields
+prisma.user = jest.fn();
+
+export { prisma };
