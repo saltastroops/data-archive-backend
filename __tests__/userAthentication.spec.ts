@@ -31,13 +31,13 @@ beforeAll(() => {
       password: await bcrypt.hash("test", 10)
     }
   )
-})
+});
 
-describe('logging in', () => {
-  it('should log in the user', async () => {
+describe('/auth/login', () => {
+  it('should log in the user if a valid username and password are supplied', async () => {
     const server = (await createServer()).createHttpServer({});
 
-    // Not yet authenticated user
+    // Request the user details
     let response = await request.agent(server).post('/')
       .send({
         query: `query { 
@@ -47,7 +47,7 @@ describe('logging in', () => {
         }`
       });
 
-    // Expect an error message for an unauthenticated user
+    // Expect an error message, as the user is not authenticated
     expect(JSON.parse(response.text).errors.length).toBe(1);
 
     // User logging in
@@ -56,10 +56,10 @@ describe('logging in', () => {
     response = await authenticatedAgent.post('/auth/login')
     .send({ username: 'test', password: 'test'});
 
-    // Expect the user to be authenticated.
+    // Expect the user to be authenticated
     expect(JSON.parse(response.text).success).toEqual(true);
 
-    // Authenticated user
+    // Request the user details
     response = await authenticatedAgent.post('/')
       .send({
         query: `query { 
@@ -69,17 +69,46 @@ describe('logging in', () => {
         }`
       });
 
-    // Expect the name of the user to be the one of the authenticated user.
+    // Expect the request to have been successful
     expect(JSON.parse(response.text).data.user.name).toEqual("Test");
+  });
+
+  it('should return an error message and status code 401 if the username or password are wrong', async () => {
+    const server = (await createServer()).createHttpServer({});
+    // User logging in with invalid credentials.
+    const authenticatedAgent = request.agent(server);
+
+    let response = await authenticatedAgent.post('/auth/login')
+      .send({ username: 'test', password: 'wrong'});
+
+    // Expect the user unauthenticated status code
+    expect(response.status).toEqual(401);
+
+    // Expect the success field to be false
+    expect(JSON.parse(response.text).success).toEqual(false);
+
+    // Request the user details
+    response = await authenticatedAgent.post('/')
+      .send({
+              query: `query { 
+          user { 
+            name 
+          } 
+        }`
+            });
+
+    // Expect an error message, as the user is not authenticated any longer
+    expect(JSON.parse(response.text).errors.length).toBe(1);
   })
+
 });
 
-describe('logging out', () => {
-  it('should logout the user that was logged in', async () => {
-    // Logs and thenticating the user
+describe('/auth/logout', () => {
+  it('should log out the user who was logged in', async () => {
+    // Authenticate the user
     const agent = await authenticatedAgent('test', 'test');
 
-    // Query for the logged user
+    // Request the user details
     let response = await agent
       .post('/')
       .send({
@@ -90,16 +119,16 @@ describe('logging out', () => {
         }`
       });
 
-    // Expect the name of the user to be the one of the authenticated user.
+    // Expect the request to have been successful
     expect(JSON.parse(response.text).data.user.name).toEqual("Test");
 
-    // Logs out the user
+    // Log out the user
     response = await agent.post('/auth/logout');
 
-    // expect the user has been logged out.
+    // Expect the user has been logged out
     expect(JSON.parse(response.text).success).toEqual(true);
 
-    // The user is not logged in any longer
+    // Request the user details
     response = await agent.post('/')
       .send({
         query: `query { 
@@ -109,36 +138,7 @@ describe('logging out', () => {
         }`
       });
 
-    // Expect an error message for an unauthenticated user.
+    // Expect an error message, as the user is not logged in any longer
     expect(JSON.parse(response.text).errors.length).toBe(1);
   });
 });
-
-describe('Invalid credentials', () => {
-  it('should return an unauthenticated error message and staus code', async () => {
-    const server = (await createServer()).createHttpServer({});
-    // User logging in with invalid credentials.
-    const authenticatedAgent = request.agent(server);
-
-    let response = await authenticatedAgent.post('/auth/login')
-    .send({ username: 'test', password: 'wrong'});
-
-    // Expect the user unauthenticated status code
-    expect(response.status).toEqual(401);
-    // Expect the user unauthenticated message.
-    expect(JSON.parse(response.text).success).toEqual(false);
-
-    // Authenticated user
-    response = await authenticatedAgent.post('/')
-      .send({
-        query: `query { 
-          user { 
-            name 
-          } 
-        }`
-      });
-
-    // Expect an error message for an unauthenticated user.
-    expect(JSON.parse(response.text).errors.length).toBe(1);
-  })
-})
