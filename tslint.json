@@ -1,11 +1,12 @@
 {
-    "extends": ["tslint:latest", "tslint-config-prettier"],
-    "linterOptions": {
-        "exclude": ["src/generated/**/*"]
+  "extends": ["tslint:latest", "tslint-config-prettier"],
+  "linterOptions": {
+    "exclude": ["src/generated/**/*"]
+  },
+  "rules": {
+    "member-access": {
+      "severity": "off"
     },
-    "rules": {
-        "member-access": {
-            "severity": "off"
-        }
-    }
+    "no-implicit-dependencies": [true, "dev"]
+  }
 }
