@@ -57,7 +57,7 @@ describe('logging in', () => {
     .send({ username: 'test', password: 'test'});
     
     // Expect the user to be authenticated.
-    expect(response.text).toEqual('You have been logged in');
+    expect(JSON.parse(response.text).success).toEqual(true);
 
     // Authenticated user
     response = await authenticatedAgent.post('/')
@@ -97,7 +97,7 @@ describe('logging out', () => {
     response = await agent.post('/auth/logout');
 
     // expect the user has been logged out.
-    expect(response.text).toEqual('You have been logged out');
+    expect(JSON.parse(response.text).success).toEqual(true);
 
     // The user is not logged in any longer
     response = await agent.post('/')
@@ -126,7 +126,7 @@ describe('Invalid credentials', () => {
     // Expect the user unauthenticated status code
     expect(response.status).toEqual(401);
     // Expect the user unauthenticated message.
-    expect(response.text).toEqual('Username or password wrong');
+    expect(JSON.parse(response.text).success).toEqual(false);
 
     // Authenticated user
     response = await authenticatedAgent.post('/')
