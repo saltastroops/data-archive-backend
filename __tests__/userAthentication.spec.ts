@@ -15,14 +15,6 @@ async function authenticatedAgent(username: string, password: string) {
 }
 
 beforeAll(() => {
-  // Mocking users query
-  prisma.users = jest.fn(async () => await [{
-    id: "1",
-    name: "Test",
-    username: "test",
-    password: await bcrypt.hash("test", 10)
-  }]);
-
   // Mocking the user query
   prisma.user = jest.fn(async () => await {
       id: "1",
