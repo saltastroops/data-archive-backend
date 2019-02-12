@@ -22,7 +22,7 @@ const createServer = async () => {
       { usernameField: "username", passwordField: "password" },
       async (username, password, done) => {
         // Only retrieving a user with the supplied username.
-        const user = (await prisma.users({ where: { username } }))[0];
+        const user = await prisma.user({ username });
         // Check if the user exist and return it content for use in subsequent request.
         if (user && (await bcrypt.compare(password, user.password))) {
           done(null, { id: user.id, name: user.name, username: user.username });
@@ -79,14 +79,32 @@ const createServer = async () => {
   });
 
   passport.deserializeUser(async (id: string, done) => {
-    const user = (await prisma.users({ where: { id } }))[0];
+    const user = await prisma.user({ id });
     done(
       null,
       user ? { id: user.id, username: user.username, name: user.name } : false
     );
   });
 
-  // Login authenticator endpoint by means of passport local athenticate function.
+  /**
+   * Login endpoint.
+   *
+   * The request body must be a JSON object with the following fields:
+   *
+   * username: The username.
+   * password: The password.
+   *
+   * The endpoint returns a JSON object with the following fields:
+   *
+   * success: Whether the user was logged in successfully.
+   * message: A success or error message.
+   *
+   * The following HTTP status codes are used:
+   *
+   * 200: If the user is logged in successfully.
+   * 401: If the username or password are wrong.
+   * 500: If a server-side error occurs.
+   */
   server.express.post("/auth/login", (req, res, next) => {
     passport.authenticate("local", (err, user) => {
       if (err) {
@@ -113,7 +131,18 @@ const createServer = async () => {
     })(req, res, next);
   });
 
-  // Logout endpoint.
+  /**
+   * Logout endpoint.
+   *
+   * No request body is expected.
+   *
+   * The endpoint returns a JSON object with the following fields:
+   *
+   * success: true.
+   * message: A success message.
+   *
+   * The success field is always true.
+   */
   server.express.post("/auth/logout", (req, res) => {
     req.logout();
     res.send({
