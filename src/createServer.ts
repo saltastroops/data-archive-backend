@@ -109,13 +109,13 @@ const createServer = async () => {
     passport.authenticate("local", (err, user) => {
       if (err) {
         return res.status(500).send({
-          success: false,
-          message: "Authentication failure due to an internal server error"
+          message: "Authentication failure due to an internal server error",
+          success: false
         });
       } else if (!user) {
         return res.status(401).send({
-          success: false,
-          message: "Username or password wrong"
+          message: "Username or password wrong",
+          success: false
         });
       } else {
         req.login(user, error => {
@@ -123,8 +123,8 @@ const createServer = async () => {
             return next(error);
           }
           return res.send({
-            success: true,
-            message: "You have been logged in"
+            message: "You have been logged in",
+            success: true
           });
         });
       }
@@ -146,8 +146,8 @@ const createServer = async () => {
   server.express.post("/auth/logout", (req, res) => {
     req.logout();
     res.send({
-      success: true,
-      message: "You have been logged out"
+      message: "You have been logged out",
+      success: true
     });
   });
 
