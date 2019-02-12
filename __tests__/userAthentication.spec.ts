@@ -1,12 +1,12 @@
 jest.mock("../src/generated/prisma-client");
 
-import request from "supertest";
-import { prisma } from "../src/generated/prisma-client";
 import bcrypt from "bcrypt";
+import request from "supertest";
 import createServer from "../src/createServer";
+import { prisma } from "../src/generated/prisma-client";
 
 // Creating an authenticated agent for making subsequent requests
-async function authenticatedAgent(username: string, password: string) {
+async function createAuthenticatedAgent(username: string, password: string) {
   const server = (await createServer()).createHttpServer({});
   const authenticatedAgent = request.agent(server);
   const response = await authenticatedAgent
@@ -18,15 +18,12 @@ async function authenticatedAgent(username: string, password: string) {
 
 beforeAll(() => {
   // Mocking the user query
-  (prisma.user as any).mockImplementation(
-    async () =>
-      await {
-        id: "1",
-        name: "Test",
-        username: "test",
-        password: await bcrypt.hash("test", 10)
-      }
-  );
+  (prisma.user as any).mockImplementation(async () => ({
+    id: "1",
+    name: "Test",
+    password: await bcrypt.hash("test", 10),
+    username: "test"
+  }));
 });
 
 afterAll(() => {
@@ -113,7 +110,7 @@ describe("/auth/login", () => {
 describe("/auth/logout", () => {
   it("should log out the user who was logged in", async () => {
     // Authenticate the user
-    const agent = await authenticatedAgent("test", "test");
+    const agent = await createAuthenticatedAgent("test", "test");
 
     // Request the user details
     let response = await agent.post("/").send({
