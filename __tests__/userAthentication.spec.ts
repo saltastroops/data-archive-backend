@@ -47,15 +47,15 @@ describe('logging in', () => {
         }`
       });
 
-    // Expect an error message for an unauthenticated user.
+    // Expect an error message for an unauthenticated user
     expect(JSON.parse(response.text).errors.length).toBe(1);
-    
-    // User logging in.
+
+    // User logging in
     const authenticatedAgent = request.agent(server);
-    
+
     response = await authenticatedAgent.post('/auth/login')
     .send({ username: 'test', password: 'test'});
-    
+
     // Expect the user to be authenticated.
     expect(JSON.parse(response.text).success).toEqual(true);
 
@@ -119,10 +119,10 @@ describe('Invalid credentials', () => {
     const server = (await createServer()).createHttpServer({});
     // User logging in with invalid credentials.
     const authenticatedAgent = request.agent(server);
-    
+
     let response = await authenticatedAgent.post('/auth/login')
     .send({ username: 'test', password: 'wrong'});
-    
+
     // Expect the user unauthenticated status code
     expect(response.status).toEqual(401);
     // Expect the user unauthenticated message.
