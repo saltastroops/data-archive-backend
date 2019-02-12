@@ -5,7 +5,7 @@ The schema's root query type.
 """
 type Query {
   """
-  Retrieves the specific user.
+  The currently logged in user. An error is raised if the user is not logged in.
   """
   user: User
 }
