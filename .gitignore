@@ -10,7 +10,7 @@
 /build
 
 # misc
-.env
+*.env
 
 # IDE
 .idea

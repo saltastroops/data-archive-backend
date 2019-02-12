@@ -1,10 +1,22 @@
 # import * from './generated/prisma.graphql'
 
+"""
+The schema's root query type.
+"""
 type Query {
-  user(id: ID!): User
-  users(limit: Int): [User]!
+  """
+  The currently logged in user. An error is raised if the user is not logged in.
+  """
+  user: User
 }
 
+"""
+The schema's root mutation type.
+"""
 type Mutation {
+  #TODO
+  """
+  Adds the newly created user.
+  """
   addUser(name: String!): User!
 }
