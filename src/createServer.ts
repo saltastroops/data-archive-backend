@@ -121,7 +121,8 @@ const createServer = async () => {
     passport.authenticate("local", (err, user) => {
       if (err) {
         return res.status(500).send({
-          message: "You have not been logged in due to an internal server error.",
+          message:
+            "You have not been logged in due to an internal server error.",
           success: false
         });
       } else if (!user) {
