@@ -1,4 +1,4 @@
-jest.mock("../src/generated/prisma-client");
+jest.mock("../generated/prisma-client");
 
 import bcrypt from "bcrypt";
 import request from "supertest";
