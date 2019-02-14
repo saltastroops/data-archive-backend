@@ -40,6 +40,8 @@ type Mutation {
 A data archive user.
 """
 type User {
+    """User id."""
+    id: ID!
     """Family name ("surname")."""
     familyName: String!
     """Given name ("first name")."""
