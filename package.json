@@ -13,9 +13,9 @@
     "test": "jest",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
-    "format": "prettier --write '{*.json,{src,__tests__}/**/*.{js,ts,tsx,json,graphql}}'",
-    "lint": "tslint '{src,__tests__}/**/*.{ts,tsx}'",
-    "lint:fix": "tslint --fix '{src,__tests__}/**/*.{ts,tsx}'"
+    "format": "prettier --write '{*.json,src/**/*.{js,ts,tsx,json,graphql}}'",
+    "lint": "tslint 'src/**/*.{ts,tsx}'",
+    "lint:fix": "tslint --fix 'src/**/*.{ts,tsx}'"
   },
   "repository": {
     "type": "git",
@@ -73,7 +73,7 @@
     }
   },
   "lint-staged": {
-    "{package.json,{src,__tests__}/**/*.{js,ts,tsx,json,css,graphql,md}}": [
+    "{package.json,src/**/*.{js,ts,tsx,json,css,graphql,md}}": [
       "prettier --write",
       "git add"
     ]
