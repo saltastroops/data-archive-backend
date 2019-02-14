@@ -14,9 +14,16 @@ type Query {
 The schema's root mutation type.
 """
 type Mutation {
-  #TODO
+  # TODO UPDATE
   """
-  Adds the newly created user.
+  Adds the newly created user when the valid information is provided and a username or an email address does not exist.
   """
-  addUser(name: String!): User!
+  signup(
+    familyName: String!
+    givenName: String!
+    username: String!
+    email: String!
+    affiliation: String!
+    password: String!
+  ): User!
 }

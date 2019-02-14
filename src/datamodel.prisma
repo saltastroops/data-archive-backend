@@ -1,6 +1,10 @@
+# TODO UPDATE
 type User {
   id: ID! @unique
-  name: String!
+  familyName: String!
+  givenName: String!
   username: String! @unique
+  email: String! @unique
+  affiliation: String!
   password: String!
 }

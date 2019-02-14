@@ -19,8 +19,11 @@ async function createAuthenticatedAgent(username: string, password: string) {
 beforeAll(() => {
   // Mocking the user query
   (prisma.user as any).mockImplementation(async () => ({
+    affiliation: "Test Affiliation",
+    email: "test@gmail.com",
+    familyName: "Test",
+    givenName: "Test",
     id: "1",
-    name: "Test",
     password: await bcrypt.hash("test", 10),
     username: "test"
   }));
@@ -42,7 +45,7 @@ describe("/auth/login", () => {
       .send({
         query: `query { 
           user { 
-            name 
+            givenName 
           } 
         }`
       });
@@ -64,13 +67,13 @@ describe("/auth/login", () => {
     response = await authenticatedAgent.post("/").send({
       query: `query { 
           user { 
-            name 
+            givenName 
           } 
         }`
     });
 
     // Expect the request to have been successful
-    expect(JSON.parse(response.text).data.user.name).toEqual("Test");
+    expect(JSON.parse(response.text).data.user.givenName).toEqual("Test");
   });
 
   it("should return an error message and status code 401 if the username or password are wrong", async () => {
@@ -95,7 +98,7 @@ describe("/auth/login", () => {
     response = await authenticatedAgent.post("/").send({
       query: `query { 
           user { 
-            name 
+            givenName 
           } 
         }`
     });
@@ -114,13 +117,13 @@ describe("/auth/logout", () => {
     let response = await agent.post("/").send({
       query: `query { 
           user { 
-            name 
+            givenName 
           } 
         }`
     });
 
     // Expect the request to have been successful
-    expect(JSON.parse(response.text).data.user.name).toEqual("Test");
+    expect(JSON.parse(response.text).data.user.givenName).toEqual("Test");
 
     // Log out the user
     response = await agent.post("/auth/logout");
@@ -132,7 +135,7 @@ describe("/auth/logout", () => {
     response = await agent.post("/").send({
       query: `query { 
           user { 
-            name 
+            givenName 
           } 
         }`
     });

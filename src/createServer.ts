@@ -37,7 +37,11 @@ const createServer = async () => {
         const user = await prisma.user({ username });
         // Check if the user exist and return it content for use in subsequent request.
         if (user && (await bcrypt.compare(password, user.password))) {
-          done(null, { id: user.id, name: user.name, username: user.username });
+          done(null, {
+            id: user.id,
+            name: user.givenName,
+            username: user.username
+          });
         } else {
           done(null, false);
         }
@@ -94,7 +98,9 @@ const createServer = async () => {
     const user = await prisma.user({ id });
     done(
       null,
-      user ? { id: user.id, username: user.username, name: user.name } : false
+      user
+        ? { id: user.id, username: user.username, name: user.givenName }
+        : false
     );
   });
 

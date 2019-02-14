@@ -47,8 +47,11 @@ type Subscription {
 
 type User {
   id: ID!
-  name: String!
+  familyName: String!
+  givenName: String!
   username: String!
+  email: String!
+  affiliation: String!
   password: String!
 }
 
@@ -59,8 +62,11 @@ type UserConnection {
 }
 
 input UserCreateInput {
-  name: String!
+  familyName: String!
+  givenName: String!
   username: String!
+  email: String!
+  affiliation: String!
   password: String!
 }
 
@@ -72,10 +78,16 @@ type UserEdge {
 enum UserOrderByInput {
   id_ASC
   id_DESC
-  name_ASC
-  name_DESC
+  familyName_ASC
+  familyName_DESC
+  givenName_ASC
+  givenName_DESC
   username_ASC
   username_DESC
+  email_ASC
+  email_DESC
+  affiliation_ASC
+  affiliation_DESC
   password_ASC
   password_DESC
   createdAt_ASC
@@ -86,8 +98,11 @@ enum UserOrderByInput {
 
 type UserPreviousValues {
   id: ID!
-  name: String!
+  familyName: String!
+  givenName: String!
   username: String!
+  email: String!
+  affiliation: String!
   password: String!
 }
 
@@ -110,14 +125,20 @@ input UserSubscriptionWhereInput {
 }
 
 input UserUpdateInput {
-  name: String
+  familyName: String
+  givenName: String
   username: String
+  email: String
+  affiliation: String
   password: String
 }
 
 input UserUpdateManyMutationInput {
-  name: String
+  familyName: String
+  givenName: String
   username: String
+  email: String
+  affiliation: String
   password: String
 }
 
@@ -136,20 +157,34 @@ input UserWhereInput {
   id_not_starts_with: ID
   id_ends_with: ID
   id_not_ends_with: ID
-  name: String
-  name_not: String
-  name_in: [String!]
-  name_not_in: [String!]
-  name_lt: String
-  name_lte: String
-  name_gt: String
-  name_gte: String
-  name_contains: String
-  name_not_contains: String
-  name_starts_with: String
-  name_not_starts_with: String
-  name_ends_with: String
-  name_not_ends_with: String
+  familyName: String
+  familyName_not: String
+  familyName_in: [String!]
+  familyName_not_in: [String!]
+  familyName_lt: String
+  familyName_lte: String
+  familyName_gt: String
+  familyName_gte: String
+  familyName_contains: String
+  familyName_not_contains: String
+  familyName_starts_with: String
+  familyName_not_starts_with: String
+  familyName_ends_with: String
+  familyName_not_ends_with: String
+  givenName: String
+  givenName_not: String
+  givenName_in: [String!]
+  givenName_not_in: [String!]
+  givenName_lt: String
+  givenName_lte: String
+  givenName_gt: String
+  givenName_gte: String
+  givenName_contains: String
+  givenName_not_contains: String
+  givenName_starts_with: String
+  givenName_not_starts_with: String
+  givenName_ends_with: String
+  givenName_not_ends_with: String
   username: String
   username_not: String
   username_in: [String!]
@@ -164,6 +199,34 @@ input UserWhereInput {
   username_not_starts_with: String
   username_ends_with: String
   username_not_ends_with: String
+  email: String
+  email_not: String
+  email_in: [String!]
+  email_not_in: [String!]
+  email_lt: String
+  email_lte: String
+  email_gt: String
+  email_gte: String
+  email_contains: String
+  email_not_contains: String
+  email_starts_with: String
+  email_not_starts_with: String
+  email_ends_with: String
+  email_not_ends_with: String
+  affiliation: String
+  affiliation_not: String
+  affiliation_in: [String!]
+  affiliation_not_in: [String!]
+  affiliation_lt: String
+  affiliation_lte: String
+  affiliation_gt: String
+  affiliation_gte: String
+  affiliation_contains: String
+  affiliation_not_contains: String
+  affiliation_starts_with: String
+  affiliation_not_starts_with: String
+  affiliation_ends_with: String
+  affiliation_not_ends_with: String
   password: String
   password_not: String
   password_in: [String!]
@@ -186,5 +249,6 @@ input UserWhereInput {
 input UserWhereUniqueInput {
   id: ID
   username: String
+  email: String
 }
 `
