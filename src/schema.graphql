@@ -21,17 +21,29 @@ type Mutation {
   Neither the username nor the email address must be used by another user already.
   """
   signup(
-    """Family name ("surname")."""
+    """
+    Family name ("surname").
+    """
     familyName: String!
-    """Given name ("first name")."""
+    """
+    Given name ("first name").
+    """
     givenName: String!
-    """Username, which must not contain upper case letters."""
+    """
+    Username, which must not contain upper case letters.
+    """
     username: String!
-    """Email address, which will be stored as lower case."""
+    """
+    Email address, which will be stored as lower case.
+    """
     email: String!
-    """Affiliation, such as a university or an institute."""
+    """
+    Affiliation, such as a university or an institute.
+    """
     affiliation: String!
-    """Password."""
+    """
+    Password.
+    """
     password: String!
   ): User!
 }
@@ -40,16 +52,28 @@ type Mutation {
 A data archive user.
 """
 type User {
-    """User id."""
-    id: ID!
-    """Family name ("surname")."""
-    familyName: String!
-    """Given name ("first name")."""
-    givenName: String!
-    """Username, which must not contain upper case letters."""
-    username: String!
-    """Email address, which will be stored as lower case."""
-    email: String!
-    """Affiliation, such as a university or an institute."""
-    affiliation: String!
+  """
+  User id.
+  """
+  id: ID!
+  """
+  Family name ("surname").
+  """
+  familyName: String!
+  """
+  Given name ("first name").
+  """
+  givenName: String!
+  """
+  Username, which must not contain upper case letters.
+  """
+  username: String!
+  """
+  Email address, which will be stored as lower case.
+  """
+  email: String!
+  """
+  Affiliation, such as a university or an institute.
+  """
+  affiliation: String!
 }

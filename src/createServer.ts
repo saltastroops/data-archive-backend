@@ -93,10 +93,7 @@ const createServer = async () => {
 
   passport.deserializeUser(async (id: string, done) => {
     const user = await prisma.user({ id });
-    done(
-      null,
-      user ? user : false
-    );
+    done(null, user ? user : false);
   });
 
   /**
