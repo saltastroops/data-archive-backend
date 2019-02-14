@@ -18,37 +18,55 @@ interface IArgs {
 
 // Defining  Mutation methods
 const Mutation = {
+  /**
+   * Register a new user.
+   *
+   * The following arguments must be supplied.
+   *
+   * affiliation:
+   *     The affiliation of the user, such as a university or an institute.
+   * email:
+   *     Email address. This wiull be stored in lower case.
+   * familyName:
+   *     The family name (surname).
+   * givenName:
+   *     The given name (first name).
+   * username:
+   *     The username, which must not contain upper case letters.
+   */
   async signup(root: any, args: IArgs, ctx: IContext) {
-    // Transform username address to lowercase.
+    // Transform username address to lowercase
     args.username = args.username.toLowerCase();
 
-    // Transform email address to lowercase.
+    // Transform the email address to lower case
     args.email = args.email.toLowerCase();
 
-    // Check if the submitted username for registering already exists.
+    // Check if there already exists a user with the submitted username
     if (await ctx.prisma.user({ username: args.username })) {
-      throw new Error("username already exists.");
+      throw new Error(
+        `There already exists a user with the username ${args.username}.`
+      );
     }
 
-    // Check if the submitted email for registering already exists.
+    // Check if there already exists a user with the submitted email address
     if (await ctx.prisma.user({ email: args.email })) {
-      throw new Error("email address already exists.");
+      throw new Error(
+        `There already exists a user with the email address ${args.email}.`
+      );
     }
 
-    // Hash the password before stored in the database.
-    const password = await bcrypt.hash(args.password, 10);
+    // Hash the password before storing it in the database.
+    const hashedPassword = await bcrypt.hash(args.password, 10);
 
-    // Adding the new entry in database.
-    const user = await ctx.prisma.createUser({
+    // Add the new user to the database
+    return await ctx.prisma.createUser({
       affiliation: args.affiliation,
       email: args.email,
       familyName: args.familyName,
       givenName: args.givenName,
-      password,
+      password: hashedPassword,
       username: args.username
     });
-
-    return user;
   }
 };
 
