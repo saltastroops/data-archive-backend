@@ -2,8 +2,8 @@ jest.mock("../src/generated/prisma-client");
 
 import bcrypt from "bcrypt";
 import request from "supertest";
-import createServer from "../src/createServer";
-import { prisma } from "../src/generated/prisma-client";
+import createServer from "../createServer";
+import { prisma } from "../generated/prisma-client";
 
 // Creating an authenticated agent for making subsequent requests
 async function createAuthenticatedAgent(username: string, password: string) {
@@ -89,9 +89,7 @@ describe("/auth/login", () => {
     expect(JSON.parse(response.text).success).toEqual(false);
 
     // Expect the error message to be meaningful
-    expect(JSON.parse(response.text).message).toContain(
-      "username or password"
-    );
+    expect(JSON.parse(response.text).message).toContain("username or password");
 
     // Request the user details
     response = await authenticatedAgent.post("/").send({
