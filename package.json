@@ -15,7 +15,7 @@
     "test:watch": "jest --watch",
     "format": "prettier --write '{*.json,src/**/*.{js,ts,tsx,json,graphql}}'",
     "lint": "tslint 'src/**/*.{ts,tsx}'",
-    "lint:fix": "tslint --fix '{src/**/*.{ts,tsx}'"
+    "lint:fix": "tslint --fix 'src/**/*.{ts,tsx}'"
   },
   "repository": {
     "type": "git",
