@@ -90,7 +90,7 @@ describe("/auth/login", () => {
 
     // Expect the error message to be meaningful
     expect(JSON.parse(response.text).message).toContain(
-      "Username or password wrong"
+      "username or password"
     );
 
     // Request the user details

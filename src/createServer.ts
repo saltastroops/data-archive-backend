@@ -13,7 +13,19 @@ Sentry.init({
   dsn: process.env.SENTRY_DSN
 });
 
-// Create a GraphQL-Yoga server
+/**
+ * Create the server.
+ *
+ * The server provides the following endpoints.
+ *
+ * /: Endpoint for GraphQL queries and mutations.
+ * /auth/login: Endpoint for logging a user in.
+ * /auth/logout: Endpoint for logging a user out.
+ *
+ * This functions returns a promise resolving to the server.
+ *
+ * See the file index.ts for an example of how to launch the server.
+ */
 const createServer = async () => {
   // Set up passport for managing user authentication
   passport.use(
@@ -109,12 +121,13 @@ const createServer = async () => {
     passport.authenticate("local", (err, user) => {
       if (err) {
         return res.status(500).send({
-          message: "Authentication failure due to an internal server error.",
+          message:
+            "You have not been logged in due to an internal server error.",
           success: false
         });
       } else if (!user) {
         return res.status(401).send({
-          message: "Username or password wrong.",
+          message: "The username or password is wrong.",
           success: false
         });
       } else {
