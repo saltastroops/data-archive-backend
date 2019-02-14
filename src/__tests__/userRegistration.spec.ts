@@ -107,7 +107,8 @@ describe("User not registered", () => {
     });
 
     // Expect the error message to be meaningful.
-    expect(response.text).toContain("username already exists.");
+    expect(response.text).toContain("test");
+    expect(response.text).toContain("exists");
   });
 
   it("should not register the user with an existing email address", async () => {
@@ -134,6 +135,7 @@ describe("User not registered", () => {
     });
 
     // Expect the error message to be meaningful.
-    expect(response.text).toContain("email address already exists.");
+    expect(response.text).toContain("test@gmail.com");
+    expect(response.text).toContain("exists");
   });
 });
