@@ -27,7 +27,7 @@ const Mutation = {
    */
   async signup(root: any, args: UserCreateInput, ctx: IContext) {
     // Check if submitted username does not contain uppercased character(s).
-    if (/[A-Z]/.test(args.username)) {
+    if (args.username !== args.username.toLowerCase()) {
       return new Error(
         `The username ${
           args.username
