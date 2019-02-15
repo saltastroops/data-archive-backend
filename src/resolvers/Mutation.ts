@@ -63,7 +63,7 @@ const Mutation = {
     const hashedPassword = await bcrypt.hash(args.password, 10);
 
     // Add the new user to the database.
-    return await ctx.prisma.createUser({
+    return ctx.prisma.createUser({
       affiliation: args.affiliation,
       email: args.email,
       familyName: args.familyName,
