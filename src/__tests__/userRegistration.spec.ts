@@ -72,6 +72,9 @@ describe("User registered", () => {
 
     // Expect the user to be assigned a unique ID when registered.
     expect(response.id).toBe("test110111");
+
+    // Expect the user password to have been hashed.
+    expect(prisma.createUser).not.toHaveBeenCalledWith(args);
   });
 });
 
