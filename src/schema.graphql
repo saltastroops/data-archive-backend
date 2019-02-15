@@ -76,4 +76,8 @@ type User {
   Affiliation, such as a university or an institute.
   """
   affiliation: String!
+  """
+  Role, which define the user's permissions.
+  """
+  roles: [Role]!
 }

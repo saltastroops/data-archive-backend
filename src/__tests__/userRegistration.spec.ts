@@ -1,9 +1,8 @@
 jest.mock("../generated/prisma-client");
 
 import bcrypt from "bcrypt";
-import request from "supertest";
-import createServer from "../createServer";
 import { prisma, UserWhereInput } from "../generated/prisma-client";
+import { resolvers } from "../resolvers";
 
 beforeAll(() => {
   interface IUserCreateInput {
@@ -24,7 +23,8 @@ beforeAll(() => {
         familyName: "Test",
         givenName: "Test",
         id: "1",
-        password: await bcrypt.hash("test", 10),
+        password: await bcrypt.hash("testpassword", 10),
+        roles: [],
         username: "test"
       };
     }
@@ -52,90 +52,109 @@ afterAll(() => {
 
 describe("User registered", () => {
   it("should register the user successfuly", async () => {
-    const server = (await createServer()).createHttpServer({});
-    const agent = request.agent(server);
+    // User signing up with valid information.
+    const args = {
+      affiliation: "Test1 Affiliation",
+      email: "test1@gmail.com",
+      familyName: "Test1",
+      givenName: "Test1",
+      password: "testpassword",
+      username: "test1"
+    };
 
-    // Registering user
-    const response = await agent.post("/").send({
-      query: `
-          mutation{
-            signup(
-              familyName: "Test1"
-              givenName: "Test1"
-              username: "test1"
-              email: "test1@gmail.com"
-              affiliation: "Test1 Affiliation"
-              password: "test1"
-            ){ 
-              id
-              givenName
-            }
-          } 
-        `
+    const response = await resolvers.Mutation.signup({}, args, {
+      prisma,
+      user: { id: "" }
     });
 
     // Expect the user to be registered.
-    expect(JSON.parse(response.text).data.signup.givenName).toBe("Test1");
+    expect(response.givenName).toBe("Test1");
 
     // Expect the user to be assigned a unique ID when registered.
-    expect(JSON.parse(response.text).data.signup.id).toBe("test110111");
+    expect(response.id).toBe("test110111");
   });
 });
 
 describe("User not registered", () => {
-  it("should not register the user with an exixting username", async () => {
-    const server = (await createServer()).createHttpServer({});
-    const agent = request.agent(server);
+  it("should not register the user submitted a username containing an uppercase character", async () => {
+    // User signing up with a username that contains an uppercased character(s).
+    const args = {
+      affiliation: "Test2 Affiliation",
+      email: "test2@gmail.com",
+      familyName: "Test2",
+      givenName: "Test2",
+      password: "test2",
+      username: "tesT2"
+    };
 
-    // Registering user
-    const response = await agent.post("/").send({
-      query: `
-          mutation{
-            signup(
-              familyName: "Test2"
-              givenName: "Test2"
-              username: "test"
-              email: "test2@gmail.com"
-              affiliation: "Test2 Affiliation"
-              password: "test2"
-            ){ 
-              id
-              givenName
-            }
-          } 
-        `
+    const response = await resolvers.Mutation.signup({}, args, {
+      prisma,
+      user: { id: "" }
     });
 
     // Expect the error message to be meaningful.
-    expect(response.text).toContain("test");
-    expect(response.text).toContain("exists");
+    expect(response.message).toContain("tesT2");
+  });
+
+  it("should not register the user with an existing username", async () => {
+    // User signing up with a username that already exists.
+    const args = {
+      affiliation: "Test3 Affiliation",
+      email: "test3@gmail.com",
+      familyName: "Test3",
+      givenName: "Test3",
+      password: "test3",
+      username: "test"
+    };
+
+    const response = await resolvers.Mutation.signup({}, args, {
+      prisma,
+      user: { id: "" }
+    });
+
+    // Expect the error message to be meaningful.
+    expect(response.message).toContain("test");
+    expect(response.message).toContain("exists");
   });
 
   it("should not register the user with an existing email address", async () => {
-    const server = (await createServer()).createHttpServer({});
-    const agent = request.agent(server);
+    // User signing up with an email address that already exists.
+    const args = {
+      affiliation: "Test4 Affiliation",
+      email: "test@gmail.com",
+      familyName: "Test4",
+      givenName: "Test4",
+      password: "test4",
+      username: "test4"
+    };
 
-    // Registering user
-    const response = await agent.post("/").send({
-      query: `
-          mutation{
-            signup(
-              familyName: "Test3"
-              givenName: "Test3"
-              username: "test3"
-              email: "test@gmail.com"
-              affiliation: "Test3 Affiliation"
-              password: "test3"
-            ){ 
-              id
-              givenName
-            }
-          } 
-        `
+    const response = await resolvers.Mutation.signup({}, args, {
+      prisma,
+      user: { id: "" }
     });
 
     // Expect the error message to be meaningful.
-    expect(response.text).toContain("test@gmail.com");
-    expect(response.text).toContain("exists");
+    expect(response.message).toContain("test@gmail.com");
+    expect(response.message).toContain("exists");
+  });
+
+  it("should not register the user submitted a password with less than 6 characters", async () => {
+    // User signing up with the password less than 6 characters.
+    const args = {
+      affiliation: "Test5 Affiliation",
+      email: "test5@gmail.com",
+      familyName: "Test5",
+      givenName: "Test5",
+      password: "test5",
+      username: "test5"
+    };
+
+    const response = await resolvers.Mutation.signup({}, args, {
+      prisma,
+      user: { id: "" }
+    });
+
+    // Expect the error message to be meaningful.
+    expect(response.message).toContain("6 characters long");
   });
 });

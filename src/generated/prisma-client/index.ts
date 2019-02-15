@@ -119,7 +119,25 @@ export type UserOrderByInput =
   | "updatedAt_ASC"
   | "updatedAt_DESC";
 
+export type Role = "ADMIN";
+
 export type MutationType = "CREATED" | "UPDATED" | "DELETED";
+
+export interface UserUpdateManyMutationInput {
+  familyName?: String;
+  givenName?: String;
+  username?: String;
+  email?: String;
+  affiliation?: String;
+  password?: String;
+  roles?: UserUpdaterolesInput;
+}
+
+export type UserWhereUniqueInput = AtLeastOne<{
+  id: ID_Input;
+  username?: String;
+  email?: String;
+}>;
 
 export interface UserCreateInput {
   familyName: String;
@@ -128,6 +146,11 @@ export interface UserCreateInput {
   email: String;
   affiliation: String;
   password: String;
+  roles?: UserCreaterolesInput;
+}
+
+export interface UserCreaterolesInput {
+  set?: Role[] | Role;
 }
 
 export interface UserUpdateInput {
@@ -137,15 +160,22 @@ export interface UserUpdateInput {
   email?: String;
   affiliation?: String;
   password?: String;
+  roles?: UserUpdaterolesInput;
 }
 
-export interface UserUpdateManyMutationInput {
-  familyName?: String;
-  givenName?: String;
-  username?: String;
-  email?: String;
-  affiliation?: String;
-  password?: String;
+export interface UserUpdaterolesInput {
+  set?: Role[] | Role;
+}
+
+export interface UserSubscriptionWhereInput {
+  mutation_in?: MutationType[] | MutationType;
+  updatedFields_contains?: String;
+  updatedFields_contains_every?: String[] | String;
+  updatedFields_contains_some?: String[] | String;
+  node?: UserWhereInput;
+  AND?: UserSubscriptionWhereInput[] | UserSubscriptionWhereInput;
+  OR?: UserSubscriptionWhereInput[] | UserSubscriptionWhereInput;
+  NOT?: UserSubscriptionWhereInput[] | UserSubscriptionWhereInput;
 }
 
 export interface UserWhereInput {
@@ -252,23 +282,6 @@ export interface UserWhereInput {
   NOT?: UserWhereInput[] | UserWhereInput;
 }
 
-export interface UserSubscriptionWhereInput {
-  mutation_in?: MutationType[] | MutationType;
-  updatedFields_contains?: String;
-  updatedFields_contains_every?: String[] | String;
-  updatedFields_contains_some?: String[] | String;
-  node?: UserWhereInput;
-  AND?: UserSubscriptionWhereInput[] | UserSubscriptionWhereInput;
-  OR?: UserSubscriptionWhereInput[] | UserSubscriptionWhereInput;
-  NOT?: UserSubscriptionWhereInput[] | UserSubscriptionWhereInput;
-}
-
-export type UserWhereUniqueInput = AtLeastOne<{
-  id: ID_Input;
-  username?: String;
-  email?: String;
-}>;
-
 export interface NodeNode {
   id: ID_Output;
 }
@@ -313,6 +326,7 @@ export interface UserPreviousValues {
   email: String;
   affiliation: String;
   password: String;
+  roles: Role[];
 }
 
 export interface UserPreviousValuesPromise
@@ -325,6 +339,7 @@ export interface UserPreviousValuesPromise
   email: () => Promise<String>;
   affiliation: () => Promise<String>;
   password: () => Promise<String>;
+  roles: () => Promise<Role[]>;
 }
 
 export interface UserPreviousValuesSubscription
@@ -337,23 +352,7 @@ export interface UserPreviousValuesSubscription
   email: () => Promise<AsyncIterator<String>>;
   affiliation: () => Promise<AsyncIterator<String>>;
   password: () => Promise<AsyncIterator<String>>;
-}
-
-export interface UserEdge {
-  node: User;
-  cursor: String;
-}
-
-export interface UserEdgePromise extends Promise<UserEdge>, Fragmentable {
-  node: <T = UserPromise>() => T;
-  cursor: () => Promise<String>;
-}
-
-export interface UserEdgeSubscription
-  extends Promise<AsyncIterator<UserEdge>>,
-    Fragmentable {
-  node: <T = UserSubscription>() => T;
-  cursor: () => Promise<AsyncIterator<String>>;
+  roles: () => Promise<AsyncIterator<Role[]>>;
 }
 
 export interface UserSubscriptionPayload {
@@ -389,6 +388,7 @@ export interface User {
   email: String;
   affiliation: String;
   password: String;
+  roles: Role[];
 }
 
 export interface UserPromise extends Promise<User>, Fragmentable {
@@ -399,6 +399,7 @@ export interface UserPromise extends Promise<User>, Fragmentable {
   email: () => Promise<String>;
   affiliation: () => Promise<String>;
   password: () => Promise<String>;
+  roles: () => Promise<Role[]>;
 }
 
 export interface UserSubscription
@@ -411,6 +412,24 @@ export interface UserSubscription
   email: () => Promise<AsyncIterator<String>>;
   affiliation: () => Promise<AsyncIterator<String>>;
   password: () => Promise<AsyncIterator<String>>;
+  roles: () => Promise<AsyncIterator<Role[]>>;
+}
+
+export interface UserEdge {
+  node: User;
+  cursor: String;
+}
+
+export interface UserEdgePromise extends Promise<UserEdge>, Fragmentable {
+  node: <T = UserPromise>() => T;
+  cursor: () => Promise<String>;
+}
+
+export interface UserEdgeSubscription
+  extends Promise<AsyncIterator<UserEdge>>,
+    Fragmentable {
+  node: <T = UserSubscription>() => T;
+  cursor: () => Promise<AsyncIterator<String>>;
 }
 
 export interface UserConnection {
@@ -458,17 +477,17 @@ export interface PageInfoSubscription
 }
 
 /*
+The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID.
+*/
+export type ID_Input = string | number;
+export type ID_Output = string;
+
+/*
 The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.
 */
 export type String = string;
 
 export type Long = string;
-
-/*
-The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID.
-*/
-export type ID_Input = string | number;
-export type ID_Output = string;
 
 /*
 The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1. 
@@ -485,6 +504,10 @@ export type Boolean = boolean;
  */
 
 export const models: Model[] = [
+  {
+    name: "Role",
+    embedded: false
+  },
   {
     name: "User",
     embedded: false
