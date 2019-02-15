@@ -5,15 +5,6 @@ import { prisma, UserWhereInput } from "../generated/prisma-client";
 import { resolvers } from "../resolvers";
 
 beforeAll(() => {
-  interface IUserCreateInput {
-    familyName: string;
-    givenName: string;
-    username: string;
-    email: string;
-    affiliation: string;
-    password: string;
-  }
-
   // Mocking the user query
   (prisma.user as any).mockImplementation(async (where: UserWhereInput) => {
     if (where.username === "test" || where.email === "test@gmail.com") {
@@ -32,7 +23,7 @@ beforeAll(() => {
 
   // Mocking the createUser mutation
   (prisma.createUser as any).mockImplementation(
-    async (data: IUserCreateInput) => ({
+    async (data: UserWhereInput) => ({
       affiliation: data.affiliation,
       email: data.email,
       familyName: data.familyName,
