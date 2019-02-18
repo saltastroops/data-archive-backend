@@ -70,11 +70,11 @@ describe("User registered", () => {
     // Expect createUser to have been called
     expect(prisma.createUser).toHaveBeenCalled();
 
-    const argumentsWithoutPassword = delete { ...args }["password"];
+    const argumentsWithoutPassword = delete { ...args }.password;
 
     const storedDataWithoutPassword = delete {
       ...(prisma.createUser as any).mock.calls[0][0]
-    }["password"];
+    }.password;
 
     // Expect the submitted user information to have been stored in the database.
     expect(storedDataWithoutPassword).toBe(argumentsWithoutPassword);
