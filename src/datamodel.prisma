@@ -7,7 +7,7 @@ type User {
   email: String! @unique
   affiliation: String!
   password: String!
-  roles: [Role]!
+  roles: [Role!]
 }
 
 # TODO UPDATE

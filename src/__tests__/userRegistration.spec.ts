@@ -14,7 +14,7 @@ beforeAll(() => {
         familyName: "Test",
         givenName: "Test",
         id: "1",
-        password: await bcrypt.hash("testpassword", 10),
+        password: "hashedpassword",
         roles: [],
         username: "test"
       };
@@ -58,11 +58,22 @@ describe("User registered", () => {
       user: { id: "" }
     });
 
-    // Expect the user to be registered.
-    expect(response.givenName).toBe("Test1");
+    // Expect createUser to have been called
+    expect(prisma.createUser).toHaveBeenCalled();
 
-    // Expect the user to be assigned a unique ID when registered.
-    expect(response.id).toBe("test110111");
+    const argumentsWithoutPassword = delete { ...args }.password;
+
+    const storedDataWithoutPassword = delete {
+      ...(prisma.createUser as any).mock.calls[0][0]
+    }.password;
+
+    // Expect the submitted user information to have been stored in the database.
+    expect(storedDataWithoutPassword).toBe(argumentsWithoutPassword);
+
+    // Expect the submitted user password stored in the database to have been hashed.
+    expect((prisma.createUser as any).mock.calls[0][0].password).not.toBe(
+      args.password
+    );
   });
 });
 
