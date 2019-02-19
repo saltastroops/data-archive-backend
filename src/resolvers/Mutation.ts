@@ -22,22 +22,25 @@ const Mutation = {
    *     The family name (surname).
    * givenName:
    *     The given name (first name).
+   * password:
+   *     The password, which must have at least 7 characters.
    * username:
    *     The username, which must not contain upper case letters.
    */
   async signup(root: any, args: UserCreateInput, ctx: IContext) {
-    // Check if submitted username does not contain uppercased character(s).
+    // Check if the submitted username contains upper case characters.
     if (args.username !== args.username.toLowerCase()) {
-      return new Error(
-        `The username ${
-          args.username
-        } is not lowercase, make sure to provide a lowercase username.`
-      ) as any;
+      throw new Error(
+        `The username ${args.username} contains upper case characters.`
+      );
     }
 
     // Check if there already exists a user with the submitted username.
-    if (await ctx.prisma.user({ username: args.username })) {
-      return new Error(
+    const usersWithGivenUsername = await ctx.prisma.users({
+      where: { username: args.username }
+    });
+    if (usersWithGivenUsername.length) {
+      throw new Error(
         `There already exists a user with the username ${args.username}.`
       );
     }
@@ -46,17 +49,18 @@ const Mutation = {
     args.email = args.email.toLowerCase();
 
     // Check if there already exists a user with the submitted email address.
-    if (await ctx.prisma.user({ email: args.email })) {
-      return new Error(
+    const usersWithGivenEmail = await ctx.prisma.users({
+      where: { email: args.email }
+    });
+    if (usersWithGivenEmail.length) {
+      throw new Error(
         `There already exists a user with the email address ${args.email}.`
       );
     }
 
     // Check if the password is secure enough.
     if (!(args.password.length > 6)) {
-      return new Error(
-        `The password should be no less than 6 characters long.`
-      );
+      throw new Error(`The password must be at least 7 characters long.`);
     }
 
     // Hash the password before storing it in the database.
