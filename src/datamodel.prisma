@@ -1,16 +1,25 @@
-# TODO UPDATE
+# A data archive user.
 type User {
+  # Unique user id
   id: ID! @unique
+  # Family name (surname)
   familyName: String!
+  # Given name (first name)
   givenName: String!
+  # Unique username
   username: String! @unique
+  # Email address
   email: String! @unique
+  # Affiliation,, such as a university or an institute
   affiliation: String!
+  # Password, which should have at least 7 characters
   password: String!
+  # Roles (such as being administrator)
   roles: [Role!]
 }
 
-# TODO UPDATE
+# An enumeration of the user roles.
 enum Role {
+  # Administrator with full power
   ADMIN
 }
