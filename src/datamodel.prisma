@@ -6,19 +6,19 @@ type User {
   familyName: String!
   # Given name (first name)
   givenName: String!
-  # Unique username
+  # Username, which must not contain upper case letters
   username: String! @unique
   # Email address
   email: String! @unique
-  # Affiliation,, such as a university or an institute
+  # Affiliation, such as a university or an institute
   affiliation: String!
-  # Password, which should have at least 7 characters
+  # Password, which must have at least 7 characters
   password: String!
-  # Roles (such as being administrator)
+  # Roles, which define the user's permissions
   roles: [Role!]
 }
 
-# An enumeration of the user roles.
+# An enumeration of the user roles, which define the permissions a user has.
 enum Role {
   # Administrator with full power
   ADMIN
