@@ -29,19 +29,19 @@ const Mutation = {
    *     The username, which must not contain upper case letters.
    */
   async signup(root: any, args: UserCreateInput, ctx: IContext) {
-    // Check if the submitted username is not empty.
+    // Check if the submitted username is not empty
     if (!args.username) {
       throw new Error(`The username cannot be empty.`);
     }
 
-    // Check if the submitted username contains upper case characters.
+    // Check if the submitted username contains upper case characters
     if (args.username !== args.username.toLowerCase()) {
       throw new Error(
         `The username ${args.username} contains upper case characters.`
       );
     }
 
-    // Check if there already exists a user with the submitted username.
+    // Check if there already exists a user with the submitted username
     const usersWithGivenUsername = await ctx.prisma.users({
       where: { username: args.username }
     });
@@ -51,7 +51,7 @@ const Mutation = {
       );
     }
 
-    // Check if the submitted email address is valid.
+    // Check if the submitted email address is valid
     if (!validate(args.email, { minDomainAtoms: 2 })) {
       throw new Error(`The email address "${args.email}" is invalid.`);
     }
@@ -59,7 +59,7 @@ const Mutation = {
     // Transform the email address to lower case.
     args.email = args.email.toLowerCase();
 
-    // Check if there already exists a user with the submitted email address.
+    // Check if there already exists a user with the submitted email address
     const usersWithGivenEmail = await ctx.prisma.users({
       where: { email: args.email }
     });
@@ -69,15 +69,15 @@ const Mutation = {
       );
     }
 
-    // Check if the password is secure enough.
+    // Check if the password is secure enough
     if (!(args.password.length > 6)) {
       throw new Error(`The password must be at least 7 characters long.`);
     }
 
-    // Hash the password before storing it in the database.
+    // Hash the password before storing it in the database
     const hashedPassword = await bcrypt.hash(args.password, 10);
 
-    // Add the new user to the database.
+    // Add the new user to the database
     return ctx.prisma.createUser({
       affiliation: args.affiliation,
       email: args.email,
