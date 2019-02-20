@@ -33,11 +33,12 @@ const createServer = async () => {
     new passportLocal.Strategy(
       { usernameField: "username", passwordField: "password" },
       async (username, password, done) => {
-        // Only retrieving a user with the supplied username.
+        // Only retrieving a user with the supplied username
         const user = await prisma.user({ username });
-        // Check if the user exist and return it content for use in subsequent request.
+
+        // Check if the user exists and add it to the request
         if (user && (await bcrypt.compare(password, user.password))) {
-          done(null, { id: user.id, name: user.name, username: user.username });
+          done(null, user);
         } else {
           done(null, false);
         }
@@ -92,10 +93,7 @@ const createServer = async () => {
 
   passport.deserializeUser(async (id: string, done) => {
     const user = await prisma.user({ id });
-    done(
-      null,
-      user ? { id: user.id, username: user.username, name: user.name } : false
-    );
+    done(null, user ? user : false);
   });
 
   /**

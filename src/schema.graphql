@@ -14,9 +14,70 @@ type Query {
 The schema's root mutation type.
 """
 type Mutation {
-  #TODO
+  # TODO UPDATE
   """
-  Adds the newly created user.
+  Register a new data archive user.
+
+  Neither the username nor the email address must be used by another user already.
   """
-  addUser(name: String!): User!
+  signup(
+    """
+    Family name ("surname").
+    """
+    familyName: String!
+    """
+    Given name ("first name").
+    """
+    givenName: String!
+    """
+    Username, which must not contain upper case letters.
+    """
+    username: String!
+    """
+    Email address, which will be stored as lower case.
+    """
+    email: String!
+    """
+    Affiliation, such as a university or an institute.
+    """
+    affiliation: String!
+    """
+    Password.
+    """
+    password: String!
+  ): User!
+}
+
+"""
+A data archive user.
+"""
+type User {
+  """
+  User id.
+  """
+  id: ID!
+  """
+  Family name ("surname").
+  """
+  familyName: String!
+  """
+  Given name ("first name").
+  """
+  givenName: String!
+  """
+  Username, which must not contain upper case letters.
+  """
+  username: String!
+  """
+  Email address, which will be stored as lower case.
+  """
+  email: String!
+  """
+  Affiliation, such as a university or an institute.
+  """
+  affiliation: String!
+  """
+  User roles, which defines the user's permissions.
+  """
+  roles: [Role!]!
 }
