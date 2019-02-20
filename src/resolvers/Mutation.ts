@@ -28,6 +28,11 @@ const Mutation = {
    *     The username, which must not contain upper case letters.
    */
   async signup(root: any, args: UserCreateInput, ctx: IContext) {
+    // Check if the submitted username is not empty.
+    if (!args.username) {
+      throw new Error(`The username cannot be empty.`);
+    }
+
     // Check if the submitted username contains upper case characters.
     if (args.username !== args.username.toLowerCase()) {
       throw new Error(
@@ -42,6 +47,13 @@ const Mutation = {
     if (usersWithGivenUsername.length) {
       throw new Error(
         `There already exists a user with the username ${args.username}.`
+      );
+    }
+
+    // Check if the submitted email address is valid.
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(args.email)) {
+      throw new Error(
+        `The submitted email address "${args.email}" is invalid.`
       );
     }
 

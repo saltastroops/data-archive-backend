@@ -1,11 +1,6 @@
 jest.mock("../generated/prisma-client");
 
-import bcrypt from "bcrypt";
-import {
-  prisma,
-  UserCreateInput,
-  UserWhereUniqueInput
-} from "../generated/prisma-client";
+import { prisma, UserCreateInput } from "../generated/prisma-client";
 import { resolvers } from "../resolvers";
 
 beforeAll(() => {
@@ -75,7 +70,7 @@ describe("User registration", () => {
     expect(prisma.createUser).toHaveBeenCalled();
 
     // createUser should have been called with the submitted arguments, but
-    // the password shou,d have been hashed. So for comparison purposes we
+    // the password should have been hashed. So for comparison purposes we
     // need the arguments without the password.
     const argumentsWithoutPassword = { ...args };
     delete argumentsWithoutPassword.password;
@@ -96,15 +91,15 @@ describe("User registration", () => {
     );
   });
 
-  it("should not register the user with a username containing an upper case character", async () => {
-    // User signing up with a username that contains an upper case character
+  it("should not register the user with an empty username", async () => {
+    // User signing up with an empty username
     const args = {
       affiliation: "Test2 Affiliation",
       email: "test2@gmail.com",
       familyName: "Test2",
       givenName: "Test2",
       password: "test2",
-      username: "tesT2"
+      username: ""
     };
 
     // Mock the users query with an empty array (the user does not exist yet)
@@ -120,17 +115,44 @@ describe("User registration", () => {
     } catch (e) {
       message = e.message;
     }
-    expect(message).toContain("tesT2");
+    expect(message).toContain("empty");
   });
 
-  it("should not register a user with an existing username", async () => {
-    // User signing up with a username that already exists
+  it("should not register the user with a username containing an upper case character", async () => {
+    // User signing up with a username that contains an upper case character
     const args = {
       affiliation: "Test3 Affiliation",
       email: "test3@gmail.com",
       familyName: "Test3",
       givenName: "Test3",
       password: "test3",
+      username: "tesT3"
+    };
+
+    // Mock the users query with an empty array (the user does not exist yet)
+    (prisma.users as any).mockResolvedValue([]);
+
+    // Expect signing up to fail with the appropriate error
+    let message = "";
+    try {
+      await resolvers.Mutation.signup({}, args, {
+        prisma,
+        user: { id: "" }
+      });
+    } catch (e) {
+      message = e.message;
+    }
+    expect(message).toContain("tesT3");
+  });
+
+  it("should not register a user with an existing username", async () => {
+    // User signing up with a username that already exists
+    const args = {
+      affiliation: "Test4 Affiliation",
+      email: "test4@gmail.com",
+      familyName: "Test4",
+      givenName: "Test4",
+      password: "test4",
       username: "existingusername"
     };
 
@@ -152,15 +174,43 @@ describe("User registration", () => {
     expect(message).toContain("existingusername");
   });
 
+  it("should not register a user with an invalid email address", async () => {
+    // User signing up with an invalid email address
+    const args = {
+      affiliation: "Test5 Affiliation",
+      email: "invalidemail@gmail",
+      familyName: "Test5",
+      givenName: "Test5",
+      password: "test5",
+      username: "test5"
+    };
+
+    // Mock the users query with an empty array (the user does not exist yet)
+    (prisma.users as any).mockResolvedValue([]);
+
+    // Expect signing up to fail with the appropriate error
+    let message = "";
+    try {
+      await resolvers.Mutation.signup({}, args, {
+        prisma,
+        user: { id: "" }
+      });
+    } catch (e) {
+      message = e.message;
+    }
+    expect(message).toContain("invalidemail@gmail");
+    expect(message).toContain("invalid");
+  });
+
   it("should not register a user with an existing email address", async () => {
     // User signing up with an email address that already exists
     const args = {
-      affiliation: "Test4 Affiliation",
+      affiliation: "Test6 Affiliation",
       email: "existing@gmail.com",
-      familyName: "Test4",
-      givenName: "Test4",
-      password: "test4",
-      username: "test4"
+      familyName: "Test6",
+      givenName: "Test6",
+      password: "test6",
+      username: "test6"
     };
 
     // Mock the users query. The first call returns an empty array (there is no
@@ -187,12 +237,12 @@ describe("User registration", () => {
   it("should not register the user with a password shorter than 7 characters", async () => {
     // User signing up with the password less than 6 characters.
     const args = {
-      affiliation: "Test5 Affiliation",
-      email: "test5@gmail.com",
-      familyName: "Test5",
-      givenName: "Test5",
-      password: "test5",
-      username: "test5"
+      affiliation: "Test7 Affiliation",
+      email: "test7@gmail.com",
+      familyName: "Test7",
+      givenName: "Test7",
+      password: "test7",
+      username: "test7"
     };
 
     // Mock the users query with an empty array (the user does not exist yet)
