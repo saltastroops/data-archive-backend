@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import { validate } from "isemail";
 import { Prisma, UserCreateInput } from "../generated/prisma-client";
 
 // Defining the context interface
@@ -51,10 +52,8 @@ const Mutation = {
     }
 
     // Check if the submitted email address is valid.
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(args.email)) {
-      throw new Error(
-        `The submitted email address "${args.email}" is invalid.`
-      );
+    if (!validate(args.email, { minDomainAtoms: 2 })) {
+      throw new Error(`The email address "${args.email}" is invalid.`);
     }
 
     // Transform the email address to lower case.
