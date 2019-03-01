@@ -11,7 +11,6 @@ const Query = {
   // TODO UPDATE.
   // Query for users
   user(root: any, args: {}, ctx: IContext) {
-    console.log(ctx.user);
     if (!ctx.user) {
       throw new Error("You must be logged in to call this query");
     }
