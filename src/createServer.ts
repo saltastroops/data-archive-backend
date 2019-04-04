@@ -56,7 +56,7 @@ const createServer = async () => {
     typeDefs: "./src/schema.graphql"
   });
 
-  // Allow server to use the cors
+  // Enable CORS
   server.express.use((req, res, next) => {
     res.header("Access-Control-Allow-Credentials", "true");
     res.header("Access-Control-Allow-Origin", process.env.FRONTEND_URL);
