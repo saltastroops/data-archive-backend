@@ -23,3 +23,83 @@ enum Role {
   # Administrator with full power
   ADMIN
 }
+
+enum DataRequestStatus {
+    PENDING
+    FAILED
+    SUCCESSFUL
+}
+enum DataCategory {
+    ACQUISITION
+    ARC
+    BIAS
+    FLAT
+    STANDARD
+    METADATA
+    SCIENCE
+}
+
+enum Telescope {
+    LESEDI
+    SAAO_1_9
+    SALT
+}
+
+type Header {
+    id: ID! @unique  # Header need to have an id since it is referable
+    key: String!
+    value: String
+}
+
+type Person {
+    id: ID! @unique
+    givenName: String!
+    familyName: String!
+}
+
+type Proposal {
+    id: ID! @unique
+    code: String!
+    title: String!
+    abstract: String!
+    principalInvestigator: Person!
+    observations: [Observation!]
+}
+
+type Observation {
+    id: ID! @unique
+    startTime: DateTime!
+    telescope: Telescope!  # Instruments need some consideration Used by DataFile
+    proposal: Proposal
+    dataFiles: [DataFile!]!
+    publicFrom: DateTime!
+}
+
+type DataFile {
+    id: ID! @unique
+    available: Boolean! @default(value: "false")
+    name: String!
+    fitsHeadersURI:  String
+    headers: [Header!]!
+    previews: [String!]!
+    startTime: DateTime
+    category: DataCategory!
+    observation: Observation
+    size: Int
+}
+
+type DataRequest {
+    id: ID! @unique
+    user: User!
+    madeAt: DateTime!
+    parts: [DataRequestPart!]!
+    url: String
+}
+
+type DataRequestPart {
+    id: ID! @unique
+    dataFiles: [DataFile!]!
+    status: DataRequestStatus! @default (value: "PENDING")
+    statusReason: String! @default (value: "none")
+    uri: String
+}
