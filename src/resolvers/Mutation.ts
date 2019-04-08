@@ -104,8 +104,9 @@ const Mutation = {
   /**
    * Update the user information.
    *
-   * The following arguments may be supplied.
-   * But the password argument must be provided.
+   * The following arguments may be supplied. Apart from the password argument
+   * all arguments are optional.
+   *
    * id:
    *     The unique id of the user to update his or her information.
    * affiliation:
@@ -116,24 +117,25 @@ const Mutation = {
    *     The family name (surname).
    * givenName:
    *     The given name (first name).
+   * username:
+   *     The username, which must not contain upper case letters.
    * password:
    *     The user old password (Must be supplied).
    * newPassword:
    *     The user new pasword.
-   * username:
-   *     The username, which must not contain upper case letters.
    */
   async updateUser(root: any, args: IUserUpdateInput, ctx: IContext) {
-    // Check if the user is logged in.
+    // Check if the user is logged in
     if (!ctx.user) {
       throw new Error("You must be logged in to update user information");
     }
 
+    // Get the currently logged user
     const currentUser = await ctx.prisma.user({
       id: ctx.user.id
     });
 
-    // Check if the currently loggend in user password is correct.
+    // Check if the password matches that of the currently logged in user
     if (!(await bcrypt.compare(args.password, currentUser.password))) {
       throw new Error("Please make sure you provide a correct password.");
     }
@@ -141,8 +143,9 @@ const Mutation = {
     const userUpdateInfo: UserUpdateInput = {};
     let userToUpdate: User;
 
-    // Check if the user information to update is for the currently logged in user.
-    // If it is for the different user, the currently logged in user must be an admin.
+    // Check if the user information to update is for the currently logged in
+    // user. If it is for a different user, the currently logged in user must
+    // be an admin.
     if (args.id) {
       const isAdmin = currentUser.roles.some(role => role === "ADMIN");
 
@@ -161,16 +164,16 @@ const Mutation = {
       });
     }
 
-    // If the username is to change.
+    // If the username is to change
     if (args.username && userToUpdate.username !== args.username) {
-      // Check if the submitted username contains upper case characters.
+      // Check if the submitted username contains upper case characters
       if (args.username !== args.username.toLowerCase()) {
         throw new Error(
           `The username ${args.username} contains upper case characters.`
         );
       }
 
-      // Check if there already exists a user with the submitted username.
+      // Check if there already exists a user with the submitted username
       const usersWithGivenUsername = await ctx.prisma.users({
         where: { username: args.username }
       });
@@ -184,17 +187,17 @@ const Mutation = {
       userUpdateInfo.username = args.username;
     }
 
-    // If the email is to change.
+    // If the email is to change
     if (args.email && userToUpdate.email !== args.email.toLowerCase()) {
-      // Check if the submitted email address is valid.
+      // Check if the submitted email address is valid
       if (!validate(args.email, { minDomainAtoms: 2 })) {
         throw new Error(`The email address "${args.email}" is invalid.`);
       }
 
-      // Transform the email address to lower case.
+      // Transform the email address to lower case
       args.email = args.email.toLowerCase();
 
-      // Check if there already exists a user with the submitted email address.
+      // Check if there already exists a user with the submitted email address
       const usersWithGivenEmail = await ctx.prisma.users({
         where: { email: args.email }
       });
@@ -207,34 +210,35 @@ const Mutation = {
       userUpdateInfo.email = args.email;
     }
 
-    // If the password is to change.
+    // If the password is to change
     if (args.newPassword) {
-      // Check if the password is secure enough.
+      // Check if the password is secure enough
       if (!(args.newPassword.length > 6)) {
         throw new Error(`The password must be at least 7 characters long.`);
       }
 
-      // Hash the password before storing it in the database.
+      // Hash the password before storing it in the database
       const hashedNewPassword = await bcrypt.hash(args.newPassword, 10);
 
       userUpdateInfo.password = hashedNewPassword;
     }
 
-    // If the given name is to change.
+    // If the given name is to change
     if (args.givenName) {
       userUpdateInfo.givenName = args.givenName;
     }
 
-    // If the family name is change.
+    // If the family name is change
     if (args.familyName) {
       userUpdateInfo.familyName = args.familyName;
     }
 
-    // If the affiliation is to change.
+    // If the affiliation is to change
     if (args.affiliation) {
       userUpdateInfo.affiliation = args.affiliation;
     }
 
+    // Update the user details
     return ctx.prisma.updateUser({
       data: {
         ...userUpdateInfo

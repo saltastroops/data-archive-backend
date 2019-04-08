@@ -15,7 +15,7 @@ interface IUserUpdateInput extends UserUpdateInput {
 }
 
 beforeAll(() => {
-  // Mocking the createUser mutation
+  // Mocking the updateUser mutation
   (prisma.updateUser as any).mockImplementation(
     (args: { data: UserUpdateInput; where: UserWhereInput }) =>
       Promise.resolve({
@@ -50,7 +50,8 @@ describe("User update", () => {
     };
 
     // Mock the users query.
-    // Return no user with the already used email nor username to update with.
+    // An empty list is returned as we assume that the given email address and
+    // username are not in use already.
     (prisma.users as any).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
 
     // Mocking the user query.
