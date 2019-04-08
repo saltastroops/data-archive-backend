@@ -2,7 +2,6 @@ import bcrypt from "bcrypt";
 import { validate } from "isemail";
 import {
   Prisma,
-  User,
   UserCreateInput,
   UserUpdateInput
 } from "../generated/prisma-client";
@@ -17,6 +16,13 @@ interface IContext {
 interface IUserUpdateInput extends UserUpdateInput {
   id?: string;
   newPassword?: string;
+}
+
+// Check whether a password is sufficiently strong.
+function checkPasswordStrength(password: string) {
+  if (password.length < 7) {
+    throw new Error(`The password must be at least 7 characters long.`);
+  }
 }
 
 // Defining  Mutation methods
@@ -81,15 +87,13 @@ const Mutation = {
     }
 
     // Check if the password is secure enough
-    if (!(args.password.length > 6)) {
-      throw new Error(`The password must be at least 7 characters long.`);
-    }
+    checkPasswordStrength(args.password);
 
     // Hash the password before storing it in the database
     const hashedPassword = await bcrypt.hash(args.password, 10);
 
     // Add the new user to the database
-    const newUser = await ctx.prisma.createUser({
+    return ctx.prisma.createUser({
       affiliation: args.affiliation,
       email: args.email,
       familyName: args.familyName,
@@ -97,8 +101,6 @@ const Mutation = {
       password: hashedPassword,
       username: args.username
     });
-
-    return newUser;
   },
 
   /**
@@ -141,28 +143,26 @@ const Mutation = {
     }
 
     const userUpdateInfo: UserUpdateInput = {};
-    let userToUpdate: User;
 
     // Check if the user information to update is for the currently logged in
     // user. If it is for a different user, the currently logged in user must
     // be an admin.
-    if (args.id) {
+    const loggedInUserId = ctx.user.id;
+    const updatedUserId = args.id || loggedInUserId;
+    if (updatedUserId !== loggedInUserId) {
       const isAdmin = currentUser.roles.some(role => role === "ADMIN");
 
       if (!isAdmin) {
         throw Error(
-          "You do not have permission to update other user information"
+          "You do not have permission to update details of another user"
         );
       }
-
-      userToUpdate = await ctx.prisma.user({
-        id: args.id
-      });
-    } else {
-      userToUpdate = await ctx.prisma.user({
-        id: ctx.user.id
-      });
     }
+
+    // Get the current details of the updated user.
+    const userToUpdate = await ctx.prisma.user({
+      id: updatedUserId
+    });
 
     // If the username is to change
     if (args.username && userToUpdate.username !== args.username) {
@@ -213,14 +213,10 @@ const Mutation = {
     // If the password is to change
     if (args.newPassword) {
       // Check if the password is secure enough
-      if (!(args.newPassword.length > 6)) {
-        throw new Error(`The password must be at least 7 characters long.`);
-      }
+      checkPasswordStrength(args.newPassword);
 
       // Hash the password before storing it in the database
-      const hashedNewPassword = await bcrypt.hash(args.newPassword, 10);
-
-      userUpdateInfo.password = hashedNewPassword;
+      userUpdateInfo.password = await bcrypt.hash(args.newPassword, 10);
     }
 
     // If the given name is to change
