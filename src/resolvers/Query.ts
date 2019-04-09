@@ -17,6 +17,14 @@ const Query = {
     return ctx.prisma.user({
       id: ctx.user.id
     });
+  },
+  // TODO Make sure that the user is defined / authenticated
+  dataRequestById(root: any, { dataRequestId }: any, { prisma }: IContext) {
+    return prisma.dataRequest({ id: dataRequestId });
+  },
+  // TODO Make sure that the user is defined / authenticated
+  dataRequestsForUser(root: any, { userId }: any, { prisma }: IContext) {
+    return prisma.dataRequests({ where: { user: { id: userId } } });
   }
 };
 
