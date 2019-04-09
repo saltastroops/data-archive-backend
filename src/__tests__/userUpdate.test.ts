@@ -195,6 +195,7 @@ describe("User update", () => {
     // Mock the users query
     (prisma.users as any).mockResolvedValueOnce([
       {
+        id: "2",
         email: "existing@email.address"
       }
     ]);
@@ -231,6 +232,7 @@ describe("User update", () => {
     // email address which is requested as the new email address.
     (prisma.users as any).mockResolvedValueOnce([
       {
+        id: "2",
         username: "existingusername"
       }
     ]);
