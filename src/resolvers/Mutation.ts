@@ -201,6 +201,7 @@ const Mutation = {
       const usersWithGivenEmail = await ctx.prisma.users({
         where: { email: args.email }
       });
+
       if (usersWithGivenEmail.length) {
         throw new Error(
           `There already exists a user with the email address ${args.email}.`

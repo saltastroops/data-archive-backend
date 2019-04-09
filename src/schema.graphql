@@ -98,7 +98,6 @@ type Mutation {
     New password.
     """
     newPassword: String
-
   ): User!
 }
 
