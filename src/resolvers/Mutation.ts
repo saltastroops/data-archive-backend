@@ -1,7 +1,11 @@
 import bcrypt from "bcrypt";
 import { validate } from "isemail";
 import { Prisma, UserCreateInput } from "../generated/prisma-client";
-// import { createDataRequest } from "./dataRequest";
+import {
+  createDataRequest,
+  updateDataRequest,
+  updateDataRequestPart
+} from "./DataRequest";
 
 // Defining the context interface
 interface IContext {
@@ -11,48 +15,39 @@ interface IContext {
 
 // Defining  Mutation methods
 const Mutation = {
-  async createDataRequest(root: any, { data }: any, { prisma }: IContext) {
-    // if (!user) {
-    //   throw new Error("You must be logged in to call this query");
-    // }
-    const user = await prisma.user({ id: "cju8eq9yxxaj90b26br1gwy2y" }); // TODO use context user
-    const madeAt = new Date();
-
-    // Creating a data request
-    const dr = await prisma.createDataRequest({
-      madeAt,
-      user: { connect: { id: user.id } }
-    });
-
-    // Creating parts of this data request
-    data.parts.forEach(async (part: any) => {
-      const drp = await prisma.createDataRequestPart({});
-      await prisma.updateDataRequest({
-        data: {
-          parts: {
-            connect: { id: drp.id }
-          }
-        },
-        where: {
-          id: dr.id
-        }
-      });
-      // connecting Data files to this DataRequest Part
-      await part.ids.forEach(async (file: string) => {
-        await prisma.updateDataRequestPart({
-          data: {
-            dataFiles: {
-              connect: { id: file }
-            }
-          },
-          where: {
-            id: drp.id
-          }
-        });
-      });
-    });
-    return dr;
-  },
+  /**
+   * Create a data request.
+   * A user need to be logged in to create a dat request
+   * @args
+   *      parts:
+   *          An array of data request part
+   *          It can be associate with observation/ it only have a part of the observation
+   *      part.ids:
+   *          An array of Data files ids
+   *          This files id's need to exist within the prisma database.
+   *          i.e you can only request data files that exist anything else will fail
+   * @return
+   *      New data request that has just been created or an error
+   */
+  createDataRequest: (root: any, args: any, ctx: IContext) =>
+    createDataRequest(root, args, ctx),
+  /**
+   *
+   * @args
+   *      data:
+   *          dare
+   * @return ctx
+   */
+  updateDataRequest: (root: any, args: any, ctx: IContext) =>
+    updateDataRequest(root, args, ctx),
+  /**
+   *
+   * @param root
+   * @param args
+   * @param ctx
+   */
+  updateDataRequestPart: (root: any, args: any, ctx: IContext) =>
+    updateDataRequestPart(root, args, ctx),
   /**
    * Register a new user.
    *
