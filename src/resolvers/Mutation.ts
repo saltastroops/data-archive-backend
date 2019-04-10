@@ -31,23 +31,37 @@ const Mutation = {
    */
   createDataRequest: (root: any, args: any, ctx: IContext) =>
     createDataRequest(root, args, ctx),
+
   /**
-   *
-   * @args
-   *      data:
-   *          dare
-   * @return ctx
+   * Update data request.
+   * When data is available for downloading or it is no longer available DataRequest need to be updated
+   * @args dataRequestId
+   *    Id of data request that need to be updated
+   * @args downloadLink
+   *    A link to where to download the data request
+   * @return
+   *      A newly updated data request
    */
   updateDataRequest: (root: any, args: any, ctx: IContext) =>
     updateDataRequest(root, args, ctx),
+
   /**
-   *
-   * @param root
-   * @param args
-   * @param ctx
+   * Update data request part.
+   * When data is available for downloading or it is no longer available or any fails DataRequestPart need to be updated
+   * @args dataRequestPartId
+   *    Id of data request part that need to be updated
+   * @args downloadLink
+   *    A link to download the data request part
+   * @args status
+   *    A current status of this data request part(PENDING, SUCCESSFUL or FAILED)
+   * @args statusReason
+   *    Usually meant for status fail
+   * @rargs
+   *      A newly updated data request part
    */
   updateDataRequestPart: (root: any, args: any, ctx: IContext) =>
     updateDataRequestPart(root, args, ctx),
+
   /**
    * Register a new user.
    *

@@ -16,8 +16,7 @@ type Query {
 The schema's root mutation type.
 """
 type Mutation {
-
-    createDataRequest(parts:  [FileId!]!): DataRequest!
+  createDataRequest(parts: [FileId!]!): DataRequest!
   # TODO UPDATE
   """
   Register a new data archive user.
@@ -50,10 +49,7 @@ type Mutation {
     """
     password: String!
   ): User!
-  updateDataRequest(
-    dataRequestId: ID!
-    downloadLink: String
-    ): DataRequest
+  updateDataRequest(dataRequestId: ID!, downloadLink: String): DataRequest
   updateDataRequestPart(
     dataRequestPartId: ID!
     downloadLink: String
@@ -97,5 +93,5 @@ type User {
 }
 
 input FileId {
-    ids: [String!]!
+  ids: [String!]!
 }

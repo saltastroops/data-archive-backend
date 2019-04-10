@@ -1,9 +1,6 @@
 import { DataRequestStatus, Prisma } from "../generated/prisma-client";
+import { IContext, userLoggedin } from "../util";
 
-interface IContext {
-  prisma: Prisma;
-  user: { id: string };
-}
 interface IRoot {
   id: string;
 }
@@ -61,12 +58,10 @@ const DataFile = {
 const createDataRequest = async (
   root: any,
   { parts }: any,
-  { prisma }: IContext
+  { prisma, user }: IContext
 ) => {
-  // if (!user) {
-  //   throw new Error("You must be logged in to call this query");
-  // }
-  const user = await prisma.user({ id: "cju8eq9yxxaj90b26br1gwy2y" }); // TODO use context user
+  userLoggedin(user);
+
   const madeAt = new Date();
 
   // Creating a data request
@@ -104,8 +99,10 @@ const createDataRequest = async (
 const updateDataRequest = (
   root: any,
   { dataRequestId, downloadLink }: IDataRequestUpdate,
-  { prisma }: IContext
+  { prisma, user }: IContext
 ) => {
+  userLoggedin(user);
+
   return prisma.updateDataRequest({
     data: {
       url: downloadLink
@@ -138,8 +135,10 @@ const updateDataRequestPart = (
     downloadLink,
     dataRequestPartId
   }: IDataRequestPartUpdate,
-  { prisma }: IContext
+  { prisma, user }: IContext
 ) => {
+  userLoggedin(user);
+
   return prisma.updateDataRequestPart({
     data: {
       status,

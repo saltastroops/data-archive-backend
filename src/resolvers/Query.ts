@@ -1,4 +1,5 @@
 import { Prisma } from "../generated/prisma-client";
+import { userLoggedin } from "../util";
 
 // Defining the context interface
 interface IContext {
@@ -19,11 +20,17 @@ const Query = {
     });
   },
   // TODO Make sure that the user is defined / authenticated
-  dataRequestById(root: any, { dataRequestId }: any, { prisma }: IContext) {
+  dataRequestById(
+    root: any,
+    { dataRequestId }: any,
+    { prisma, user }: IContext
+  ) {
+    userLoggedin(user);
     return prisma.dataRequest({ id: dataRequestId });
   },
   // TODO Make sure that the user is defined / authenticated
-  dataRequestsForUser(root: any, { userId }: any, { prisma }: IContext) {
+  dataRequestsForUser(root: any, { userId }: any, { prisma, user }: IContext) {
+    userLoggedin(user);
     return prisma.dataRequests({ where: { user: { id: userId } } });
   }
 };
