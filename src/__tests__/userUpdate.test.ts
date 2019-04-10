@@ -110,9 +110,13 @@ describe("User update", () => {
       };
 
       // Mock the users query.
-      // An empty list is returned as we assume that the given email address and
-      // username are not in use already.
-      (prisma.users as any).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+      (prisma.users as any).mockResolvedValueOnce([
+        {
+          email: "test@gmail.com",
+          id: "1",
+          username: "test"
+        }
+      ]);
 
       // Mocking the user query.
       // User to update
@@ -155,9 +159,107 @@ describe("User update", () => {
         (prisma.updateUser as any).mock.calls[0][0].data.password
       ).not.toBe(args.password);
     });
+
+    it("should raise an error if the current password is wrong", async () => {
+      // Updating user with an invalid password.
+      const args: IUserUpdateInput = {
+        password: "wrongpassword"
+      };
+
+      // Mock the user query for the currently logged in user
+      (prisma.user as any).mockImplementation(async () => ({
+        id: "1",
+        password: await bcrypt.hash("test", 10)
+      }));
+
+      // Expect the user update to fail with the appropriate error
+      let message = null;
+      try {
+        await resolvers.Mutation.updateUser({}, args, {
+          prisma,
+          user: { id: "1" }
+        });
+      } catch (e) {
+        message = e.message;
+      }
+      expect(message).toContain("provide a correct password");
+    });
+
+    it("should raise an error if the email address is used by another user", async () => {
+      // Updating user with an email that is in use already
+      const args: IUserUpdateInput = {
+        email: "existing@email.address",
+        password: "test"
+      };
+
+      // Mock the users query
+      (prisma.users as any).mockResolvedValueOnce([
+        {
+          email: "existing@email.address",
+          id: "2"
+        }
+      ]);
+
+      // Mocking the user query for the currently logged in user
+      (prisma.user as any).mockImplementation(async () => ({
+        email: "test@gmail.com",
+        id: "1",
+        password: await bcrypt.hash("test", 10)
+      }));
+
+      // Expect the user update to fail with the appropriate error
+      let message = null;
+      try {
+        await resolvers.Mutation.updateUser({}, args, {
+          prisma,
+          user: { id: "1" }
+        });
+      } catch (e) {
+        message = e.message;
+      }
+      expect(message).toContain("already exists");
+      expect(message).toContain("email address");
+    });
+
+    it("should raise an error if the username is used by another user", async () => {
+      // Updating user with a username that is in use already
+      const args: IUserUpdateInput = {
+        password: "test",
+        username: "existingusername"
+      };
+
+      // Mock the users query. A list with one user is returned, who has the
+      // email address which is requested as the new email address.
+      (prisma.users as any).mockResolvedValueOnce([
+        {
+          id: "2",
+          username: "existingusername"
+        }
+      ]);
+
+      // Mock the user query for the currently logged in user
+      (prisma.user as any).mockImplementation(async () => ({
+        id: "1",
+        password: await bcrypt.hash("test", 10),
+        username: "test"
+      }));
+
+      // Expect the user update to fail with the appropriate error
+      let message = null;
+      try {
+        await resolvers.Mutation.updateUser({}, args, {
+          prisma,
+          user: { id: "1" }
+        });
+      } catch (e) {
+        message = e.message;
+      }
+      expect(message).toContain("already exists");
+      expect(message).toContain("username");
+    });
   });
 
-  describe("Update user information other than the currently logged in user", () => {
+  describe("Update user information of a user other than the currently logged in user", () => {
     it("should update the user information of a user other than the logged in user", async () => {
       // Updating user with valid information.
       const args: IUserUpdateInput = {
@@ -221,103 +323,5 @@ describe("User update", () => {
         (prisma.updateUser as any).mock.calls[0][0].data.password
       ).not.toBe(args.password);
     });
-  });
-
-  it("should raise an error if the current password is wrong", async () => {
-    // Updating user with an invalid password.
-    const args: IUserUpdateInput = {
-      password: "wrongpassword"
-    };
-
-    // Mock the user query for the currently logged in user
-    (prisma.user as any).mockImplementation(async () => ({
-      id: "1",
-      password: await bcrypt.hash("test", 10)
-    }));
-
-    // Expect the user update to fail with the appropriate error
-    let message = null;
-    try {
-      await resolvers.Mutation.updateUser({}, args, {
-        prisma,
-        user: { id: "1" }
-      });
-    } catch (e) {
-      message = e.message;
-    }
-    expect(message).toContain("provide a correct password");
-  });
-
-  it("should raise an error if the email address is used by another user", async () => {
-    // Updating user with an email that is in use already
-    const args: IUserUpdateInput = {
-      email: "existing@email.address",
-      password: "test"
-    };
-
-    // Mock the users query
-    (prisma.users as any).mockResolvedValueOnce([
-      {
-        email: "existing@email.address",
-        id: "2"
-      }
-    ]);
-
-    // Mocking the user query for the currently logged in user
-    (prisma.user as any).mockImplementation(async () => ({
-      email: "test@gmail.com",
-      id: "1",
-      password: await bcrypt.hash("test", 10)
-    }));
-
-    // Expect the user update to fail with the appropriate error
-    let message = null;
-    try {
-      await resolvers.Mutation.updateUser({}, args, {
-        prisma,
-        user: { id: "1" }
-      });
-    } catch (e) {
-      message = e.message;
-    }
-    expect(message).toContain("already exists");
-    expect(message).toContain("email address");
-  });
-
-  it("should raise an error if the username is already used by another user", async () => {
-    // Updating user with a username that is in use already
-    const args: IUserUpdateInput = {
-      password: "test",
-      username: "existingusername"
-    };
-
-    // Mock the users query. A list with one user is returned, who has the
-    // email address which is requested as the new email address.
-    (prisma.users as any).mockResolvedValueOnce([
-      {
-        id: "2",
-        username: "existingusername"
-      }
-    ]);
-
-    // Mock the user query for the currently logged in user
-    (prisma.user as any).mockImplementation(async () => ({
-      id: "1",
-      password: await bcrypt.hash("test", 10),
-      username: "test"
-    }));
-
-    // Expect the user update to fail with the appropriate error
-    let message = null;
-    try {
-      await resolvers.Mutation.updateUser({}, args, {
-        prisma,
-        user: { id: "1" }
-      });
-    } catch (e) {
-      message = e.message;
-    }
-    expect(message).toContain("already exists");
-    expect(message).toContain("username");
   });
 });
