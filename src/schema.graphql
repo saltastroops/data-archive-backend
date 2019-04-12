@@ -25,26 +25,79 @@ type Mutation {
     Family name ("surname").
     """
     familyName: String!
+
     """
     Given name ("first name").
     """
     givenName: String!
+
     """
     Username, which must not contain upper case letters.
     """
     username: String!
+
     """
     Email address, which will be stored as lower case.
     """
     email: String!
+
     """
     Affiliation, such as a university or an institute.
     """
     affiliation: String!
+
     """
     Password.
     """
     password: String!
+  ): User!
+
+  """
+  Update the data archive user information.
+
+  Neither the username nor the email address updated must be used by another user already.
+  To update the data archive user information, the current password must be provided.
+  """
+  updateUser(
+    """
+    Unique user ID
+    """
+    id: ID
+
+    """
+    Family name ("surname").
+    """
+    familyName: String
+
+    """
+    Given name ("first name").
+    """
+    givenName: String
+
+    """
+    Username, which must not contain upper case letters.
+    """
+    username: String
+
+    """
+    Email address, which will be stored as lower case.
+    """
+    email: String
+
+    """
+    Affiliation, such as a university or an institute.
+    """
+    affiliation: String
+
+    """
+    Password.
+    """
+    password: String!
+
+    """
+    New password.
+    """
+    newPassword: String
   ): User!
 }
 
@@ -56,26 +109,32 @@ type User {
   User id.
   """
   id: ID!
+
   """
   Family name ("surname").
   """
   familyName: String!
+
   """
   Given name ("first name").
   """
   givenName: String!
+
   """
   Username, which must not contain upper case letters.
   """
   username: String!
+
   """
   Email address, which will be stored as lower case.
   """
   email: String!
+
   """
   Affiliation, such as a university or an institute.
   """
   affiliation: String!
+
   """
   User roles, which defines the user's permissions.
   """
