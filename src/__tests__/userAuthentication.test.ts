@@ -50,8 +50,8 @@ describe("/auth/login", () => {
         }`
       });
 
-    // Expect an error message, as the user is not authenticated
-    expect(JSON.parse(response.text).errors.length).toBe(1);
+    // Expect user to be null, as the user is not authenticated
+    expect(JSON.parse(response.text).data.user).toBe(null);
 
     // User logging in
     const authenticatedAgent = request.agent(server);
@@ -103,8 +103,8 @@ describe("/auth/login", () => {
         }`
     });
 
-    // Expect an error message, as the user is not authenticated any longer
-    expect(JSON.parse(response.text).errors.length).toBe(1);
+    // Expect user to be null, as the user is not authenticated any longer
+    expect(JSON.parse(response.text).data.user).toBe(null);
   });
 });
 
@@ -140,7 +140,7 @@ describe("/auth/logout", () => {
         }`
     });
 
-    // Expect an error message, as the user is not logged in any longer
-    expect(JSON.parse(response.text).errors.length).toBe(1);
+    // Expect user to be null, as the user is not logged in any longer
+    expect(JSON.parse(response.text).data.user).toBe(null);
   });
 });

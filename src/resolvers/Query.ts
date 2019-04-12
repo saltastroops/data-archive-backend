@@ -12,7 +12,7 @@ const Query = {
   // Query for users
   user(root: any, args: {}, ctx: IContext) {
     if (!ctx.user) {
-      throw new Error("You must be logged in to call this query");
+      return null;
     }
     return ctx.prisma.user({
       id: ctx.user.id
