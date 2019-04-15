@@ -173,7 +173,42 @@ const createServer = async () => {
     });
   });
 
-  // Returning the server
+  /**
+   * Data Request
+   */
+  server.express.post("/data-request/update", async (req, res) => {
+      const {body,} = req;
+      if (!req.isAuthenticated()) {
+          return res.status(401).send({
+              message: "You are not logged in",
+              success: false
+          });
+      }
+
+      try {
+          await prisma.updateDataRequest({
+              data: {
+                  url: body.downloadLink
+              },
+              where: {
+                  id: body.id
+              }
+          });
+
+
+          return res.status(200).send({
+              success: true,
+          })
+
+      }catch (e) {
+          const message = e.result.errors[0].message;
+          return res.status(500).send({
+              message,
+              success: false,
+          })
+      }
+
+  });
   return server;
 };
 
