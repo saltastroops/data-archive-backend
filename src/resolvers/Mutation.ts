@@ -164,6 +164,10 @@ const Mutation = {
       id: updatedUserId
     });
 
+    if (!userToUpdate) {
+      throw new Error(`User with an ID ${updatedUserId} does not exist`);
+    }
+
     // If the username is to change
     if (args.username) {
       if (userToUpdate.username !== args.username) {

@@ -323,5 +323,40 @@ describe("User update", () => {
         (prisma.updateUser as any).mock.calls[0][0].data.password
       ).not.toBe(args.password);
     });
+
+    it("should throw an error if the user does not exist", async () => {
+      // Updating a user that does not exist.
+      const args: IUserUpdateInput = {
+        id: "2",
+        password: "test"
+      };
+
+      // Mock the user query for the he currently logged in user
+      (prisma.user as any)
+        .mockResolvedValueOnce({
+          affiliation: "Test Affiliation",
+          email: "test@gmail.com",
+          familyName: "Test",
+          givenName: "Test",
+          id: "1",
+          password: await bcrypt.hash("test", 10),
+          roles: ["ADMIN"],
+          username: "test"
+        })
+        .mockResolvedValueOnce(null);
+
+      // Expect the user update to fail with the appropriate error
+      let message = null;
+      try {
+        await resolvers.Mutation.updateUser({}, args, {
+          prisma,
+          user: { id: "1" }
+        });
+      } catch (e) {
+        message = e.message;
+      }
+      expect(message).toContain(`ID ${args.id}`);
+      expect(message).toContain("does not exist");
+    });
   });
 });
