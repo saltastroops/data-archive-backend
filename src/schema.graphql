@@ -16,7 +16,7 @@ type Query {
 The schema's root mutation type.
 """
 type Mutation {
-  createDataRequest(parts: [FileId!]!): DataRequest!
+  createDataRequest(files: [String!]!): DataRequest!
   # TODO UPDATE
   """
   Register a new data archive user.
@@ -90,8 +90,4 @@ type User {
   User roles, which defines the user's permissions.
   """
   roles: [Role!]!
-}
-
-input FileId {
-  ids: [String!]!
 }

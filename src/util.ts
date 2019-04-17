@@ -15,4 +15,27 @@ const userLoggedin = (user: IUser) => {
   }
 };
 
+export const groupDataFileByPart = (dataFiles: any[]) => {
+  let groupedDataFiles: any = {};
+  dataFiles.forEach((file: any) => {
+    if (file.observation && file.observation.id) {
+        groupedDataFiles = groupedDataFiles[file.observation.id] ?
+            {
+                ...groupedDataFiles,
+                [file.observation.id]: [...groupedDataFiles[file.observation.id], file.id]
+            } :
+            {
+                ...groupedDataFiles,
+                [file.observation.id] : [ file.id]
+            }
+    } else {
+        groupedDataFiles = {
+            ... groupedDataFiles,
+            "unknownObs": !groupedDataFiles.unknownObs ? [file.id] : [...groupedDataFiles.unknownObs, file.id]
+        }
+    }
+  });
+  return groupedDataFiles
+};
+
 export { userLoggedin, IContext };

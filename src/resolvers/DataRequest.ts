@@ -56,8 +56,7 @@ const DataFile = {
  *      New data request that has just been created or an error
  */
 const createDataRequest = async (
-  root: any,
-  { parts }: any,
+  { files }: any,
   { prisma, user }: IContext
 ) => {
   userLoggedin(user);
