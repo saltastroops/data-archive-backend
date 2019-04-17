@@ -1,5 +1,5 @@
 import { DataRequestStatus, Prisma } from "../generated/prisma-client";
-import { IContext, userLoggedin } from "../util";
+import { groupDataFileByPart, IContext, userLoggedin } from "../util";
 
 interface IRoot {
   id: string;
@@ -62,95 +62,32 @@ const createDataRequest = async (
   userLoggedin(user);
 
   const madeAt = new Date();
-
+  const parts = await prisma.dataFiles({ where: { id_in: files } });
+  //  Todo use method groupDataFileByPart() when you can get an observation within a part
+  return { id: "XX" };
+  // Todo need to return what is commented below
   // Creating a data request
-  return prisma.createDataRequest({
-    madeAt,
-    parts: {
-      create: parts.map((part: any) => ({
-        // Data request parts creation
-        dataFiles: {
-          connect: part.ids.map((file: string) => ({
-            // Data files linking
-            id: file
-          }))
-        }
-      }))
-    },
-    user: {
-      connect: {
-        id: user.id
-      }
-    }
-  });
-};
-
-/**
- * Update data request.
- * When data is available for downloading or it is no longer available DataRequest need to be updated
- * @args dataRequestId
- *    Id of data request that need to be updated
- * @args downloadLink
- *    A link to where to download the data request
- * @return
- *      A newly updated data request
- */
-const updateDataRequest = (
-  root: any,
-  { dataRequestId, downloadLink }: IDataRequestUpdate,
-  { prisma, user }: IContext
-) => {
-  userLoggedin(user);
-
-  return prisma.updateDataRequest({
-    data: {
-      url: downloadLink
-    },
-    where: {
-      id: dataRequestId
-    }
-  });
-};
-
-/**
- * Update data request part.
- * When data is available for downloading or it is no longer available or any fails DataRequestPart need to be updated
- * @args dataRequestPartId
- *    Id of data request part that need to be updated
- * @args downloadLink
- *    A link to download the data request part
- * @args status
- *    A current status of this data request part(PENDING, SUCCESSFUL or FAILED)
- * @args statusReason
- *    Usually meant for status fail
- * @rargs
- *      A newly updated data request part
- */
-const updateDataRequestPart = (
-  root: any,
-  {
-    status,
-    statusReason,
-    downloadLink,
-    dataRequestPartId
-  }: IDataRequestPartUpdate,
-  { prisma, user }: IContext
-) => {
-  userLoggedin(user);
-
-  return prisma.updateDataRequestPart({
-    data: {
-      status,
-      statusReason,
-      uri: downloadLink
-    },
-    where: {
-      id: dataRequestPartId
-    }
-  });
+  //   return prisma.createDataRequest({
+  //     madeAt,
+  //     parts: {
+  //       create: parts.map((part: any) => ({
+  //         // Data request parts creation
+  //         dataFiles: {
+  //           connect: part.ids.map((file: string) => ({
+  //             // Data files linking
+  //             id: file
+  //           }))
+  //         }
+  //       }))
+  //     },
+  //     user: {
+  //       connect: {
+  //         id: user.id
+  //       }
+  //     }
+  //   });
 };
 
 const DataRequestsTypes = { DataFile, DataRequest, DataRequestPart };
 
-export { DataRequestsTypes };
-export { createDataRequest, updateDataRequest, updateDataRequestPart };
+export { createDataRequest, DataRequestsTypes };
