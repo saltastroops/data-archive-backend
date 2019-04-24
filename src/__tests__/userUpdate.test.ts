@@ -325,13 +325,13 @@ describe("User update", () => {
     });
 
     it("should throw an error if the user does not exist", async () => {
-      // Updating a user that does not exist.
+      // Updating a user that does not exist
       const args: IUserUpdateInput = {
         id: "2",
         password: "test"
       };
 
-      // Mock the user query for the he currently logged in user
+      // Mock the user query for the currently logged in user
       (prisma.user as any)
         .mockResolvedValueOnce({
           affiliation: "Test Affiliation",
@@ -356,7 +356,7 @@ describe("User update", () => {
         message = e.message;
       }
       expect(message).toContain(`ID ${args.id}`);
-      expect(message).toContain("does not exist");
+      expect(message).toContain("no user");
     });
   });
 });
