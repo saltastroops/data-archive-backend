@@ -129,7 +129,7 @@ const Mutation = {
   async updateUser(root: any, args: IUserUpdateInput, ctx: IContext) {
     // Check if the user is logged in
     if (!ctx.user) {
-      throw new Error("You must be logged in to update user information");
+      throw new Error("You must be logged in to update user information.");
     }
 
     // Get the currently logged user
@@ -154,7 +154,7 @@ const Mutation = {
 
       if (!isAdmin) {
         throw Error(
-          "You do not have permission to update details of another user"
+          "You do not have permission to update details of another user."
         );
       }
     }
@@ -163,6 +163,10 @@ const Mutation = {
     const userToUpdate = await ctx.prisma.user({
       id: updatedUserId
     });
+
+    if (!userToUpdate) {
+      throw new Error(`There exists no user with the ID ${updatedUserId}.`);
+    }
 
     // If the username is to change
     if (args.username) {
