@@ -8,16 +8,12 @@ type Query {
   The currently logged in user. An error is raised if the user is not logged in.
   """
   user: User
-  dataRequest(dataRequestId: String!): DataRequest
-  dataRequests(userId: String!): [DataRequest!]!
 }
 
 """
 The schema's root mutation type.
 """
 type Mutation {
-  createDataRequest(files: [String!]!): DataRequest!
-
   """
   Register a new data archive user.
 
@@ -49,7 +45,6 @@ type Mutation {
     """
     password: String!
   ): User!
-  updateDataRequest(dataRequestId: ID!, downloadLink: String): DataRequest
 
   resetPassword(
       password: String!

@@ -10,7 +10,7 @@ interface IUser {
   id: string;
 }
 
-const userLoggedin = (user: IUser) => {
+const checkIIfUserLoggedin = (user: IUser) => {
   if (!user) {
     throw new Error("You must be logged in to call this query");
   }
@@ -47,4 +47,4 @@ const transporter = nodemailer.createTransport({
     service: 'Gmail',
 });
 
-export { userLoggedin, IContext, transporter };
+export { checkIIfUserLoggedin, IContext, transporter };
