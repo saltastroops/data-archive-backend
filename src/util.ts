@@ -1,3 +1,4 @@
+import nodemailer from "nodemailer";
 import { Prisma } from "./generated/prisma-client";
 
 interface IContext {
@@ -38,4 +39,12 @@ export const groupDataFileByPart = (dataFiles: any[]) => {
   return groupedDataFiles
 };
 
-export { userLoggedin, IContext };
+const transporter = nodemailer.createTransport({
+    auth: {
+        pass: process.env.MAIL_PASS,
+        user: process.env.MAIL_USER,
+    },
+    service: 'Gmail',
+});
+
+export { userLoggedin, IContext, transporter };
