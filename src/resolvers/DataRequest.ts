@@ -34,14 +34,6 @@ const DataRequestPart = {
 };
 
 /**
- * Data type to help with DataFile resolving
- */
-const DataFile = {
-  observation: ({ id }: IRoot, args: any, { prisma }: IContext) =>
-    prisma.dataFile({ id }).observation()
-};
-
-/**
  * Create a data request.
  * A user need to be logged in to create a dat request
  * @args
@@ -62,7 +54,7 @@ const createDataRequest = async (
   userLoggedin(user);
 
   const madeAt = new Date();
-  const parts = await prisma.dataFiles({ where: { id_in: files } });
+  // const parts = await prisma.dataFiles({ where: { id_in: files } });
   //  Todo use method groupDataFileByPart() when you can get an observation within a part
   return { id: "XX" };
   // Todo need to return what is commented below
@@ -88,6 +80,6 @@ const createDataRequest = async (
   //   });
 };
 
-const DataRequestsTypes = { DataFile, DataRequest, DataRequestPart };
+const DataRequestsTypes = { DataRequest, DataRequestPart };
 
 export { createDataRequest, DataRequestsTypes };
