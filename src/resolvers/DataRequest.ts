@@ -1,18 +1,7 @@
-import { DataRequestStatus, Prisma } from "../generated/prisma-client";
-import { groupDataFileByPart, IContext, userLoggedin } from "../util";
+import { IContext } from "../util";
 
 interface IRoot {
   id: string;
-}
-interface IDataRequestUpdate {
-  downloadLink: string;
-  dataRequestId: string;
-}
-interface IDataRequestPartUpdate {
-  downloadLink: string;
-  dataRequestPartId: string;
-  status: DataRequestStatus;
-  statusReason: string;
 }
 
 /**
@@ -51,10 +40,17 @@ const createDataRequest = async (
   { files }: any,
   { prisma, user }: IContext
 ) => {
-  userLoggedin(user);
+  // todo: test if the user is authenticated
+  // checkIIfUserLoggedin(user);
+
+  // todo: group files by an observation.
+  // query the MySQL database to find where the files belong to.
+  // group all the files by an observation
+  // todo: create data request with all the parts included.
+  // return a prisma query for a data request
 
   const madeAt = new Date();
-  // const parts = await prisma.dataFiles({ where: { id_in: files } });
+
   //  Todo use method groupDataFileByPart() when you can get an observation within a part
   return { id: "XX" };
   // Todo need to return what is commented below
