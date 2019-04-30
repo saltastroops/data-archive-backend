@@ -7,6 +7,7 @@ import passport from "passport";
 import passportLocal from "passport-local";
 import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
+import { Request, Response } from "express";
 
 // Set up Sentry
 Sentry.init({
@@ -174,77 +175,134 @@ const createServer = async () => {
   });
 
   /**
-   * data file request download endpoint
+   * Endpoint for downloading the data for a full data request.
    *
-   * #TODO UPDATE
+   * The URL includes the following parameters.
    *
-   * #NB!
-   *
-   * The end point needs to be updated and conformed accordingly
-   * As well as the path to the file location
-   * (currently created it to be the path specified here for testing purposes but it git ignored)
-   *
+   * :dataRequestId
+   *     The id of the data request.
+   * :filename
+   *     The filename to use for the downloaded file. It is not used for
+   *     identifying the data file, but is used in the attachment HTTP header.
    */
   server.express.get(
-    "/downloads/data-requests/:dataRequestId/:request_date/:request_number/:filename",
+    "/downloads/data-requests/:dataRequestId/:filename",
     async (req, res) => {
       // Check if the user is logged in
       if (!req.user) {
         return res.status(401).send({
-          message: "You must be logged in.",
-          success: false
-        });
+                                      message: "You must be logged in.",
+                                      success: false
+                                    });
       }
 
       // Get all the params from the request
       const {
         dataRequestId,
-        request_date,
-        request_number,
         filename
       } = req.params;
 
-      // Get the data request to download
-      const dataRequest = await prisma.dataRequest({
-        id: dataRequestId
-      }).$fragment(`{
-        id
-        user {
-          id
-        }
-      }`);
+      // Download the data file for the data request
+      return downloadDataRequest({ dataRequestId, filename, req, res });
+    }
+  );
 
-      // Obtain if the user owns the data request to download or is an ADMIN
-      const ownsDataRequest =
-        (dataRequest as any).user.id === req.user.id ||
-        req.user.roles.find((role: string) => role === "ADMIN");
-
-      // If the user does not own the data request to download,
-      // nor is an ADMIN, forbid the user from downloading
-      if (!ownsDataRequest) {
-        return res.status(403).send({
-          message: "You do not own this data request.",
-          success: false
-        });
+  /**
+   * Endpoint for downloading the data for a data request part.
+   *
+   * The URL includes the following parameters.
+   *
+   * :dataRequestId
+   *     The id of the data request.
+   * :dataRequestPartId:
+   *     The id of the data request part.
+   * :filename
+   *     The filename to use for the downloaded file. It is not used for
+   *     identifying the data file, but is used in the attachment HTTP header.
+   */
+  server.express.get(
+    "/downloads/data-requests/:dataRequestId/:dataRequestPartId/:filename",
+    async (req, res) => {
+      // Check if the user is logged in
+      if (!req.user) {
+        return res.status(401).send({
+                                      message: "You must be logged in.",
+                                      success: false
+                                    });
       }
 
-      // Path to the data request file to download.
-      const url = `./downloads/data-requests/${dataRequestId}/${request_date}/${request_number}/${filename}`;
+      // Get all the params from the request
+      const {
+        dataRequestId,
+        dataRequestPartId,
+        filename
+      } = req.params;
 
-      // Download the data request file
-      res.download(url, `${request_date}-${filename}`, err => {
-        if (err) {
-          return res.status(404).send({
-            message: "File does not exist.",
-            success: false
-          });
-        }
-      });
+      // Download the data file for the data request part
+      return downloadDataRequest({ dataRequestId, dataRequestPartId, filename, req, res });
     }
   );
 
   // Returning the server
   return server;
 };
+
+interface IDataRequestDownloadParameters {
+  dataRequestId: string;
+  dataRequestPartId?: string;
+  filename: string;
+  req: Request;
+  res: Response;
+}
+
+async function downloadDataRequest({ dataRequestId, dataRequestPartId, filename, req, res }: IDataRequestDownloadParameters) {
+  // Get the data request
+  const notFound = {
+    message: "The requested file does not exist.",
+    success: false
+  };
+  const dataRequest = await prisma.dataRequest({ id: dataRequestId });
+  if (!dataRequest) {
+    return res.status(404).send(notFound);
+  }
+
+  // Check that the user may download content for the data request, either
+  // because they own the request or because they are an administrator.
+  const mayDownload =
+    (dataRequest as any).user.id === req.user.id ||
+    req.user.roles.find((role: string) => role === "ADMIN");
+
+  // If the user does not own the data request to download,
+  // nor is an ADMIN, forbid the user from downloading
+  if (!mayDownload) {
+    return res.status(403).send({
+                                  message: "You are not allowed to download the requested file.",
+                                  success: false
+                                });
+  }
+
+  // Get the download URI
+  let uri: string;
+  if (dataRequestPartId) {
+    const dataRequestPart = (dataRequest as any).parts.find((part: any) => part.id === dataRequestPartId);
+    if (!dataRequestPart) {
+      return res.status(404).send(notFound);
+    }
+    uri = dataRequestPart.uri;
+  } else {
+    uri = (dataRequest as any).uri;
+  }
+
+  // Download the data request file
+  res.download(uri, filename, err => {
+    if (err) {
+      if (!res.headersSent) {
+        res.status(404).send(notFound);
+      } else {
+        res.end();
+      }
+    }
+  });
+}
 
 export default createServer;
