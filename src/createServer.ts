@@ -174,25 +174,6 @@ const createServer = async () => {
     });
   });
 
-  server.express.get("/auth/reset-password/:token", async (req, res) => {
-    // check if the user with token exist
-    const user = await prisma.user({
-      passwordResetToken: req.params.token
-    });
-    if(!user){
-      return res.status(401).send("Token is outdated or unknown.")
-    }
-
-    // Check if token is not expired
-    if(user.passwordResetTokenExpiry && (moment(user.passwordResetTokenExpiry) <=  moment(Date.now()))){
-      return res.status(401).send("Token is expired")
-    }
-
-    // redirect to reset password page on frontend
-    return res.redirect(`${process.env.FRONTEND_URL}/auth/reset-password/${req.params.token}`)
-
-  });
-
   return server;
 };
 
