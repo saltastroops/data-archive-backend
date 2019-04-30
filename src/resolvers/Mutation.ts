@@ -14,7 +14,7 @@ const Mutation = {
   requestPasswordReset: (root: any, { email }: any, ctx: any) =>
     requestReset(email),
 
-  resetPassword: (root: any, { token, password }: any, ctx: IContext) =>
+  resetPassword: (root: any, { token, password }: any, ctx: any) =>
     resetPassword(token, password),
 
   /**

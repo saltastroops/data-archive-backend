@@ -57,18 +57,18 @@ const resetPassword = async (token: string, password: string) => {
   // get the user with the token
   const user = await prisma.user({ passwordResetToken: token });
   if (!user) {
-    throw new Error(`Fail to reset password of unknown token`);
+    throw new Error(`Fail to reset password of unknown token.`);
   }
   if (
     user.passwordResetTokenExpiry &&
     moment(user.passwordResetTokenExpiry) <= moment(Date.now())
   ) {
-    throw new Error("Token is expired");
+    throw new Error("Token is expired.");
   }
   const hashedPassword = await bcrypt.hash(password, 10);
 
   // updating the user with the new password and expire the token
-  await prisma.updateUser({
+  const passwordUpdated = await prisma.updateUser({
     data: {
       password: hashedPassword,
       passwordResetTokenExpiry: moment(Date.now()).toDate()
@@ -77,6 +77,9 @@ const resetPassword = async (token: string, password: string) => {
       passwordResetToken: token
     }
   });
+  if (!passwordUpdated) {
+    throw new Error("Fail to update token.");
+  }
   return user;
 };
 
