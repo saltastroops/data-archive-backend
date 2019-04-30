@@ -64,6 +64,7 @@ type DataFileConnection {
 }
 
 input DataFileCreateInput {
+  id: ID
   available: Boolean
   name: String!
   fitsHeadersURI: String
@@ -90,6 +91,7 @@ input DataFileCreatepreviewsInput {
 }
 
 input DataFileCreateWithoutObservationInput {
+  id: ID
   available: Boolean
   name: String!
   fitsHeadersURI: String
@@ -120,10 +122,6 @@ enum DataFileOrderByInput {
   category_DESC
   size_ASC
   size_DESC
-  createdAt_ASC
-  createdAt_DESC
-  updatedAt_ASC
-  updatedAt_DESC
 }
 
 type DataFilePreviousValues {
@@ -428,6 +426,7 @@ type DataRequestConnection {
 }
 
 input DataRequestCreateInput {
+  id: ID
   user: UserCreateOneInput!
   madeAt: DateTime!
   parts: DataRequestPartCreateManyInput
@@ -446,10 +445,6 @@ enum DataRequestOrderByInput {
   madeAt_DESC
   url_ASC
   url_DESC
-  createdAt_ASC
-  createdAt_DESC
-  updatedAt_ASC
-  updatedAt_DESC
 }
 
 type DataRequestPart {
@@ -467,6 +462,7 @@ type DataRequestPartConnection {
 }
 
 input DataRequestPartCreateInput {
+  id: ID
   dataFiles: DataFileCreateManyInput
   status: DataRequestStatus
   statusReason: String
@@ -492,10 +488,6 @@ enum DataRequestPartOrderByInput {
   statusReason_DESC
   uri_ASC
   uri_DESC
-  createdAt_ASC
-  createdAt_DESC
-  updatedAt_ASC
-  updatedAt_DESC
 }
 
 type DataRequestPartPreviousValues {
@@ -795,6 +787,7 @@ type HeaderConnection {
 }
 
 input HeaderCreateInput {
+  id: ID
   key: String!
   value: String
 }
@@ -816,10 +809,6 @@ enum HeaderOrderByInput {
   key_DESC
   value_ASC
   value_DESC
-  createdAt_ASC
-  createdAt_DESC
-  updatedAt_ASC
-  updatedAt_DESC
 }
 
 type HeaderPreviousValues {
@@ -1073,6 +1062,7 @@ type ObservationConnection {
 }
 
 input ObservationCreateInput {
+  id: ID
   startTime: DateTime!
   telescope: Telescope!
   proposal: ProposalCreateOneWithoutObservationsInput
@@ -1091,6 +1081,7 @@ input ObservationCreateOneWithoutDataFilesInput {
 }
 
 input ObservationCreateWithoutDataFilesInput {
+  id: ID
   startTime: DateTime!
   telescope: Telescope!
   proposal: ProposalCreateOneWithoutObservationsInput
@@ -1098,6 +1089,7 @@ input ObservationCreateWithoutDataFilesInput {
 }
 
 input ObservationCreateWithoutProposalInput {
+  id: ID
   startTime: DateTime!
   telescope: Telescope!
   dataFiles: DataFileCreateManyWithoutObservationInput
@@ -1118,10 +1110,6 @@ enum ObservationOrderByInput {
   telescope_DESC
   publicFrom_ASC
   publicFrom_DESC
-  createdAt_ASC
-  createdAt_DESC
-  updatedAt_ASC
-  updatedAt_DESC
 }
 
 type ObservationPreviousValues {
@@ -1333,6 +1321,7 @@ type PersonConnection {
 }
 
 input PersonCreateInput {
+  id: ID
   givenName: String!
   familyName: String!
 }
@@ -1354,10 +1343,6 @@ enum PersonOrderByInput {
   givenName_DESC
   familyName_ASC
   familyName_DESC
-  createdAt_ASC
-  createdAt_DESC
-  updatedAt_ASC
-  updatedAt_DESC
 }
 
 type PersonPreviousValues {
@@ -1479,6 +1464,7 @@ type ProposalConnection {
 }
 
 input ProposalCreateInput {
+  id: ID
   code: String!
   title: String!
   abstract: String!
@@ -1492,6 +1478,7 @@ input ProposalCreateOneWithoutObservationsInput {
 }
 
 input ProposalCreateWithoutObservationsInput {
+  id: ID
   code: String!
   title: String!
   abstract: String!
@@ -1512,10 +1499,6 @@ enum ProposalOrderByInput {
   title_DESC
   abstract_ASC
   abstract_DESC
-  createdAt_ASC
-  createdAt_DESC
-  updatedAt_ASC
-  updatedAt_DESC
 }
 
 type ProposalPreviousValues {
@@ -1717,6 +1700,7 @@ type UserConnection {
 }
 
 input UserCreateInput {
+  id: ID
   familyName: String!
   givenName: String!
   username: String!
@@ -1761,10 +1745,6 @@ enum UserOrderByInput {
   passwordResetToken_DESC
   passwordResetTokenExpiry_ASC
   passwordResetTokenExpiry_DESC
-  createdAt_ASC
-  createdAt_DESC
-  updatedAt_ASC
-  updatedAt_DESC
 }
 
 type UserPreviousValues {

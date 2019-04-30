@@ -6,8 +6,8 @@ generate:
   - generator: typescript-client
     output: ./generated/prisma-client/
   - generator: graphql-schema
-    output: ../src/generated/
-      
+    output: ../src/generated/prisma.graphql
+
 # This ensures that the Prisma client is updated whenever the datamodel changes
 hooks:
     post-deploy:
