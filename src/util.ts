@@ -12,10 +12,12 @@ interface IUser {
 
 const transporter = nodemailer.createTransport({
     auth: {
-        pass: process.env.MAIL_PASS,
+        pass: process.env.MAIL_PASSWORD,
         user: process.env.MAIL_USER,
     },
-    service: 'Gmail',
+  host: process.env.MAIL_HOST,
+  port: 465,
+  secure: true
 });
 
 export {IContext, transporter };
