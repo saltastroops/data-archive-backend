@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import { validate } from "isemail";
 import { Prisma, UserCreateInput } from "../generated/prisma-client";
-import { requestReset, resetPassword } from "./resetPassword";
+import { requestPasswordReset, resetPassword } from "./resetPassword";
 
 // Defining the context interface
 interface IContext {
@@ -11,10 +11,29 @@ interface IContext {
 
 // Defining  Mutation methods
 const Mutation = {
+  /**
+   * Request a password reset.
+   *
+   * The following arguments must be supplied.
+   *
+   * email:
+   *     The email address to which the link for resetting the password shall
+   *     be sent. This must be an existing user's email address.
+   */
   requestPasswordReset: (root: any, { email }: any, ctx: any) =>
-    requestReset(email),
+    requestPasswordReset(email),
 
-  resetPassword: (root: any, { token, password }: any, ctx: IContext) =>
+  /**
+   * Reset a user's password.
+   *
+   * The following arguments must be supplied.
+   *
+   * password:
+   *     The new password.
+   * token:
+   *     The unique token identifying the user.
+   */
+  resetPassword: (root: any, { password, token }: any, ctx: IContext) =>
     resetPassword(token, password),
 
   /**

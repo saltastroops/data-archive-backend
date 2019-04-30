@@ -8,7 +8,9 @@ interface IContext {
 
 // Defining Query methods
 const Query = {
-  // Query for users
+  /**
+   * Get the currently logged in user,
+   */
   user(root: any, args: {}, ctx: IContext) {
     if (!ctx.user) {
       throw new Error("You must be logged in to call this query");
