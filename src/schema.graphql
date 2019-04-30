@@ -85,7 +85,7 @@ type User {
   """
   affiliation: String!
   """
-  User roles, which defines the user's permissions.
+  User roles, which define the user's permissions.
   """
   roles: [Role!]!
 }

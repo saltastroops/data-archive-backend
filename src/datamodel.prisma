@@ -16,7 +16,9 @@ type User {
   password: String!
   # Roles, which define the user's permissions
   roles: [Role!] @scalarList(strategy: RELATION)
+  # A unique token identifying the user when the password is reset
   passwordResetToken: String @unique
+  # The time when the password reset toke expires
   passwordResetTokenExpiry: DateTime
 }
 
@@ -24,26 +26,4 @@ type User {
 enum Role {
   # Administrator with full power
   ADMIN
-}
-
-enum DataRequestStatus {
-    PENDING
-    FAILED
-    SUCCESSFUL
-}
-
-type DataRequest {
-    id: ID! @id
-    user: User!
-    madeAt: DateTime!
-    parts: [DataRequestPart!]!
-    url: String
-}
-
-type DataRequestPart {
-    id: ID! @id
-    dataFiles: [String!]! @scalarList(strategy: RELATION)
-    status: DataRequestStatus! @default (value: PENDING)
-    statusReason: String! @default (value: "none")
-    uri: String
 }
