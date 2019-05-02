@@ -10,18 +10,14 @@ interface IUser {
   id: string;
 }
 
-const checkIfUserLoggedin = (user: IUser) => {
-  if (!user) {
-    throw new Error("You must be logged in to call this query");
-  }
-};
-
 const transporter = nodemailer.createTransport({
     auth: {
-        pass: process.env.MAIL_PASS,
+        pass: process.env.MAIL_PASSWORD,
         user: process.env.MAIL_USER,
     },
-    service: 'Gmail',
+  host: process.env.MAIL_HOST,
+  port: 465,
+  secure: true
 });
 
-export { checkIfUserLoggedin, IContext, transporter };
+export {IContext, transporter };

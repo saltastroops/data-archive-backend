@@ -1,18 +1,16 @@
-import * as Sentry from "@sentry/node";
 import bcrypt from "bcrypt";
 import bodyParser from "body-parser";
 import session from "express-session";
 import { GraphQLServer } from "graphql-yoga";
-import moment from "moment";
 import passport from "passport";
 import passportLocal from "passport-local";
 import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
 
 // Set up Sentry
-Sentry.init({
-  dsn: process.env.SENTRY_DSN
-});
+// Sentry.init({
+//   dsn: process.env.SENTRY_DSN
+// });
 
 /**
  * Create the server.
@@ -172,25 +170,6 @@ const createServer = async () => {
       message: "You have been logged out.",
       success: true
     });
-  });
-
-  server.express.get("/auth/reset-password/:token", async (req, res) => {
-    // check if the user with token exist
-    const user = await prisma.user({
-      passwordResetToken: req.params.token
-    });
-    if(!user){
-      return res.status(401).send("Token is outdated or unknown.")
-    }
-
-    // Check if token is not expired
-    if(user.passwordResetTokenExpiry && (moment(user.passwordResetTokenExpiry) <=  moment(Date.now()))){
-      return res.status(401).send("Token is expired")
-    }
-
-    // redirect to reset password page on frontend
-    return res.redirect(`${process.env.FRONTEND_URL}/auth/reset-password/${req.params.token}`)
-
   });
 
   return server;

@@ -1,11 +1,3 @@
-type AggregateDataRequest {
-  count: Int!
-}
-
-type AggregateDataRequestPart {
-  count: Int!
-}
-
 type AggregateUser {
   count: Int!
 }
@@ -14,400 +6,11 @@ type BatchPayload {
   count: Long!
 }
 
-type DataRequest {
-  id: ID!
-  user: User!
-  madeAt: DateTime!
-  parts(where: DataRequestPartWhereInput, orderBy: DataRequestPartOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [DataRequestPart!]
-  url: String
-}
-
-type DataRequestConnection {
-  pageInfo: PageInfo!
-  edges: [DataRequestEdge]!
-  aggregate: AggregateDataRequest!
-}
-
-input DataRequestCreateInput {
-  id: ID
-  user: UserCreateOneInput!
-  madeAt: DateTime!
-  parts: DataRequestPartCreateManyInput
-  url: String
-}
-
-type DataRequestEdge {
-  node: DataRequest!
-  cursor: String!
-}
-
-enum DataRequestOrderByInput {
-  id_ASC
-  id_DESC
-  madeAt_ASC
-  madeAt_DESC
-  url_ASC
-  url_DESC
-  createdAt_ASC
-  createdAt_DESC
-  updatedAt_ASC
-  updatedAt_DESC
-}
-
-type DataRequestPart {
-  id: ID!
-  dataFiles: [String!]!
-  status: DataRequestStatus!
-  statusReason: String!
-  uri: String
-}
-
-type DataRequestPartConnection {
-  pageInfo: PageInfo!
-  edges: [DataRequestPartEdge]!
-  aggregate: AggregateDataRequestPart!
-}
-
-input DataRequestPartCreatedataFilesInput {
-  set: [String!]
-}
-
-input DataRequestPartCreateInput {
-  id: ID
-  dataFiles: DataRequestPartCreatedataFilesInput
-  status: DataRequestStatus
-  statusReason: String
-  uri: String
-}
-
-input DataRequestPartCreateManyInput {
-  create: [DataRequestPartCreateInput!]
-  connect: [DataRequestPartWhereUniqueInput!]
-}
-
-type DataRequestPartEdge {
-  node: DataRequestPart!
-  cursor: String!
-}
-
-enum DataRequestPartOrderByInput {
-  id_ASC
-  id_DESC
-  status_ASC
-  status_DESC
-  statusReason_ASC
-  statusReason_DESC
-  uri_ASC
-  uri_DESC
-  createdAt_ASC
-  createdAt_DESC
-  updatedAt_ASC
-  updatedAt_DESC
-}
-
-type DataRequestPartPreviousValues {
-  id: ID!
-  dataFiles: [String!]!
-  status: DataRequestStatus!
-  statusReason: String!
-  uri: String
-}
-
-input DataRequestPartScalarWhereInput {
-  id: ID
-  id_not: ID
-  id_in: [ID!]
-  id_not_in: [ID!]
-  id_lt: ID
-  id_lte: ID
-  id_gt: ID
-  id_gte: ID
-  id_contains: ID
-  id_not_contains: ID
-  id_starts_with: ID
-  id_not_starts_with: ID
-  id_ends_with: ID
-  id_not_ends_with: ID
-  status: DataRequestStatus
-  status_not: DataRequestStatus
-  status_in: [DataRequestStatus!]
-  status_not_in: [DataRequestStatus!]
-  statusReason: String
-  statusReason_not: String
-  statusReason_in: [String!]
-  statusReason_not_in: [String!]
-  statusReason_lt: String
-  statusReason_lte: String
-  statusReason_gt: String
-  statusReason_gte: String
-  statusReason_contains: String
-  statusReason_not_contains: String
-  statusReason_starts_with: String
-  statusReason_not_starts_with: String
-  statusReason_ends_with: String
-  statusReason_not_ends_with: String
-  uri: String
-  uri_not: String
-  uri_in: [String!]
-  uri_not_in: [String!]
-  uri_lt: String
-  uri_lte: String
-  uri_gt: String
-  uri_gte: String
-  uri_contains: String
-  uri_not_contains: String
-  uri_starts_with: String
-  uri_not_starts_with: String
-  uri_ends_with: String
-  uri_not_ends_with: String
-  AND: [DataRequestPartScalarWhereInput!]
-  OR: [DataRequestPartScalarWhereInput!]
-  NOT: [DataRequestPartScalarWhereInput!]
-}
-
-type DataRequestPartSubscriptionPayload {
-  mutation: MutationType!
-  node: DataRequestPart
-  updatedFields: [String!]
-  previousValues: DataRequestPartPreviousValues
-}
-
-input DataRequestPartSubscriptionWhereInput {
-  mutation_in: [MutationType!]
-  updatedFields_contains: String
-  updatedFields_contains_every: [String!]
-  updatedFields_contains_some: [String!]
-  node: DataRequestPartWhereInput
-  AND: [DataRequestPartSubscriptionWhereInput!]
-  OR: [DataRequestPartSubscriptionWhereInput!]
-  NOT: [DataRequestPartSubscriptionWhereInput!]
-}
-
-input DataRequestPartUpdatedataFilesInput {
-  set: [String!]
-}
-
-input DataRequestPartUpdateDataInput {
-  dataFiles: DataRequestPartUpdatedataFilesInput
-  status: DataRequestStatus
-  statusReason: String
-  uri: String
-}
-
-input DataRequestPartUpdateInput {
-  dataFiles: DataRequestPartUpdatedataFilesInput
-  status: DataRequestStatus
-  statusReason: String
-  uri: String
-}
-
-input DataRequestPartUpdateManyDataInput {
-  dataFiles: DataRequestPartUpdatedataFilesInput
-  status: DataRequestStatus
-  statusReason: String
-  uri: String
-}
-
-input DataRequestPartUpdateManyInput {
-  create: [DataRequestPartCreateInput!]
-  update: [DataRequestPartUpdateWithWhereUniqueNestedInput!]
-  upsert: [DataRequestPartUpsertWithWhereUniqueNestedInput!]
-  delete: [DataRequestPartWhereUniqueInput!]
-  connect: [DataRequestPartWhereUniqueInput!]
-  set: [DataRequestPartWhereUniqueInput!]
-  disconnect: [DataRequestPartWhereUniqueInput!]
-  deleteMany: [DataRequestPartScalarWhereInput!]
-  updateMany: [DataRequestPartUpdateManyWithWhereNestedInput!]
-}
-
-input DataRequestPartUpdateManyMutationInput {
-  dataFiles: DataRequestPartUpdatedataFilesInput
-  status: DataRequestStatus
-  statusReason: String
-  uri: String
-}
-
-input DataRequestPartUpdateManyWithWhereNestedInput {
-  where: DataRequestPartScalarWhereInput!
-  data: DataRequestPartUpdateManyDataInput!
-}
-
-input DataRequestPartUpdateWithWhereUniqueNestedInput {
-  where: DataRequestPartWhereUniqueInput!
-  data: DataRequestPartUpdateDataInput!
-}
-
-input DataRequestPartUpsertWithWhereUniqueNestedInput {
-  where: DataRequestPartWhereUniqueInput!
-  update: DataRequestPartUpdateDataInput!
-  create: DataRequestPartCreateInput!
-}
-
-input DataRequestPartWhereInput {
-  id: ID
-  id_not: ID
-  id_in: [ID!]
-  id_not_in: [ID!]
-  id_lt: ID
-  id_lte: ID
-  id_gt: ID
-  id_gte: ID
-  id_contains: ID
-  id_not_contains: ID
-  id_starts_with: ID
-  id_not_starts_with: ID
-  id_ends_with: ID
-  id_not_ends_with: ID
-  status: DataRequestStatus
-  status_not: DataRequestStatus
-  status_in: [DataRequestStatus!]
-  status_not_in: [DataRequestStatus!]
-  statusReason: String
-  statusReason_not: String
-  statusReason_in: [String!]
-  statusReason_not_in: [String!]
-  statusReason_lt: String
-  statusReason_lte: String
-  statusReason_gt: String
-  statusReason_gte: String
-  statusReason_contains: String
-  statusReason_not_contains: String
-  statusReason_starts_with: String
-  statusReason_not_starts_with: String
-  statusReason_ends_with: String
-  statusReason_not_ends_with: String
-  uri: String
-  uri_not: String
-  uri_in: [String!]
-  uri_not_in: [String!]
-  uri_lt: String
-  uri_lte: String
-  uri_gt: String
-  uri_gte: String
-  uri_contains: String
-  uri_not_contains: String
-  uri_starts_with: String
-  uri_not_starts_with: String
-  uri_ends_with: String
-  uri_not_ends_with: String
-  AND: [DataRequestPartWhereInput!]
-  OR: [DataRequestPartWhereInput!]
-  NOT: [DataRequestPartWhereInput!]
-}
-
-input DataRequestPartWhereUniqueInput {
-  id: ID
-}
-
-type DataRequestPreviousValues {
-  id: ID!
-  madeAt: DateTime!
-  url: String
-}
-
-enum DataRequestStatus {
-  PENDING
-  FAILED
-  SUCCESSFUL
-}
-
-type DataRequestSubscriptionPayload {
-  mutation: MutationType!
-  node: DataRequest
-  updatedFields: [String!]
-  previousValues: DataRequestPreviousValues
-}
-
-input DataRequestSubscriptionWhereInput {
-  mutation_in: [MutationType!]
-  updatedFields_contains: String
-  updatedFields_contains_every: [String!]
-  updatedFields_contains_some: [String!]
-  node: DataRequestWhereInput
-  AND: [DataRequestSubscriptionWhereInput!]
-  OR: [DataRequestSubscriptionWhereInput!]
-  NOT: [DataRequestSubscriptionWhereInput!]
-}
-
-input DataRequestUpdateInput {
-  user: UserUpdateOneRequiredInput
-  madeAt: DateTime
-  parts: DataRequestPartUpdateManyInput
-  url: String
-}
-
-input DataRequestUpdateManyMutationInput {
-  madeAt: DateTime
-  url: String
-}
-
-input DataRequestWhereInput {
-  id: ID
-  id_not: ID
-  id_in: [ID!]
-  id_not_in: [ID!]
-  id_lt: ID
-  id_lte: ID
-  id_gt: ID
-  id_gte: ID
-  id_contains: ID
-  id_not_contains: ID
-  id_starts_with: ID
-  id_not_starts_with: ID
-  id_ends_with: ID
-  id_not_ends_with: ID
-  user: UserWhereInput
-  madeAt: DateTime
-  madeAt_not: DateTime
-  madeAt_in: [DateTime!]
-  madeAt_not_in: [DateTime!]
-  madeAt_lt: DateTime
-  madeAt_lte: DateTime
-  madeAt_gt: DateTime
-  madeAt_gte: DateTime
-  parts_every: DataRequestPartWhereInput
-  parts_some: DataRequestPartWhereInput
-  parts_none: DataRequestPartWhereInput
-  url: String
-  url_not: String
-  url_in: [String!]
-  url_not_in: [String!]
-  url_lt: String
-  url_lte: String
-  url_gt: String
-  url_gte: String
-  url_contains: String
-  url_not_contains: String
-  url_starts_with: String
-  url_not_starts_with: String
-  url_ends_with: String
-  url_not_ends_with: String
-  AND: [DataRequestWhereInput!]
-  OR: [DataRequestWhereInput!]
-  NOT: [DataRequestWhereInput!]
-}
-
-input DataRequestWhereUniqueInput {
-  id: ID
-}
-
 scalar DateTime
 
 scalar Long
 
 type Mutation {
-  createDataRequest(data: DataRequestCreateInput!): DataRequest!
-  updateDataRequest(data: DataRequestUpdateInput!, where: DataRequestWhereUniqueInput!): DataRequest
-  updateManyDataRequests(data: DataRequestUpdateManyMutationInput!, where: DataRequestWhereInput): BatchPayload!
-  upsertDataRequest(where: DataRequestWhereUniqueInput!, create: DataRequestCreateInput!, update: DataRequestUpdateInput!): DataRequest!
-  deleteDataRequest(where: DataRequestWhereUniqueInput!): DataRequest
-  deleteManyDataRequests(where: DataRequestWhereInput): BatchPayload!
-  createDataRequestPart(data: DataRequestPartCreateInput!): DataRequestPart!
-  updateDataRequestPart(data: DataRequestPartUpdateInput!, where: DataRequestPartWhereUniqueInput!): DataRequestPart
-  updateManyDataRequestParts(data: DataRequestPartUpdateManyMutationInput!, where: DataRequestPartWhereInput): BatchPayload!
-  upsertDataRequestPart(where: DataRequestPartWhereUniqueInput!, create: DataRequestPartCreateInput!, update: DataRequestPartUpdateInput!): DataRequestPart!
-  deleteDataRequestPart(where: DataRequestPartWhereUniqueInput!): DataRequestPart
-  deleteManyDataRequestParts(where: DataRequestPartWhereInput): BatchPayload!
   createUser(data: UserCreateInput!): User!
   updateUser(data: UserUpdateInput!, where: UserWhereUniqueInput!): User
   updateManyUsers(data: UserUpdateManyMutationInput!, where: UserWhereInput): BatchPayload!
@@ -434,12 +37,6 @@ type PageInfo {
 }
 
 type Query {
-  dataRequest(where: DataRequestWhereUniqueInput!): DataRequest
-  dataRequests(where: DataRequestWhereInput, orderBy: DataRequestOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [DataRequest]!
-  dataRequestsConnection(where: DataRequestWhereInput, orderBy: DataRequestOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): DataRequestConnection!
-  dataRequestPart(where: DataRequestPartWhereUniqueInput!): DataRequestPart
-  dataRequestParts(where: DataRequestPartWhereInput, orderBy: DataRequestPartOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [DataRequestPart]!
-  dataRequestPartsConnection(where: DataRequestPartWhereInput, orderBy: DataRequestPartOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): DataRequestPartConnection!
   user(where: UserWhereUniqueInput!): User
   users(where: UserWhereInput, orderBy: UserOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [User]!
   usersConnection(where: UserWhereInput, orderBy: UserOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): UserConnection!
@@ -451,8 +48,6 @@ enum Role {
 }
 
 type Subscription {
-  dataRequest(where: DataRequestSubscriptionWhereInput): DataRequestSubscriptionPayload
-  dataRequestPart(where: DataRequestPartSubscriptionWhereInput): DataRequestPartSubscriptionPayload
   user(where: UserSubscriptionWhereInput): UserSubscriptionPayload
 }
 
@@ -488,11 +83,6 @@ input UserCreateInput {
   passwordResetTokenExpiry: DateTime
 }
 
-input UserCreateOneInput {
-  create: UserCreateInput
-  connect: UserWhereUniqueInput
-}
-
 input UserCreaterolesInput {
   set: [Role!]
 }
@@ -521,10 +111,6 @@ enum UserOrderByInput {
   passwordResetToken_DESC
   passwordResetTokenExpiry_ASC
   passwordResetTokenExpiry_DESC
-  createdAt_ASC
-  createdAt_DESC
-  updatedAt_ASC
-  updatedAt_DESC
 }
 
 type UserPreviousValues {
@@ -558,18 +144,6 @@ input UserSubscriptionWhereInput {
   NOT: [UserSubscriptionWhereInput!]
 }
 
-input UserUpdateDataInput {
-  familyName: String
-  givenName: String
-  username: String
-  email: String
-  affiliation: String
-  password: String
-  roles: UserUpdaterolesInput
-  passwordResetToken: String
-  passwordResetTokenExpiry: DateTime
-}
-
 input UserUpdateInput {
   familyName: String
   givenName: String
@@ -594,20 +168,8 @@ input UserUpdateManyMutationInput {
   passwordResetTokenExpiry: DateTime
 }
 
-input UserUpdateOneRequiredInput {
-  create: UserCreateInput
-  update: UserUpdateDataInput
-  upsert: UserUpsertNestedInput
-  connect: UserWhereUniqueInput
-}
-
 input UserUpdaterolesInput {
   set: [Role!]
-}
-
-input UserUpsertNestedInput {
-  update: UserUpdateDataInput!
-  create: UserCreateInput!
 }
 
 input UserWhereInput {

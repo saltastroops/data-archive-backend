@@ -3,7 +3,7 @@ jest.mock("../generated/prisma-client");
 jest.mock("../util");
 import { prisma } from "../generated/prisma-client";
 import { resolvers } from "../resolvers";
-import { transporter } from "../util";
+import { IContext, transporter } from "../util";
 
 afterEach(() => {
   // Cleaning up
@@ -156,7 +156,7 @@ describe("reset password", () => {
       await resolvers.Mutation.resetPassword(
         {},
         { password: "secretpassword" },
-        {}
+        {} as IContext
       );
       expect(true).toBeFalsy();
     } catch (e) {

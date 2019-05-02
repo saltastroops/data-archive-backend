@@ -8,6 +8,10 @@ type Query {
   The currently logged in user. An error is raised if the user is not logged in.
   """
   user: User
+
+  """
+  Checks if the given token is valid.
+  """
   verifyPasswordResetToken(token: String!): Success
 }
 
@@ -47,12 +51,17 @@ type Mutation {
     password: String!
   ): User!
 
+  """Reset a user's password."""
   resetPassword(
+      """The new password, which must have at least seven characters."""
       password: String!
+      """The unique token identifying the user."""
       token: String!
       ): User!
 
+  """Request a password reset."""
   requestPasswordReset(
+    """The email address of the user for whom a password reset request is made."""
     email: String!
     ): User!
 }
@@ -86,13 +95,19 @@ type User {
   """
   affiliation: String!
   """
-  User roles, which defines the user's permissions.
+  User roles, which define the user's permissions.
   """
   roles: [Role!]!
 }
 
 
 type Success {
+    """
+    Success status.
+    """
     success: Boolean!
+    """
+    Message is ever the status has one.
+    """
     message: String
 }
