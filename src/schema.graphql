@@ -8,6 +8,7 @@ type Query {
   The currently logged in user. An error is raised if the user is not logged in.
   """
   user: User
+  verifyPasswordResetToken(token: String!): Success
 }
 
 """
@@ -88,4 +89,10 @@ type User {
   User roles, which defines the user's permissions.
   """
   roles: [Role!]!
+}
+
+
+type Success {
+    success: Boolean!
+    message: String
 }
