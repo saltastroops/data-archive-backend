@@ -1,13 +1,13 @@
 import * as Sentry from "@sentry/node";
 import bcrypt from "bcrypt";
 import bodyParser from "body-parser";
+import { Request, Response } from "express";
 import session from "express-session";
 import { GraphQLServer } from "graphql-yoga";
 import passport from "passport";
 import passportLocal from "passport-local";
 import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
-import { Request, Response } from "express";
 
 // Set up Sentry
 Sentry.init({
@@ -191,16 +191,13 @@ const createServer = async () => {
       // Check if the user is logged in
       if (!req.user) {
         return res.status(401).send({
-                                      message: "You must be logged in.",
-                                      success: false
-                                    });
+          message: "You must be logged in.",
+          success: false
+        });
       }
 
       // Get all the params from the request
-      const {
-        dataRequestId,
-        filename
-      } = req.params;
+      const { dataRequestId, filename } = req.params;
 
       // Download the data file for the data request
       return downloadDataRequest({ dataRequestId, filename, req, res });
@@ -226,20 +223,22 @@ const createServer = async () => {
       // Check if the user is logged in
       if (!req.user) {
         return res.status(401).send({
-                                      message: "You must be logged in.",
-                                      success: false
-                                    });
+          message: "You must be logged in.",
+          success: false
+        });
       }
 
       // Get all the params from the request
-      const {
-        dataRequestId,
-        dataRequestPartId,
-        filename
-      } = req.params;
+      const { dataRequestId, dataRequestPartId, filename } = req.params;
 
       // Download the data file for the data request part
-      return downloadDataRequest({ dataRequestId, dataRequestPartId, filename, req, res });
+      return downloadDataRequest({
+        dataRequestId,
+        dataRequestPartId,
+        filename,
+        req,
+        res
+      });
     }
   );
 
@@ -255,13 +254,20 @@ interface IDataRequestDownloadParameters {
   res: Response;
 }
 
-async function downloadDataRequest({ dataRequestId, dataRequestPartId, filename, req, res }: IDataRequestDownloadParameters) {
+async function downloadDataRequest({
+  dataRequestId,
+  dataRequestPartId,
+  filename,
+  req,
+  res
+}: IDataRequestDownloadParameters) {
   // Get the data request
   const notFound = {
     message: "The requested file does not exist.",
     success: false
   };
   const dataRequest = await prisma.dataRequest({ id: dataRequestId });
+
   if (!dataRequest) {
     return res.status(404).send(notFound);
   }
@@ -276,15 +282,17 @@ async function downloadDataRequest({ dataRequestId, dataRequestPartId, filename,
   // nor is an ADMIN, forbid the user from downloading
   if (!mayDownload) {
     return res.status(403).send({
-                                  message: "You are not allowed to download the requested file.",
-                                  success: false
-                                });
+      message: "You are not allowed to download the requested file.",
+      success: false
+    });
   }
 
   // Get the download URI
   let uri: string;
   if (dataRequestPartId) {
-    const dataRequestPart = (dataRequest as any).parts.find((part: any) => part.id === dataRequestPartId);
+    const dataRequestPart = (dataRequest as any).parts.find(
+      (part: any) => part.id === dataRequestPartId
+    );
     if (!dataRequestPart) {
       return res.status(404).send(notFound);
     }
