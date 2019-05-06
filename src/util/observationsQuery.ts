@@ -8,7 +8,7 @@
  *
  * Boolean values are mapped to 1 for true and to 0 for false.
  */
-import { DatabaseModel, IDatabaseTable } from "./DatabaseModel";
+import { DatabaseModel, IDatabaseTableInfo } from "./DatabaseModel";
 
 class WhereConditionContent {
   private columnsSet: Set<string>;
@@ -327,7 +327,7 @@ export function createFromExpression(columns: Set<string>, dm: DatabaseModel) {
     fromTables.splice(index, 0, table);
 
     // Add all the tables the table depends on
-    for (let dep of Array.from(dm.dependencies(table))) {
+    for (const dep of Array.from(dm.dependencies(table))) {
       collectFromTables(fromTables, dep);
     }
   }
@@ -338,7 +338,7 @@ export function createFromExpression(columns: Set<string>, dm: DatabaseModel) {
   // Figure out the tables (and their order) for the FROM expression
   const columnTables = new Set<string>(tablesArray);
   const tables: string[] = [];
-  for (let table of Array.from(columnTables)) {
+  for (const table of Array.from(columnTables)) {
     collectFromTables(tables, table);
   }
 

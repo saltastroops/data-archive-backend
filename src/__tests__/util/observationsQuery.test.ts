@@ -1,8 +1,8 @@
+import { DatabaseModel } from "../../util/DatabaseModel";
 import {
   createFromExpression,
   parseWhereCondition
 } from "../../util/observationsQuery";
-import { DatabaseModel } from "../../util/DatabaseModel";
 
 function checkInvalidColumn(column: string) {
   const f = () => objectToSQL({ IS_NULL: { column } });
@@ -457,11 +457,11 @@ describe("parseWhereCondition", () => {
       radius = 0.00005
     ) => ({
       WITHIN_RADIUS: {
-        rightAscensionColumn: "Target.RA",
-        rightAscension,
-        declinationColumn: "Target.Dec",
         declination,
-        radius
+        declinationColumn: "Target.Dec",
+        radius,
+        rightAscension,
+        rightAscensionColumn: "Target.RA"
       }
     });
 

@@ -1,11 +1,11 @@
-export interface IDatabaseTable {
+export interface IDatabaseTableInfo {
   name: string;
   rightOf: Set<string>;
   join: string;
 }
 
 export class DatabaseModel {
-  public constructor(private tables: Set<IDatabaseTable>) {}
+  public constructor(private tables: Set<IDatabaseTableInfo>) {}
 
   /**
    * Return the table with the given name. An error is raised if there is no
