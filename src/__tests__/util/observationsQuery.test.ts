@@ -1,4 +1,8 @@
-import { parseWhereCondition } from "../../util/observationsQuery";
+import {
+  createFromExpression,
+  parseWhereCondition
+} from "../../util/observationsQuery";
+import { DatabaseModel } from "../../util/DatabaseModel";
 
 function checkInvalidColumn(column: string) {
   const f = () => objectToSQL({ IS_NULL: { column } });
@@ -628,5 +632,191 @@ describe("parseWhereCondition", () => {
         new Set<string>(["Target.Dec", "Target.RA"])
       );
     });
+  });
+});
+
+describe("createFromExpression", () => {
+  it("should raise an error if no table is passed", () => {
+    const a = { join: "", name: "A", rightOf: new Set<string>() };
+    const dm = new DatabaseModel(new Set([a]));
+
+    const f = () => createFromExpression(new Set(), dm);
+    expect(f).toThrowError("at least one");
+  });
+
+  it("should raise an error if a non-existing table is passed", () => {
+    const a = { join: "", name: "A", rightOf: new Set<string>() };
+    const dm = new DatabaseModel(new Set([a]));
+
+    const f = () => createFromExpression(new Set(["A", "NonExisting"]), dm);
+    expect(f).toThrowError("does not exist");
+  });
+
+  it("should raise an error if there is more than one root dependency", () => {
+    const a = { join: "", name: "A", rightOf: new Set<string>() };
+    const x = { join: "", name: "X", rightOf: new Set<string>() };
+    const dm = new DatabaseModel(new Set([a, x]));
+
+    const f = () => createFromExpression(new Set(["A", "X"]), dm);
+    expect(f).toThrowError("single root");
+  });
+
+  it("should create the FROM expression for a single table", () => {
+    const a = { join: "", name: "A", rightOf: new Set<string>() };
+    const dm = new DatabaseModel(new Set([a]));
+
+    expect(createFromExpression(new Set(["A"]), dm)).toEqual("`A`");
+  });
+
+  it("should create the FROM expression for a linear dependency", () => {
+    const a = { join: "", name: "A", rightOf: new Set<string>() };
+    const b = {
+      join: "A.b_id=B.id",
+      name: "B",
+      rightOf: new Set<string>(["A"])
+    };
+    const c = {
+      join: "B.c_id=C.id",
+      name: "C",
+      rightOf: new Set<string>(["B"])
+    };
+    const dm = new DatabaseModel(new Set([a, b, c]));
+
+    expect(createFromExpression(new Set(["A"]), dm)).toEqual("`A`");
+    expect(createFromExpression(new Set(["A", "B"]), dm)).toEqual(
+      "`A` LEFT JOIN `B` ON (A.b_id=B.id)"
+    );
+    expect(createFromExpression(new Set(["A", "B", "C"]), dm)).toEqual(
+      "`A` LEFT JOIN `B` ON (A.b_id=B.id) LEFT JOIN `C` ON (B.c_id=C.id)"
+    );
+
+    // The order to which tables are passed to the set is irrelevant
+    expect(createFromExpression(new Set(["B", "C", "A"]), dm)).toEqual(
+      "`A` LEFT JOIN `B` ON (A.b_id=B.id) LEFT JOIN `C` ON (B.c_id=C.id)"
+    );
+    expect(createFromExpression(new Set(["C", "A", "B"]), dm)).toEqual(
+      "`A` LEFT JOIN `B` ON (A.b_id=B.id) LEFT JOIN `C` ON (B.c_id=C.id)"
+    );
+    expect(createFromExpression(new Set(["A", "C", "B"]), dm)).toEqual(
+      "`A` LEFT JOIN `B` ON (A.b_id=B.id) LEFT JOIN `C` ON (B.c_id=C.id)"
+    );
+    expect(createFromExpression(new Set(["B", "A", "C"]), dm)).toEqual(
+      "`A` LEFT JOIN `B` ON (A.b_id=B.id) LEFT JOIN `C` ON (B.c_id=C.id)"
+    );
+    expect(createFromExpression(new Set(["C", "B", "A"]), dm)).toEqual(
+      "`A` LEFT JOIN `B` ON (A.b_id=B.id) LEFT JOIN `C` ON (B.c_id=C.id)"
+    );
+  });
+
+  it("should create the FROM expression for a more complex table structure", () => {
+    /*
+    The following dependency structure is tested.
+
+    A --- B --- +
+    |           |
+    + --- C --- + --- D --- + --- F
+    |                       |
+    + --- E --------------- +
+    |
+    + --- G
+
+    X --- Y
+     */
+    const a = { join: "", name: "A", rightOf: new Set([]) };
+    const b = { join: "A.b_id=B.id", name: "B", rightOf: new Set(["A"]) };
+    const c = { join: "A.c_id=C.id", name: "C", rightOf: new Set(["A"]) };
+    const d = {
+      join: "B.d_id=D.id OR C.d_id=D.id",
+      name: "D",
+      rightOf: new Set(["B", "C"])
+    };
+    const e = { join: "A.e_id=E.id", name: "E", rightOf: new Set(["A"]) };
+    const f = {
+      join: "D.f_id=F.id OR E.f_id=F.id",
+      name: "F",
+      rightOf: new Set(["D", "E"])
+    };
+    const g = { join: "A.g_id=G.id", name: "G", rightOf: new Set(["A"]) };
+    const x = { join: "", name: "X", rightOf: new Set([]) };
+    const y = { join: "X.y_id=Y.id", name: "Y", rightOf: new Set(["X"]) };
+
+    const dm = new DatabaseModel(new Set([a, b, c, d, e, f, g, x, y]));
+
+    expect(createFromExpression(new Set(["A"]), dm)).toEqual("`A`");
+    expect(createFromExpression(new Set(["B"]), dm)).toEqual(
+      "`A` LEFT JOIN `B` ON (A.b_id=B.id)"
+    );
+    expect(createFromExpression(new Set(["A", "B"]), dm)).toEqual(
+      "`A` LEFT JOIN `B` ON (A.b_id=B.id)"
+    );
+
+    const joins: any = {
+      a: "`A`",
+      b: "LEFT JOIN `B` ON (A.b_id=B.id)",
+      c: "LEFT JOIN `C` ON (A.c_id=C.id)",
+      d: "LEFT JOIN `D` ON (B.d_id=D.id OR C.d_id=D.id)",
+      e: "LEFT JOIN `E` ON (A.e_id=E.id)",
+      f: "LEFT JOIN `F` ON (D.f_id=F.id OR E.f_id=F.id)",
+      g: "LEFT JOIN `G` ON (A.g_id=G.id)",
+      x: "`X`",
+      y: "LEFT JOIN `Y` ON (X.y_id=Y.id)"
+    };
+
+    const findIndexes = (from: string) =>
+      Object.keys(joins).reduce(
+        (indexes: any, key) => ({
+          ...indexes,
+          [key]: from.indexOf(joins[key])
+        }),
+        {}
+      );
+
+    (() => {
+      const from = createFromExpression(new Set(["B", "D"]), dm);
+      const indexes = findIndexes(from);
+
+      expect(indexes.a).toBe(0);
+      expect(indexes.b).toBeGreaterThan(indexes.a);
+      expect(indexes.c).toBeGreaterThan(indexes.a);
+      expect(indexes.d).toBeGreaterThan(indexes.b);
+      expect(indexes.d).toBeGreaterThan(indexes.c);
+      expect(indexes.e).toBe(-1);
+      expect(indexes.f).toBe(-1);
+      expect(indexes.g).toBe(-1);
+      expect(indexes.x).toBe(-1);
+      expect(indexes.y).toBe(-1);
+    })();
+
+    (() => {
+      const from = createFromExpression(new Set(["F"]), dm);
+      const indexes = findIndexes(from);
+
+      expect(indexes.b).toBeGreaterThan(indexes.a);
+      expect(indexes.c).toBeGreaterThan(indexes.a);
+      expect(indexes.d).toBeGreaterThan(indexes.b);
+      expect(indexes.d).toBeGreaterThan(indexes.c);
+      expect(indexes.e).toBeGreaterThan(indexes.a);
+      expect(indexes.f).toBeGreaterThan(indexes.d);
+      expect(indexes.f).toBeGreaterThan(indexes.e);
+      expect(indexes.g).toBe(-1);
+      expect(indexes.x).toBe(-1);
+      expect(indexes.y).toBe(-1);
+    })();
+
+    (() => {
+      const from = createFromExpression(new Set(["G", "B", "F"]), dm);
+      const indexes = findIndexes(from);
+
+      expect(indexes.b).toBeGreaterThan(indexes.a);
+      expect(indexes.c).toBeGreaterThan(indexes.a);
+      expect(indexes.d).toBeGreaterThan(indexes.b);
+      expect(indexes.d).toBeGreaterThan(indexes.c);
+      expect(indexes.e).toBeGreaterThan(indexes.a);
+      expect(indexes.f).toBeGreaterThan(indexes.d);
+      expect(indexes.f).toBeGreaterThan(indexes.e);
+      expect(indexes.g).toBeGreaterThan(indexes.a);
+      expect(indexes.x).toBe(-1);
+      expect(indexes.y).toBe(-1);
+    })();
   });
 });

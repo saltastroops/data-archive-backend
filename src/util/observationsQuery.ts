@@ -8,6 +8,8 @@
  *
  * Boolean values are mapped to 1 for true and to 0 for false.
  */
+import { DatabaseModel, IDatabaseTable } from "./DatabaseModel";
+
 class WhereConditionContent {
   private columnsSet: Set<string>;
 
@@ -276,6 +278,85 @@ export function parseWhereCondition(where: string): WhereConditionContent {
 
   const w = JSON.parse(where);
   return convertToSQL(w);
+}
+
+/**
+ * Create the SQL FROM expression required for querying a set of columns. The
+ * FROM keyword is not included in the expression.
+ *
+ * Parameters:
+ * -----------
+ * columns:
+ *     The columns.
+ * dm:
+ *     The database model describing the table dependencies.
+ *
+ * Returns:
+ * --------
+ * The FROM expression.
+ */
+export function createFromExpression(columns: Set<string>, dm: DatabaseModel) {
+  // There must be at least one column
+  if (columns.size === 0) {
+    throw new Error("There must be at least one column.");
+  }
+
+  /**
+   * Check whether a table a must be to the right of a table b.
+   */
+  function mustBeRightOf(a: string, b: string) {
+    return dm.dependencies(a).has(b);
+  }
+
+  /**
+   * Collect the tables required in the FROM expression if the given table is
+   * queried for. The tables are added in the correct order to the given array
+   * of tables.
+   */
+  function collectFromTables(fromTables: string[], table: string) {
+    // If the table is in the array already, there is nothing to do
+    if (fromTables.findIndex(t => t === table) !== -1) {
+      return;
+    }
+
+    // Insert the table as far to the left as possible
+    let index = fromTables.length;
+    while (index > 0 && !mustBeRightOf(table, fromTables[index - 1])) {
+      index--;
+    }
+    fromTables.splice(index, 0, table);
+
+    // Add all the tables the table depends on
+    for (let dep of Array.from(dm.dependencies(table))) {
+      collectFromTables(fromTables, dep);
+    }
+  }
+
+  // Get the tables to which the columns belong
+  const tablesArray = Array.from(columns).map(column => column.split(".")[0]);
+
+  // Figure out the tables (and their order) for the FROM expression
+  const columnTables = new Set<string>(tablesArray);
+  const tables: string[] = [];
+  for (let table of Array.from(columnTables)) {
+    collectFromTables(tables, table);
+  }
+
+  // Sanity check: there must be a single root dependency, i.e. every table
+  // other than the first one must depend on the first table
+  for (let i = 1; i < tables.length; i++) {
+    if (!mustBeRightOf(tables[i], tables[0])) {
+      throw new Error("There must be a single root dependency");
+    }
+  }
+
+  // Now that we have the tables we can construct the FROM expression by joining
+  // the tables with their JOIN statements
+  let fromSQL = `\`${tables[0]}\``;
+  for (let i = 1; i < tables.length; i++) {
+    fromSQL += ` LEFT JOIN \`${tables[i]}\` ON (${dm.table(tables[i]).join})`;
+  }
+  return fromSQL;
 }
 
 function validateColumn(column: string | null | undefined) {
