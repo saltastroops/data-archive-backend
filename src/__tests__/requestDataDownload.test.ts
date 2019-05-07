@@ -23,8 +23,8 @@ afterAll(() => {
 });
 
 describe("/downloads/data-requests/:dataRequestId/:filename", () => {
-  it("should download the requested data file as an owner", async () => {
-    // Mocking the user query of the user who is not an admin
+  it("should download the requested data file if the user owns it", async () => {
+    // Mock the user query for the user, who is not an admin
     (prisma.user as any).mockImplementation(async () => ({
       affiliation: "Test Affiliation",
       email: "test@gmail.com",
@@ -36,11 +36,13 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
       username: "test"
     }));
 
-    // Mocking the data request owned by the logged in user
-    // Assuming the file is located in this directory
+    // Mock the query for the data request, which is owned by the logged in
+    // user.
+    // The URI points to an existing file in the test folder. Despite its
+    // extension, this file is not a zip file but contains an ASCII text string.
     // ./downloads/data-requests/1/data-file-request.zip
     (prisma.dataRequest as any).mockResolvedValueOnce({
-      uri: "./downloads/data-requests/1/data-file-request.zip",
+      uri: "./src/__tests__/data/data-file-request.zip",
       user: {
         id: "1"
       }
@@ -53,20 +55,23 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
       "/downloads/data-requests/1/data-file-request.zip"
     );
 
-    // Expect the user unauthenticated status code
+    // Expect that all went well
     expect(response.status).toEqual(200);
 
-    // Expect the content type of the downloaded file to be zip file
+    // Expect the content type of the downloaded file to be application/zip
     expect(response.header["content-type"]).toEqual("application/zip");
 
-    // Expect the disposition to have file name with data-file-request.zip
+    // Expect the disposition to use "data-file-request.zip" as filename
     expect(response.header["content-disposition"]).toContain(
       "data-file-request.zip"
     );
+
+    // Expect that the correct file content has been returned
+    expect(response.text).toEqual("This pretends to be a zip file.");
   });
 
-  it("should download the requested data file as an admin", async () => {
-    // Mocking the user query of the user who is an admin
+  it("should download the requested data file if the user is an admin", async () => {
+    // Mock the query for the user, who is an admin
     (prisma.user as any).mockImplementation(async () => ({
       affiliation: "Test Affiliation",
       email: "test@gmail.com",
@@ -78,11 +83,13 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
       username: "test"
     }));
 
-    // Mocking the data request owned by the logged in user
-    // Assuming the file is located in this directory
+    // Mock the query for the data request, which is owned by the logged in
+    // user.
+    // The URI points to an existing file in the test folder. Despite its
+    // extension, this file is not a zip file but contains an ASCII text string.
     // ./downloads/data-requests/1/data-file-request.zip
     (prisma.dataRequest as any).mockResolvedValueOnce({
-      uri: "./downloads/data-requests/1/data-file-request.zip",
+      uri: "./src/__tests__/data/data-file-request.zip",
       user: {
         id: "2"
       }
@@ -95,20 +102,23 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
       "/downloads/data-requests/1/data-file-request.zip"
     );
 
-    // Expect the user unauthenticated status code
+    // Expect that all went well
     expect(response.status).toEqual(200);
 
-    // Expect the content type of the downloaded file to be zip file
+    // Expect the content type of the downloaded file to be application/zip
     expect(response.header["content-type"]).toEqual("application/zip");
 
-    // Expect the disposition to have file name with data-file-request.zip
+    // Expect the disposition to use "data-file-request.zip" as filename
     expect(response.header["content-disposition"]).toContain(
       "data-file-request.zip"
     );
+
+    // Expect that the correct file content has been returned
+    expect(response.text).toEqual("This pretends to be a zip file.");
   });
 
-  it("should not download the requested data file if its no longer exists", async () => {
-    // Mocking the user query of the user who is not an admin
+  it("should return a Not Found error if the requested data file no longer exists", async () => {
+    // Mock the query for the user, who is not an admin
     (prisma.user as any).mockImplementation(async () => ({
       affiliation: "Test Affiliation",
       email: "test@gmail.com",
@@ -120,7 +130,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
       username: "test"
     }));
 
-    // Mocking the data request owned by the logged in user
+    // Mock the query for the data request, which is owned by the logged in user
     (prisma.dataRequest as any).mockResolvedValueOnce({
       uri: "path/to/no-longer-existing/data-request",
       user: {
@@ -133,7 +143,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
 
     const response = await agent.get("/downloads/data-requests/1/filename.zip");
 
-    // Expect the user unauthenticated status code
+    // Expect the Not Found status code
     expect(response.status).toEqual(404);
 
     // Expect the success field to be false
@@ -143,8 +153,8 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
     expect(JSON.parse(response.text).message).toContain("does not exist");
   });
 
-  it("should not download if the user does not own the data request file nor an admin", async () => {
-    // Mocking the user query of the user who is not an admin
+  it("should return a Forbidden error if the user may not download the file", async () => {
+    // Mock the query for the user, who is not an admin
     (prisma.user as any).mockImplementation(async () => ({
       affiliation: "Test Affiliation",
       email: "test@gmail.com",
@@ -156,7 +166,8 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
       username: "test"
     }));
 
-    // Mocking the data request not owned by the logged in user
+    // Mock the query for the data request, which is not owned by the logged in
+    // user
     (prisma.dataRequest as any).mockResolvedValueOnce({
       user: {
         id: "2"
@@ -170,7 +181,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
       "/downloads/data-requests/requested-data-file-id/filename.zip"
     );
 
-    // Expect the user unauthenticated status code
+    // Expect the Forbidden status code
     expect(response.status).toEqual(403);
 
     // Expect the success field to be false
@@ -182,8 +193,8 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
     );
   });
 
-  it("should not download if the user have not requested any data file", async () => {
-    // Mocking the data request that is empty
+  it("should return a Not Found error if the data request does not exist", async () => {
+    // Mocking the data request that does not exist
     (prisma.dataRequest as any).mockResolvedValueOnce(null);
 
     // Authenticate the user
@@ -201,17 +212,16 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
     expect(JSON.parse(response.text).message).toContain("does not exist");
   });
 
-  it("should not allow any user in this endpoint if they are not logged in", async () => {
+  it("should return an Unauthorized error if the user is not logged in", async () => {
     const server = (await createServer()).createHttpServer({});
 
-    // User attempting to download requested data files.
-    const authenticatedAgent = request.agent(server);
+    const unauthenticatedAgent = request.agent(server);
 
-    const response = await authenticatedAgent.get(
+    const response = await unauthenticatedAgent.get(
       "/downloads/data-requests/1/filename.zip"
     );
 
-    // Expect the user unauthenticated status code
+    // Expect the Unauthorized status code
     expect(response.status).toEqual(401);
 
     // Expect the success field to be false
@@ -223,8 +233,8 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
 });
 
 describe("/downloads/data-requests/:dataRequestId/:dataRequestPartId/:filename", () => {
-  it("should download the requested part data file as an owner", async () => {
-    // Mocking the user query of the user who is not an admin
+  it("should download the requested data file if the user owns it", async () => {
+    // Mock the query for the user, who is not an admin
     (prisma.user as any).mockImplementation(async () => ({
       affiliation: "Test Affiliation",
       email: "test@gmail.com",
@@ -236,13 +246,15 @@ describe("/downloads/data-requests/:dataRequestId/:dataRequestPartId/:filename",
       username: "test"
     }));
 
-    // Mocking the data request owned by the logged in user
-    // Assuming the file is located in this directory ./downloads/data-requests/1/part-data-file-request.zip
+    // Mock the query for the data request, which is owned by the logged in
+    // user.
+    // The URI points to an existing file in the test folder. Despite its
+    // extension, this file is not a zip file but contains an ASCII text string.
     (prisma.dataRequest as any).mockResolvedValueOnce({
       parts: [
         {
           id: "1",
-          uri: "./downloads/data-requests/1/parts/part-data-file-request.zip"
+          uri: "./src/__tests__/data/data-file-request.zip"
         }
       ],
       user: {
@@ -257,20 +269,23 @@ describe("/downloads/data-requests/:dataRequestId/:dataRequestPartId/:filename",
       "/downloads/data-requests/1/1/part-data-file-request.zip"
     );
 
-    // Expect the user unauthenticated status code
+    // Expect that all went well
     expect(response.status).toEqual(200);
 
     // Expect the content type of the downloaded file to be zip file
     expect(response.header["content-type"]).toEqual("application/zip");
 
-    // Expect the disposition to have file name with part-data-file-request.zip
+    // Expect the disposition to use "data-file-request.zip" as filename
     expect(response.header["content-disposition"]).toContain(
       "part-data-file-request.zip"
     );
+
+    // Expect that the correct file content has been returned
+    expect(response.text).toEqual("This pretends to be a zip file.");
   });
 
-  it("should download the requested part data file as an admin", async () => {
-    // Mocking the user query of the user who is an admin
+  it("should download the requested data file if the user is an admin", async () => {
+    // Mock the query for the user, who is an admin
     (prisma.user as any).mockImplementation(async () => ({
       affiliation: "Test Affiliation",
       email: "test@gmail.com",
@@ -282,13 +297,15 @@ describe("/downloads/data-requests/:dataRequestId/:dataRequestPartId/:filename",
       username: "test"
     }));
 
-    // Mocking the data request owned by the logged in user
-    // Assuming the file is located in this directory ./downloads/data-requests/1/data-file-request.zip
+    // Mock the query for the data request, which is owned by the logged in
+    // user.
+    // The URI points to an existing file in the test folder. Despite its
+    // extension, this file is not a zip file but contains an ASCII text string.
     (prisma.dataRequest as any).mockResolvedValueOnce({
       parts: [
         {
           id: "1",
-          uri: "./downloads/data-requests/1/parts/part-data-file-request.zip"
+          uri: "./src/__tests__/data/data-file-request.zip"
         }
       ],
       user: {
@@ -303,20 +320,23 @@ describe("/downloads/data-requests/:dataRequestId/:dataRequestPartId/:filename",
       "/downloads/data-requests/1/1/part-data-file-request.zip"
     );
 
-    // Expect the user unauthenticated status code
+    // Expect that all went well
     expect(response.status).toEqual(200);
 
     // Expect the content type of the downloaded file to be zip file
     expect(response.header["content-type"]).toEqual("application/zip");
 
-    // Expect the disposition to have file name with part-data-file-request.zip
+    // Expect the disposition to use "data-file-request.zip" as filename
     expect(response.header["content-disposition"]).toContain(
       "part-data-file-request.zip"
     );
+
+    // Expect that the correct file content has been returned
+    expect(response.text).toEqual("This pretends to be a zip file.");
   });
 
-  it("should not download the requested part data file if its no longer exists", async () => {
-    // Mocking the user query of the user who is not an admin
+  it("should return a Not Found error if the requested data file no longer exists", async () => {
+    // Mock the query for the user, who is not an admin
     (prisma.user as any).mockImplementation(async () => ({
       affiliation: "Test Affiliation",
       email: "test@gmail.com",
@@ -328,7 +348,7 @@ describe("/downloads/data-requests/:dataRequestId/:dataRequestPartId/:filename",
       username: "test"
     }));
 
-    // Mocking the data request owned by the logged in user
+    // Mock the query for the data request, which is owned by the logged in user
     (prisma.dataRequest as any).mockResolvedValueOnce({
       parts: [
         {
@@ -348,7 +368,7 @@ describe("/downloads/data-requests/:dataRequestId/:dataRequestPartId/:filename",
       "/downloads/data-requests/1/1/filename.zip"
     );
 
-    // Expect the user unauthenticated status code
+    // Expect the Not Found status code
     expect(response.status).toEqual(404);
 
     // Expect the success field to be false
@@ -358,8 +378,8 @@ describe("/downloads/data-requests/:dataRequestId/:dataRequestPartId/:filename",
     expect(JSON.parse(response.text).message).toContain("does not exist");
   });
 
-  it("should not download if the user does not own the data request file nor an admin", async () => {
-    // Mocking the user query of the user who is not an admin
+  it("should return a Forbidden error if the user may not download the file", async () => {
+    // Mock the query for the user, who is not an admin
     (prisma.user as any).mockImplementation(async () => ({
       affiliation: "Test Affiliation",
       email: "test@gmail.com",
@@ -371,7 +391,8 @@ describe("/downloads/data-requests/:dataRequestId/:dataRequestPartId/:filename",
       username: "test"
     }));
 
-    // Mocking the data request not owned by the logged in user
+    // Mock the query for the data request, which is not owned by the logged in
+    // user
     (prisma.dataRequest as any).mockResolvedValueOnce({
       user: {
         id: "2"
@@ -385,7 +406,7 @@ describe("/downloads/data-requests/:dataRequestId/:dataRequestPartId/:filename",
       "/downloads/data-requests/1/1/filename.zip"
     );
 
-    // Expect the user unauthenticated status code
+    // Expect the Forbidden status code
     expect(response.status).toEqual(403);
 
     // Expect the success field to be false
@@ -397,8 +418,8 @@ describe("/downloads/data-requests/:dataRequestId/:dataRequestPartId/:filename",
     );
   });
 
-  it("should not download if the user have not requested any data file", async () => {
-    // Mocking the data request that is empty
+  it("should return a Not Found error if the data request does not exist", async () => {
+    // Mock the query for the data request, which does not exist
     (prisma.dataRequest as any).mockResolvedValueOnce(null);
 
     // Authenticate the user
@@ -408,7 +429,7 @@ describe("/downloads/data-requests/:dataRequestId/:dataRequestPartId/:filename",
       "/downloads/data-requests/1/1/filename.zip"
     );
 
-    // Expect the user unauthenticated status code
+    // Expect the Not Found status code
     expect(response.status).toEqual(404);
 
     // Expect the success field to be false
@@ -418,17 +439,16 @@ describe("/downloads/data-requests/:dataRequestId/:dataRequestPartId/:filename",
     expect(JSON.parse(response.text).message).toContain("does not exist");
   });
 
-  it("should not allow any user in this endpoint if they are not logged in", async () => {
+  it("should return an Unauthorized error if the user is not logged in", async () => {
     const server = (await createServer()).createHttpServer({});
 
-    // User attempting to download requested data files.
-    const authenticatedAgent = request.agent(server);
+    const unauthenticatedAgent = request.agent(server);
 
-    const response = await authenticatedAgent.get(
+    const response = await unauthenticatedAgent.get(
       "/downloads/data-requests/1/1/filename.zip"
     );
 
-    // Expect the user unauthenticated status code
+    // Expect the Unauthorized status code
     expect(response.status).toEqual(401);
 
     // Expect the success field to be false
