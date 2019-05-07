@@ -1,5 +1,5 @@
 import moment from "moment";
-import { prisma, Prisma } from "../generated/prisma-client";
+import { Prisma } from "../generated/prisma-client";
 
 // Defining the context interface
 interface IContext {
@@ -29,7 +29,7 @@ const Query = {
       passwordResetToken: token
     });
     if (!user) {
-      return { success: false, message: "Token is outdated or unknown." };
+      return { success: false, message: "The token is unknown." };
     }
 
     // Check if token is not expired
@@ -37,7 +37,7 @@ const Query = {
       user.passwordResetTokenExpiry &&
       moment(user.passwordResetTokenExpiry) <= moment(Date.now())
     ) {
-      return { success: false, message: "Token Expired." };
+      return { success: false, message: "The token has expired." };
     }
 
     return { success: true };

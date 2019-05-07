@@ -6,13 +6,17 @@ import { prisma } from "../generated/prisma-client";
 import { transporter } from "../util";
 
 const requestPasswordReset = async (email: string) => {
-  // Find a user with given email address
+  // There must be an email address
+  if (!email) {
+    throw new Error("An email address must be provided.");
+  }
 
+  // Find the user with the given email address
   const user = await prisma.user({
     email
   });
   if (!user) {
-    throw new Error(`There exists no user with this email address.`);
+    throw new Error(`There exists no user with the email address ${email}.`);
   }
 
   // Create a reset token
@@ -40,6 +44,7 @@ const requestPasswordReset = async (email: string) => {
     );
   }
 
+  // Send the email with the reset link to the user
   try {
     const url = `${
       process.env.FRONTEND_HOST
@@ -66,6 +71,12 @@ The SAAO/SALT Data Archive Team`;
 };
 
 const resetPassword = async (token: string, password: string) => {
+  // There must be a (non-empty string) token
+  if (!token) {
+    throw new Error("A reset token must be provided.");
+  }
+
+  // There must be a valid password
   if (!(password.length > 6)) {
     throw new Error(`The password must be at least 7 characters long.`);
   }
@@ -79,12 +90,12 @@ const resetPassword = async (token: string, password: string) => {
     user.passwordResetTokenExpiry &&
     moment(user.passwordResetTokenExpiry) <= moment(Date.now())
   ) {
-    throw new Error("The token has expired");
+    throw new Error("The token has expired.");
   }
   const hashedPassword = await bcrypt.hash(password, 10);
 
   // Update the user with the new password and expire the token
-  const passwordUpdated = await prisma.updateUser({
+  const updatedUser = await prisma.updateUser({
     data: {
       password: hashedPassword,
       passwordResetTokenExpiry: moment(Date.now()).toDate()
@@ -93,8 +104,8 @@ const resetPassword = async (token: string, password: string) => {
       passwordResetToken: token
     }
   });
-  if (!passwordUpdated) {
-    throw new Error("Fail to update token.");
+  if (!updatedUser) {
+    throw new Error("The password could not be updated.");
   }
   return user;
 };

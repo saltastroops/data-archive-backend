@@ -18,14 +18,14 @@ afterEach(() => {
  */
 
 describe("Request password reset", () => {
-  it("should fail if email is not provided", async () => {
+  it("should fail if no email is provided", async () => {
     // no email provided
     (prisma.user as any).mockResolvedValue(undefined);
     try {
-      await resolvers.Mutation.requestPasswordReset({}, {}, {});
+      await resolvers.Mutation.requestPasswordReset({}, {} as any, {} as any);
       expect(true).toBeFalsy();
     } catch (e) {
-      expect(e.message).toEqual("No user with email undefined");
+      expect(e.message).toContain("email address must be provided");
     }
 
     expect(prisma.updateUser).not.toHaveBeenCalled();
@@ -40,35 +40,35 @@ describe("Request password reset", () => {
       await resolvers.Mutation.requestPasswordReset(
         {},
         { email: "unknown@xxx.xx" },
-        {}
+        {} as any
       );
       expect(true).toBeFalsy();
     } catch (e) {
-      expect(e.message).toEqual("No user with email unknown@xxx.xx");
+      expect(e.message).toContain(
+        "no user with the email address unknown@xxx.xx"
+      );
     }
 
     expect(prisma.updateUser).not.toHaveBeenCalled();
     expect(transporter.sendMail).not.toHaveBeenCalled();
   });
 
-  it("should fail if for any reason it fails to add token and token expiry to prisma", async () => {
+  it("should fail if adding the token and token expiry to Prisma fails", async () => {
     // user with email is not found
     (prisma.user as any).mockResolvedValue({
       email: "xxx@xxx.xx",
       username: "xxx"
     });
-    (prisma.updateUser as any).mockResolvedValue(undefined);
+    (prisma.updateUser as any).mockResolvedValue(null);
     try {
       await resolvers.Mutation.requestPasswordReset(
         {},
         { email: "xxx@xxx.xx" },
-        {}
+        {} as any
       );
       expect(true).toBeFalsy();
     } catch (e) {
-      expect(e.message).toEqual(
-        "Fail to generate a reset token, request again"
-      );
+      expect(e.message).toContain("Please try again.");
     }
 
     expect(prisma.user).toHaveBeenCalled();
@@ -76,8 +76,7 @@ describe("Request password reset", () => {
     expect(transporter.sendMail).not.toHaveBeenCalled();
   });
 
-  it("should fail if it fails to send email to user", async () => {
-    // user with email is not found
+  it("should fail if no email could be sent to the user", async () => {
     (prisma.user as any).mockResolvedValue({
       email: "xxx@xxx.xx",
       username: "xxx"
@@ -91,13 +90,11 @@ describe("Request password reset", () => {
       await resolvers.Mutation.requestPasswordReset(
         {},
         { email: "xxx@xxx.xx" },
-        {}
+        {} as any
       );
       expect(true).toBeFalsy();
     } catch (e) {
-      expect(e.message).toEqual(
-        "Fail to send reset token to email: xxx@xxx.xx"
-      );
+      expect(e.message).toContain("could not be sent");
     }
 
     expect(prisma.user).toHaveBeenCalled();
@@ -105,11 +102,11 @@ describe("Request password reset", () => {
     expect(transporter.sendMail).toHaveBeenCalled();
   });
 
-  it("should only when: ", async () => {
+  it("should send an email if the token could be generated and stored", async () => {
     /**
-     * email is provided,
-     * reset token and token expiry is updated successfully,
-     * email is send successfully
+     * An email address is provided,
+     * the reset token and token expiry are updated successfully,
+     * an email is sent successfully
      */
     // user with email is not found
     (prisma.user as any).mockResolvedValue({
@@ -125,7 +122,7 @@ describe("Request password reset", () => {
     await resolvers.Mutation.requestPasswordReset(
       {},
       { email: "xxx@xxx.xx" },
-      {}
+      {} as any
     );
 
     expect(prisma.user).toHaveBeenCalled();
@@ -135,51 +132,37 @@ describe("Request password reset", () => {
 });
 
 describe("reset password", () => {
-  it("should fail if password is not given or length less that 7 and token not given", async () => {
-    // no email provided
+  it("should fail if a password of length less than 7 is given", async () => {
     try {
-      await resolvers.Mutation.resetPassword({}, {}, {});
-      expect(true).toBeFalsy();
-    } catch (e) {
-      expect(e.message).toEqual("Cannot read property 'length' of undefined");
-    }
-    try {
-      await resolvers.Mutation.resetPassword({}, { password: "secret" }, {});
+      await resolvers.Mutation.resetPassword(
+        {},
+        { password: "secret", token: "abc" },
+        {} as any
+      );
       expect(true).toBeFalsy();
     } catch (e) {
       expect(e.message).toEqual(
         "The password must be at least 7 characters long."
       );
     }
-
-    try {
-      await resolvers.Mutation.resetPassword(
-        {},
-        { password: "secretpassword" },
-        {} as IContext
-      );
-      expect(true).toBeFalsy();
-    } catch (e) {
-      expect(e.message).toEqual("Fail to reset password of unknown token.");
-    }
   });
 
-  it("should fail if token given is bad", async () => {
-    // no of a given token
-    (prisma.user as any).mockResolvedValue(undefined);
+  it("should fail if the token is invalid", async () => {
+    // no user found for given token
+    (prisma.user as any).mockResolvedValue(null);
     try {
       await resolvers.Mutation.resetPassword(
         {},
         { password: "secretpassword", token: "badToken" },
-        {}
+        {} as any
       );
       expect(true).toBeFalsy();
     } catch (e) {
-      expect(e.message).toEqual("Fail to reset password of unknown token.");
+      expect(e.message).toContain("no user for the token");
     }
   });
 
-  it("should fail if token given is expired", async () => {
+  it("should fail if the token has expired", async () => {
     // given token is expired
     (prisma.user as any).mockResolvedValue({
       passwordResetTokenExpiry: moment(Date.now()).subtract(1, "second")
@@ -187,12 +170,12 @@ describe("reset password", () => {
     try {
       await resolvers.Mutation.resetPassword(
         {},
-        { password: "secretpassword", token: "badToken" },
-        {}
+        { password: "secretpassword", token: "expiredtoken" },
+        {} as any
       );
       expect(true).toBeFalsy();
     } catch (e) {
-      expect(e.message).toEqual("Token is expired.");
+      expect(e.message).toContain("expired.");
     }
   });
 
@@ -200,17 +183,18 @@ describe("reset password", () => {
     (prisma.user as any).mockResolvedValue({
       passwordResetTokenExpiry: moment(Date.now()).add(1, "hour")
     });
-    // user password fail to update
-    (prisma.updateUser as any).mockResolvedValue(undefined);
+    // user cannot be updated
+    (prisma.updateUser as any).mockResolvedValue(null);
+
     try {
       await resolvers.Mutation.resetPassword(
         {},
-        { password: "secretpassword", token: "badToken" },
-        {}
+        { password: "secretpassword", token: "validtoken" },
+        {} as any
       );
       expect(true).toBeFalsy();
     } catch (e) {
-      expect(e.message).toEqual("Fail to update token.");
+      expect(e.message).toContain("could not be updated");
     }
   });
 
@@ -234,7 +218,7 @@ describe("reset password", () => {
     await resolvers.Mutation.resetPassword(
       {},
       { password: "secretpassword", token: "badToken" },
-      {}
+      {} as any
     );
     expect(prisma.user).toHaveBeenCalled();
     expect(prisma.updateUser).toHaveBeenCalled();
