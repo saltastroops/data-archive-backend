@@ -11,10 +11,7 @@ type Query {
   """
   Query the data requests
   """
-  dataRequests(
-    limit: Int
-    startIndex: Int!
-  ): [DataRequest!]!
+  dataRequests(limit: Int, startIndex: Int!): [DataRequest!]!
 }
 
 """

@@ -32,10 +32,10 @@ const Query = {
 
     const limit = args.limit ? Math.min(args.limit, 200) : 200;
 
-    return await ctx.prisma.dataRequests({
+    return ctx.prisma.dataRequests({
       first: limit,
-      skip: args.startIndex,
-      orderBy: "madeAt_DESC"
+      orderBy: "madeAt_DESC",
+      skip: args.startIndex
     }).$fragment(`{
       id
       madeAt

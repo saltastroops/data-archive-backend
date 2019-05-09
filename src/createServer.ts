@@ -269,7 +269,7 @@ async function downloadDataRequest({
 
   // TODO UPDATE INCLUDE MORE INFORMATION IN THE FRAGMENT AS REQUIRED
   const dataRequest = await prisma.dataRequest({ id: dataRequestId })
-  .$fragment(`{
+    .$fragment(`{
     id
     uri
     parts{
