@@ -41,11 +41,13 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
     // The URI points to an existing file in the test folder. Despite its
     // extension, this file is not a zip file but contains an ASCII text string.
     // ./downloads/data-requests/1/data-file-request.zip
-    (prisma.dataRequest as any).mockResolvedValueOnce({
-      uri: "./src/__tests__/data/data-file-request.zip",
-      user: {
-        id: "1"
-      }
+    (prisma.dataRequest as any).mockReturnValue({
+      $fragment: async () => ({
+        uri: "./src/__tests__/data/data-file-request.zip",
+        user: {
+          id: "1"
+        }
+      })
     });
 
     // Authenticate the user
@@ -88,11 +90,13 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
     // The URI points to an existing file in the test folder. Despite its
     // extension, this file is not a zip file but contains an ASCII text string.
     // ./downloads/data-requests/1/data-file-request.zip
-    (prisma.dataRequest as any).mockResolvedValueOnce({
-      uri: "./src/__tests__/data/data-file-request.zip",
-      user: {
-        id: "2"
-      }
+    (prisma.dataRequest as any).mockReturnValue({
+      $fragment: async () => ({
+        uri: "./src/__tests__/data/data-file-request.zip",
+        user: {
+          id: "2"
+        }
+      })
     });
 
     // Authenticate the user
@@ -131,11 +135,13 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
     }));
 
     // Mock the query for the data request, which is owned by the logged in user
-    (prisma.dataRequest as any).mockResolvedValueOnce({
-      uri: "path/to/no-longer-existing/data-request",
-      user: {
-        id: "1"
-      }
+    (prisma.dataRequest as any).mockReturnValue({
+      $fragment: async () => ({
+        uri: "path/to/no-longer-existing/data-request",
+        user: {
+          id: "1"
+        }
+      })
     });
 
     // Authenticate the user
@@ -168,10 +174,12 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
 
     // Mock the query for the data request, which is not owned by the logged in
     // user
-    (prisma.dataRequest as any).mockResolvedValueOnce({
-      user: {
-        id: "2"
-      }
+    (prisma.dataRequest as any).mockReturnValue({
+      $fragment: async () => ({
+        user: {
+          id: "2"
+        }
+      })
     });
 
     // Authenticate the user
@@ -195,7 +203,9 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
 
   it("should return a Not Found error if the data request does not exist", async () => {
     // Mocking the data request that does not exist
-    (prisma.dataRequest as any).mockResolvedValueOnce(null);
+    (prisma.dataRequest as any).mockReturnValue({
+      $fragment: async () => null
+    });
 
     // Authenticate the user
     const agent = await createAuthenticatedAgent("test", "test");
@@ -250,16 +260,18 @@ describe("/downloads/data-requests/:dataRequestId/:dataRequestPartId/:filename",
     // user.
     // The URI points to an existing file in the test folder. Despite its
     // extension, this file is not a zip file but contains an ASCII text string.
-    (prisma.dataRequest as any).mockResolvedValueOnce({
-      parts: [
-        {
-          id: "1",
-          uri: "./src/__tests__/data/data-file-request.zip"
+    (prisma.dataRequest as any).mockReturnValue({
+      $fragment: async () => ({
+        parts: [
+          {
+            id: "1",
+            uri: "./src/__tests__/data/data-file-request.zip"
+          }
+        ],
+        user: {
+          id: "1"
         }
-      ],
-      user: {
-        id: "1"
-      }
+      })
     });
 
     // Authenticate the user
@@ -301,16 +313,18 @@ describe("/downloads/data-requests/:dataRequestId/:dataRequestPartId/:filename",
     // user.
     // The URI points to an existing file in the test folder. Despite its
     // extension, this file is not a zip file but contains an ASCII text string.
-    (prisma.dataRequest as any).mockResolvedValueOnce({
-      parts: [
-        {
-          id: "1",
-          uri: "./src/__tests__/data/data-file-request.zip"
+    (prisma.dataRequest as any).mockReturnValue({
+      $fragment: async () => ({
+        parts: [
+          {
+            id: "1",
+            uri: "./src/__tests__/data/data-file-request.zip"
+          }
+        ],
+        user: {
+          id: "2"
         }
-      ],
-      user: {
-        id: "2"
-      }
+      })
     });
 
     // Authenticate the user
@@ -349,16 +363,18 @@ describe("/downloads/data-requests/:dataRequestId/:dataRequestPartId/:filename",
     }));
 
     // Mock the query for the data request, which is owned by the logged in user
-    (prisma.dataRequest as any).mockResolvedValueOnce({
-      parts: [
-        {
-          id: "1",
-          uri: "path/to/no-longer-existing/part-data-request"
+    (prisma.dataRequest as any).mockReturnValue({
+      $fragment: async () => ({
+        parts: [
+          {
+            id: "1",
+            uri: "path/to/no-longer-existing/part-data-request"
+          }
+        ],
+        user: {
+          id: "1"
         }
-      ],
-      user: {
-        id: "1"
-      }
+      })
     });
 
     // Authenticate the user
@@ -393,10 +409,12 @@ describe("/downloads/data-requests/:dataRequestId/:dataRequestPartId/:filename",
 
     // Mock the query for the data request, which is not owned by the logged in
     // user
-    (prisma.dataRequest as any).mockResolvedValueOnce({
-      user: {
-        id: "2"
-      }
+    (prisma.dataRequest as any).mockReturnValue({
+      $fragment: async () => ({
+        user: {
+          id: "2"
+        }
+      })
     });
 
     // Authenticate the user
@@ -420,7 +438,9 @@ describe("/downloads/data-requests/:dataRequestId/:dataRequestPartId/:filename",
 
   it("should return a Not Found error if the data request does not exist", async () => {
     // Mock the query for the data request, which does not exist
-    (prisma.dataRequest as any).mockResolvedValueOnce(null);
+    (prisma.dataRequest as any).mockReturnValue({
+      $fragment: async () => null
+    });
 
     // Authenticate the user
     const agent = await createAuthenticatedAgent("test", "test");

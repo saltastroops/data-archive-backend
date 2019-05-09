@@ -8,6 +8,13 @@ type Query {
   The currently logged in user. An error is raised if the user is not logged in.
   """
   user: User
+  """
+  Query the data requests
+  """
+  dataRequests(
+    limit: Int
+    startIndex: Int!
+  ): [DataRequest!]!
 }
 
 """

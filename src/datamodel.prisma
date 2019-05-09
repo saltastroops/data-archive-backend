@@ -70,6 +70,7 @@ type Proposal {
 
 type Observation {
     id: ID! @id
+    name: String!
     startTime: DateTime!
     telescope: Telescope!  # Instruments need some consideration Used by DataFile
     proposal: Proposal
@@ -95,7 +96,7 @@ type DataRequest {
     user: User!
     madeAt: DateTime!
     parts: [DataRequestPart!]!
-    url: String
+    uri: String
 }
 
 type DataRequestPart {

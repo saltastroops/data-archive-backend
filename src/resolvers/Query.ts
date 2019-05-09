@@ -17,6 +17,42 @@ const Query = {
     return ctx.prisma.user({
       id: ctx.user.id
     });
+  },
+
+  // Query user data requests
+  // TODO UPDATE INCLUDE MORE INFORMATION IN THE FRAGMENT AS REQUIRED
+  async dataRequests(
+    root: any,
+    args: { limit: number; startIndex: number },
+    ctx: IContext
+  ) {
+    if (!ctx.user) {
+      throw new Error("You must be logged in");
+    }
+
+    const limit = args.limit ? Math.min(args.limit, 200) : 200;
+
+    return await ctx.prisma.dataRequests({
+      first: limit,
+      skip: args.startIndex,
+      orderBy: "madeAt_DESC"
+    }).$fragment(`{
+      id
+      madeAt
+      uri
+      parts {
+        id
+        status
+        uri
+        dataFiles {
+          id
+          name
+          observation {
+            name
+          }
+        }
+      }
+    }`);
   }
 };
 

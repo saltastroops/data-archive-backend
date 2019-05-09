@@ -266,7 +266,20 @@ async function downloadDataRequest({
     message: "The requested file does not exist.",
     success: false
   };
-  const dataRequest = await prisma.dataRequest({ id: dataRequestId });
+
+  // TODO UPDATE INCLUDE MORE INFORMATION IN THE FRAGMENT AS REQUIRED
+  const dataRequest = await prisma.dataRequest({ id: dataRequestId })
+  .$fragment(`{
+    id
+    uri
+    parts{
+      id
+      uri
+    }
+    user{
+      id
+    }
+  }`);
 
   if (!dataRequest) {
     return res.status(404).send(notFound);
