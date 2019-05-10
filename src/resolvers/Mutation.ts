@@ -122,9 +122,9 @@ const Mutation = {
    * username:
    *     The username, which must not contain upper case letters.
    * password:
-   *     The user old password (Must be supplied).
+   *     The user's old password. This argument is required.
    * newPassword:
-   *     The user new password.
+   *     The user's new password.
    */
   async updateUser(root: any, args: IUserUpdateInput, ctx: IContext) {
     // Check if the user is logged in
@@ -142,7 +142,7 @@ const Mutation = {
       currentUser &&
       !(await bcrypt.compare(args.password, currentUser.password))
     ) {
-      throw new Error("Please make sure you provide a correct password.");
+      throw new Error("The old password is wrong.");
     }
 
     const userUpdateInfo: UserUpdateInput = {};

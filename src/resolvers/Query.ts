@@ -9,7 +9,7 @@ interface IContext {
 // Defining Query methods
 const Query = {
   // TODO UPDATE.
-  // Query for users
+  // Query for the current user
   user(root: any, args: {}, ctx: IContext) {
     if (!ctx.user) {
       return null;
@@ -19,7 +19,7 @@ const Query = {
     });
   },
 
-  // Query user data requests
+  // Query for the current user's data requests
   // TODO UPDATE INCLUDE MORE INFORMATION IN THE FRAGMENT AS REQUIRED
   async dataRequests(
     root: any,

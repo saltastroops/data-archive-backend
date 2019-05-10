@@ -8,10 +8,21 @@ type Query {
   The currently logged in user. An error is raised if the user is not logged in.
   """
   user: User
+
   """
-  Query the data requests
+  The data requests made by the currently logged in user, ordered in descending order by the time they were made.
   """
-  dataRequests(limit: Int, startIndex: Int!): [DataRequest!]!
+  dataRequests(
+    """
+    The maximum number of data requests to return.
+    """
+    limit: Int,
+
+    """
+    The index of the first data request to return.
+    """
+    startIndex: Int!
+  ): [DataRequest!]!
 }
 
 """
