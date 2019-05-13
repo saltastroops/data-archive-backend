@@ -182,7 +182,7 @@ describe("User update", () => {
       } catch (e) {
         message = e.message;
       }
-      expect(message).toContain("provide a correct password");
+      expect(message).toContain("The old password is wrong");
     });
 
     it("should raise an error if the email address is used by another user", async () => {

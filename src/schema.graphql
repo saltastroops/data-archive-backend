@@ -16,7 +16,7 @@ type Query {
     """
     The maximum number of data requests to return.
     """
-    limit: Int,
+    limit: Int
 
     """
     The index of the first data request to return.
