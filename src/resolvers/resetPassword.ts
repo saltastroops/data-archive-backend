@@ -48,7 +48,7 @@ const requestPasswordReset = async (email: string) => {
   try {
     const url = `${
       process.env.FRONTEND_HOST
-    }/auth/reset-password/${passwordResetToken}`;
+    }/reset-password/${passwordResetToken}`;
     const html = `Dear ${user.givenName} ${user.familyName},<br><br>
 Someone (probably you) has requested to reset your password for the SAAO/SALT Data Archive.<br><br>
 Please click on the following link to change the password:<br><br>
