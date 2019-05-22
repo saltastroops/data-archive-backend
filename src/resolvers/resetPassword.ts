@@ -94,10 +94,11 @@ const resetPassword = async (token: string, password: string) => {
   }
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // Update the user with the new password and expire the token
+  // Update the user with the new password and delete the token
   const updatedUser = await prisma.updateUser({
     data: {
       password: hashedPassword,
+      passwordResetToken: "",
       passwordResetTokenExpiry: moment(Date.now()).toDate()
     },
     where: {
