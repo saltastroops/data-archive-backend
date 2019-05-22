@@ -56,7 +56,7 @@ const Query = {
       }
     }`);
   },
-  async verifyPasswordResetToken(
+  async passwordResetTokenStatus(
     root: any,
     { token }: any,
     { prisma }: IContext

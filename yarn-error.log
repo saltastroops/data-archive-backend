@@ -1,5 +1,5 @@
 Arguments: 
-  /usr/bin/node /usr/bin/yarn start
+  /usr/bin/node /usr/bin/yarn test
 
 PATH: 
   /home/nhlavu/mongodb/mongodb-linux-x86_64-3.6.5/bin/:/home/nhlavu/.rvm/gems/ruby-2.4.1/bin:/home/nhlavu/.rvm/gems/ruby-2.4.1@global/bin:/home/nhlavu/.rvm/rubies/ruby-2.4.1/bin:/home/nhlavu/bin:/home/nhlavu/.local/bin:/home/nhlavu/mongodb/mongodb-linux-x86_64-3.6.5/bin/:/home/nhlavu/mongodb/mongodb-linux-x86_64-3.6.5/bin/:/home/nhlavu/bin:/home/nhlavu/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/nhlavu/.rvm/bin:/home/nhlavu/.rvm/bin:/home/nhlavu/.rvm/bin:/home/nhlavu/.rvm/bin:/home/nhlavu/.rvm/bin
@@ -25,7 +25,7 @@ npm manifest:
     "scripts": {
       "start": "pm2 start src/index.ts --node-args='-r dotenv/config'",
       "deploy": "export DEBUG=\"prisma\"; cd src/; prisma deploy --env-file ../.env",
-      "dev": " export DEBUG=\\\\\\\"nodemon\\\\\\\"; nodemon -e ts,graphql -x ts-node -r dotenv/config src/index.ts",
+      "dev": " export DEBUG=\"nodemon\"; nodemon -e ts,graphql -x ts-node -r dotenv/config src/index.ts",
       "test": "PRISMA_ENDPOINT=https://fakeaddress jest",
       "test:coverage": "PRISMA_ENDPOINT=https://fakeaddress jest --coverage",
       "test:watch": "PRISMA_ENDPOINT=https://fakeaddress jest --watch",
@@ -5539,9 +5539,9 @@ Lockfile:
 
 Trace: 
   Error: Command failed.
-  Exit code: 127
+  Exit code: 1
   Command: sh
-  Arguments: -c pm2 start src/index.ts --node-args='-r dotenv/config'
+  Arguments: -c PRISMA_ENDPOINT=https://fakeaddress jest
   Directory: /home/nhlavu/nhlavu/da/backend/data-archive-backend
   Output:
   

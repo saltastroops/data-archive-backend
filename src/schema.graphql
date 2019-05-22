@@ -27,7 +27,7 @@ type Query {
   """
   Checks if the given token is valid.
   """
-  verifyPasswordResetToken(token: String!): Success
+  passwordResetTokenStatus(token: String!): Status
 }
 
 """
@@ -176,7 +176,7 @@ type User {
 }
 
 
-type Success {
+type Status {
     """
     Success status.
     """
