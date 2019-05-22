@@ -65,7 +65,7 @@ const Query = {
       passwordResetToken: token
     });
     if (!user) {
-      return { success: false, message: "The token is unknown." };
+      return { status: false, message: "The token is unknown." };
     }
 
     // Check if token is not expired
@@ -73,10 +73,10 @@ const Query = {
       user.passwordResetTokenExpiry &&
       moment(user.passwordResetTokenExpiry) <= moment(Date.now())
     ) {
-      return { success: false, message: "The token has expired." };
+      return { status: false, message: "The token has expired." };
     }
 
-    return { success: true };
+    return { status: true };
   }
 };
 

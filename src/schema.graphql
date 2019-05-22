@@ -180,7 +180,7 @@ type Status {
     """
     Success status.
     """
-    success: Boolean!
+    status: Boolean!
     """
     Message is ever the status has one.
     """
