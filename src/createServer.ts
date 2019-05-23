@@ -10,9 +10,11 @@ import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
 
 // Set up Sentry
-Sentry.init({
-  dsn: process.env.SENTRY_DSN
-});
+if (process.env.NODE_ENV === 'production') {
+    Sentry.init({
+        dsn: process.env.SENTRY_DSN
+    });
+}
 
 /**
  * Create the server.

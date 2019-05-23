@@ -1,7 +1,7 @@
 # A data archive user.
 type User {
   # Unique user id
-  id: ID! @id
+  id: ID! @unique
   # Family name (surname)
   familyName: String!
   # Given name (first name)

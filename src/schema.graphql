@@ -23,6 +23,11 @@ type Query {
     """
     startIndex: Int!
   ): [DataRequest!]!
+
+  """
+  Checks if the given token is valid.
+  """
+  passwordResetTokenStatus(token: String!): Status
 }
 
 """
@@ -114,6 +119,20 @@ type Mutation {
     """
     newPassword: String
   ): User!
+
+  """Reset a user's password."""
+  resetPassword(
+      """The new password, which must have at least seven characters."""
+      password: String!
+      """The unique token identifying the user."""
+      token: String!
+      ): User!
+
+  """Request a password reset."""
+  requestPasswordReset(
+    """The email address of the user for whom a password reset request is made."""
+    email: String!
+    ): User!
 }
 
 """
@@ -154,4 +173,16 @@ type User {
   User roles, which defines the user's permissions.
   """
   roles: [Role!]!
+}
+
+
+type Status {
+    """
+    Success status.
+    """
+    status: Boolean!
+    """
+    Message is ever the status has one.
+    """
+    message: String
 }

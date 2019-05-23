@@ -5,6 +5,7 @@ import {
   UserCreateInput,
   UserUpdateInput
 } from "../generated/prisma-client";
+import { requestPasswordReset, resetPassword } from "./resetPassword";
 
 // Defining the context interface
 interface IContext {
@@ -27,6 +28,37 @@ function checkPasswordStrength(password: string) {
 
 // Defining  Mutation methods
 const Mutation = {
+  /**
+   * Request a password reset.
+   *
+   * The following arguments must be supplied.
+   *
+   * email:
+   *     The email address to which the link for resetting the password shall
+   *     be sent. This must be an existing user's email address.
+   */
+  requestPasswordReset: (
+    root: any,
+    { email }: { email: string },
+    ctx: IContext
+  ) => requestPasswordReset(email),
+
+  /**
+   * Reset a user's password.
+   *
+   * The following arguments must be supplied.
+   *
+   * password:
+   *     The new password.
+   * token:
+   *     The unique token identifying the user.
+   */
+  resetPassword: (
+    root: any,
+    { password, token }: { password: string; token: string },
+    ctx: IContext
+  ) => resetPassword(token, password),
+
   /**
    * Register a new user.
    *

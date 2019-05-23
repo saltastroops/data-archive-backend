@@ -1,3 +1,4 @@
+import moment from "moment";
 import { Prisma } from "../generated/prisma-client";
 
 // Defining the context interface
@@ -8,8 +9,9 @@ interface IContext {
 
 // Defining Query methods
 const Query = {
-  // TODO UPDATE.
-  // Query for the current user
+  /**
+   * Get the currently logged in user,
+   */
   user(root: any, args: {}, ctx: IContext) {
     if (!ctx.user) {
       return null;
@@ -53,6 +55,28 @@ const Query = {
         }
       }
     }`);
+  },
+  async passwordResetTokenStatus(
+    root: any,
+    { token }: any,
+    { prisma }: IContext
+  ) {
+    const user = await prisma.user({
+      passwordResetToken: token
+    });
+    if (!user) {
+      return { status: false, message: "The token is unknown." };
+    }
+
+    // Check if token is not expired
+    if (
+      user.passwordResetTokenExpiry &&
+      moment(user.passwordResetTokenExpiry) <= moment(Date.now())
+    ) {
+      return { status: false, message: "The token has expired." };
+    }
+
+    return { status: true };
   }
 };
 
