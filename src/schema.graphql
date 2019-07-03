@@ -137,7 +137,3 @@ type DataFile {
     ownedByUser: Boolean!
     metadata : [MetadataItem!]!
 }
-
-type DDTY {
-    dataFiles: [DataFile]
-}
