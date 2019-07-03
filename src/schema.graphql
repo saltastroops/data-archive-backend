@@ -18,7 +18,31 @@ type Query {
 #  Checks if the given token is valid.
   passwordResetTokenStatus(token: String!): Status
 
-  dataFiles (where: String!, columns: [String!]!): [DataFile]
+  """
+  Details about data files.
+  """
+  dataFiles(
+    """
+    Filter condition for the database query.
+    """
+    where: String!
+
+    """
+    Database columns whose values should be included in the results.
+    """
+    columns: [String!]!
+
+    """
+    The index of the first result to include in the search results. An offset of zero is assumed, i.e. a start index of
+    5 refers to the 6th result.
+    """
+    startIndex: Int = 0
+
+    """
+    Maximum number of data files to return.
+    """
+    limit: Int = 1000
+  ): DataFileConnection!
 }
 
 #The schema's root mutation type.
@@ -128,6 +152,29 @@ type Status {
 }
 
 """
+Information about a search results page.
+"""
+type PageInfo {
+  """
+  The index of the first search result on the page. An index offset of 0 is assumed. So, for example, if the start index
+  is 100, the first 100 search results have been skipped and 101st result is the first result included in the page's
+  items.
+  """
+  startIndex: Int!
+
+  """
+  The (maximum) number of results included on a page. Depending on the values of the start index and the items total
+  the actual number returned may be smaller.
+  """
+  itemsPerPage: Int!
+
+  """
+  The total number of search results.
+  """
+  itemsTotal: Int!
+}
+
+"""
 A metadata item.
 """
 type MetadataItem {
@@ -140,6 +187,21 @@ type MetadataItem {
   Value of the metadata item.
   """
   value: String
+}
+
+"""
+Results for a data file query.
+"""
+type DataFileConnection {
+  """
+  List of data files.
+  """
+  dataFiles: [DataFile!]!
+
+  """
+  Search page details.
+  """
+  pageInfo: PageInfo!
 }
 
 """

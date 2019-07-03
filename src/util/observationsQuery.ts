@@ -8,7 +8,7 @@
  *
  * Boolean values are mapped to 1 for true and to 0 for false.
  */
-import { DatabaseModel, IDatabaseTableInfo } from "./DatabaseModel";
+import { DatabaseModel } from "./DatabaseModel";
 
 class WhereConditionContent {
   private columnsSet: Set<string>;
@@ -58,11 +58,6 @@ class WhereConditionContent {
   public get columns() {
     return this.columnsSet;
   }
-}
-
-function tableColumn(tc: string) {
-  const spl = tc.split(".");
-  return `\`${spl[0]}\`.${spl[1]}`;
 }
 
 /**
@@ -138,42 +133,42 @@ export function parseWhereCondition(where: string): WhereConditionContent {
     } else if (o.EQUALS) {
       validateColumn(o.EQUALS.column);
       validateValue(o.EQUALS.value);
-      sql = "(" + tableColumn(o.EQUALS.column) + " = ?)";
+      sql = "(" + o.EQUALS.column + " = ?)";
       values = [o.EQUALS.value];
-      columns.add(tableColumn(o.EQUALS.column));
+      columns.add(o.EQUALS.column);
     } else if (o.IS_NULL) {
       validateColumn(o.IS_NULL.column);
-      sql = "(" + tableColumn(o.IS_NULL.column) + " IS NULL)";
+      sql = "(" + o.IS_NULL.column + " IS NULL)";
       values = [];
       columns.add(o.IS_NULL.column);
     } else if (o.LESS_THAN) {
       validateColumn(o.LESS_THAN.column);
       validateValue(o.LESS_THAN.value);
-      sql = "(" + tableColumn(o.LESS_THAN.column) + " < ?)";
+      sql = "(" + o.LESS_THAN.column + " < ?)";
       values = [o.LESS_THAN.value];
       columns.add(o.LESS_THAN.column);
     } else if (o.GREATER_THAN) {
       validateColumn(o.GREATER_THAN.column);
       validateValue(o.GREATER_THAN.value);
-      sql = "(" + tableColumn(o.GREATER_THAN.column) + " > ?)";
+      sql = "(" + o.GREATER_THAN.column + " > ?)";
       values = [o.GREATER_THAN.value];
       columns.add(o.GREATER_THAN.column);
     } else if (o.LESS_EQUAL) {
       validateColumn(o.LESS_EQUAL.column);
       validateValue(o.LESS_EQUAL.value);
-      sql = "(" + tableColumn(o.LESS_EQUAL.column) + " <= ?)";
+      sql = "(" + o.LESS_EQUAL.column + " <= ?)";
       values = [o.LESS_EQUAL.value];
       columns.add(o.LESS_EQUAL.column);
     } else if (o.GREATER_EQUAL) {
       validateColumn(o.GREATER_EQUAL.column);
       validateValue(o.GREATER_EQUAL.value);
-      sql = "(" + tableColumn(o.GREATER_EQUAL.column) + " >= ?)";
+      sql = "(" + o.GREATER_EQUAL.column + " >= ?)";
       values = [o.GREATER_EQUAL.value];
       columns.add(o.GREATER_EQUAL.column);
     } else if (o.CONTAINS) {
       validateColumn(o.CONTAINS.column);
       validateValue(o.CONTAINS.value);
-      sql = "(" + tableColumn(o.CONTAINS.column) + " LIKE ?)";
+      sql = "(" + o.CONTAINS.column + " LIKE ?)";
       values = [o.CONTAINS.value];
       columns.add(o.CONTAINS.column);
     } else if (o.WITHIN_RADIUS) {
