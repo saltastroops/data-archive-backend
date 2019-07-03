@@ -122,6 +122,10 @@ enum DataFileOrderByInput {
   category_DESC
   size_ASC
   size_DESC
+  createdAt_ASC
+  createdAt_DESC
+  updatedAt_ASC
+  updatedAt_DESC
 }
 
 type DataFilePreviousValues {
@@ -445,6 +449,10 @@ enum DataRequestOrderByInput {
   madeAt_DESC
   uri_ASC
   uri_DESC
+  createdAt_ASC
+  createdAt_DESC
+  updatedAt_ASC
+  updatedAt_DESC
 }
 
 type DataRequestPart {
@@ -488,6 +496,10 @@ enum DataRequestPartOrderByInput {
   statusReason_DESC
   uri_ASC
   uri_DESC
+  createdAt_ASC
+  createdAt_DESC
+  updatedAt_ASC
+  updatedAt_DESC
 }
 
 type DataRequestPartPreviousValues {
@@ -809,6 +821,10 @@ enum HeaderOrderByInput {
   key_DESC
   value_ASC
   value_DESC
+  createdAt_ASC
+  createdAt_DESC
+  updatedAt_ASC
+  updatedAt_DESC
 }
 
 type HeaderPreviousValues {
@@ -1116,6 +1132,10 @@ enum ObservationOrderByInput {
   telescope_DESC
   publicFrom_ASC
   publicFrom_DESC
+  createdAt_ASC
+  createdAt_DESC
+  updatedAt_ASC
+  updatedAt_DESC
 }
 
 type ObservationPreviousValues {
@@ -1383,6 +1403,10 @@ enum PersonOrderByInput {
   givenName_DESC
   familyName_ASC
   familyName_DESC
+  createdAt_ASC
+  createdAt_DESC
+  updatedAt_ASC
+  updatedAt_DESC
 }
 
 type PersonPreviousValues {
@@ -1539,6 +1563,10 @@ enum ProposalOrderByInput {
   title_DESC
   abstract_ASC
   abstract_DESC
+  createdAt_ASC
+  createdAt_DESC
+  updatedAt_ASC
+  updatedAt_DESC
 }
 
 type ProposalPreviousValues {
@@ -1785,6 +1813,10 @@ enum UserOrderByInput {
   passwordResetToken_DESC
   passwordResetTokenExpiry_ASC
   passwordResetTokenExpiry_DESC
+  createdAt_ASC
+  createdAt_DESC
+  updatedAt_ASC
+  updatedAt_DESC
 }
 
 type UserPreviousValues {
