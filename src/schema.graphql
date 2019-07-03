@@ -127,13 +127,37 @@ type Status {
     message: String
 }
 
+"""
+A metadata item.
+"""
 type MetadataItem {
+  """
+  Name of the metadata item.
+  """
   name: String!
+
+  """
+  Value of the metadata item.
+  """
   value: String
 }
 
+"""
+Details about a data file.
+"""
 type DataFile {
+    """
+    Id of the data file.
+    """
     id: ID!
+
+    """
+    Whether the currently logged in user owns the data in the file, and hence may access it even if it proprietary.
+    """
     ownedByUser: Boolean!
+
+    """
+    Metadata for the data file.
+    """
     metadata : [MetadataItem!]!
 }
