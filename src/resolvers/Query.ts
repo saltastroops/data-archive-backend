@@ -64,6 +64,7 @@ const Query = {
       }
     }`);
   },
+
   async passwordResetTokenStatus(
     root: any,
     { token }: any,
@@ -86,14 +87,19 @@ const Query = {
 
     return { status: true };
   },
+
   /**
-   * A query to retrieve the data file previews.
-   * returns an object that consists of the list
-   * of images paths and a string of FITS hearders.
-   * e.g. {
+   * A query to retrieve data file preview details.
+   *
+   * The query returns an object that consists of the list
+   * of images URIs and a string with the FITS headers.
+   *
+   * For example:
+   *
+   * {
    *    dataPreviewFitsHeaders: 'TEST = 5555\nTEST1 = 2222\n',
-   *    dataPreviewFilePaths: ['
-   *      /home/path/to/preview_file/image.png
+   *    dataPreviewFilePaths: [
+   *      '/previews/Preview-1234.png'
    *    ']
    * }
    */

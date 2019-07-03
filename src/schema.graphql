@@ -30,7 +30,7 @@ type Query {
   passwordResetTokenStatus(token: String!): Status
 
   """
-  Data preview.
+  The data preview content for a data file.
   """
   dataPreview(
     """
@@ -200,6 +200,7 @@ type Status {
   Success status.
   """
   status: Boolean!
+
   """
   Message is ever the status has one.
   """
@@ -211,11 +212,12 @@ Data preview.
 """
 type DataPreview {
   """
-  A list of data preview file path.
+  File paths of the preview images.
   """
   dataPreviewFilePaths: [String!]!
+
   """
-  The FITS headers as a sting for the data preview
+  FITS headers as a string.
   """
   dataPreviewFitsHeaders: String!
 }
