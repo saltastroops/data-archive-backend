@@ -1,5 +1,6 @@
 import moment from "moment";
 import { Prisma } from "../generated/prisma-client";
+import { queryDataFiles } from "./serchResults";
 
 // Defining the context interface
 interface IContext {
@@ -19,6 +20,12 @@ const Query = {
     return ctx.prisma.user({
       id: ctx.user.id
     });
+  },
+
+  async search(root: any, args: any, ctx: IContext) {
+    return {
+      data: await queryDataFiles(args.columns, args.where)
+    };
   },
 
   // Query for the current user's data requests

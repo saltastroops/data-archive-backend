@@ -60,6 +60,11 @@ class WhereConditionContent {
   }
 }
 
+function tableColumn(tc: string) {
+  const spl = tc.split(".");
+  return `\`${spl[0]}\`.${spl[1]}`;
+}
+
 /**
  * Parse the given where condition into a SQL statement, its values and the
  * columns used in the condition.
@@ -133,42 +138,42 @@ export function parseWhereCondition(where: string): WhereConditionContent {
     } else if (o.EQUALS) {
       validateColumn(o.EQUALS.column);
       validateValue(o.EQUALS.value);
-      sql = "(`" + o.EQUALS.column + "` = ?)";
+      sql = "(" + tableColumn(o.EQUALS.column) + " = ?)";
       values = [o.EQUALS.value];
-      columns.add(o.EQUALS.column);
+      columns.add(tableColumn(o.EQUALS.column));
     } else if (o.IS_NULL) {
       validateColumn(o.IS_NULL.column);
-      sql = "(`" + o.IS_NULL.column + "` IS NULL)";
+      sql = "(" + tableColumn(o.IS_NULL.column) + " IS NULL)";
       values = [];
       columns.add(o.IS_NULL.column);
     } else if (o.LESS_THAN) {
       validateColumn(o.LESS_THAN.column);
       validateValue(o.LESS_THAN.value);
-      sql = "(`" + o.LESS_THAN.column + "` < ?)";
+      sql = "(" + tableColumn(o.LESS_THAN.column) + " < ?)";
       values = [o.LESS_THAN.value];
       columns.add(o.LESS_THAN.column);
     } else if (o.GREATER_THAN) {
       validateColumn(o.GREATER_THAN.column);
       validateValue(o.GREATER_THAN.value);
-      sql = "(`" + o.GREATER_THAN.column + "` > ?)";
+      sql = "(" + tableColumn(o.GREATER_THAN.column) + " > ?)";
       values = [o.GREATER_THAN.value];
       columns.add(o.GREATER_THAN.column);
     } else if (o.LESS_EQUAL) {
       validateColumn(o.LESS_EQUAL.column);
       validateValue(o.LESS_EQUAL.value);
-      sql = "(`" + o.LESS_EQUAL.column + "` <= ?)";
+      sql = "(" + tableColumn(o.LESS_EQUAL.column) + " <= ?)";
       values = [o.LESS_EQUAL.value];
       columns.add(o.LESS_EQUAL.column);
     } else if (o.GREATER_EQUAL) {
       validateColumn(o.GREATER_EQUAL.column);
       validateValue(o.GREATER_EQUAL.value);
-      sql = "(`" + o.GREATER_EQUAL.column + "` >= ?)";
+      sql = "(" + tableColumn(o.GREATER_EQUAL.column) + " >= ?)";
       values = [o.GREATER_EQUAL.value];
       columns.add(o.GREATER_EQUAL.column);
     } else if (o.CONTAINS) {
       validateColumn(o.CONTAINS.column);
       validateValue(o.CONTAINS.value);
-      sql = "(`" + o.CONTAINS.column + "` LIKE ?)";
+      sql = "(" + tableColumn(o.CONTAINS.column) + " LIKE ?)";
       values = [o.CONTAINS.value];
       columns.add(o.CONTAINS.column);
     } else if (o.WITHIN_RADIUS) {

@@ -1,5 +1,5 @@
 Arguments: 
-  /usr/bin/node /usr/bin/yarn test
+  /usr/bin/node /usr/bin/yarn add @types/promise-mysql
 
 PATH: 
   /home/nhlavu/mongodb/mongodb-linux-x86_64-3.6.5/bin/:/home/nhlavu/.rvm/gems/ruby-2.4.1/bin:/home/nhlavu/.rvm/gems/ruby-2.4.1@global/bin:/home/nhlavu/.rvm/rubies/ruby-2.4.1/bin:/home/nhlavu/bin:/home/nhlavu/.local/bin:/home/nhlavu/mongodb/mongodb-linux-x86_64-3.6.5/bin/:/home/nhlavu/mongodb/mongodb-linux-x86_64-3.6.5/bin/:/home/nhlavu/bin:/home/nhlavu/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/nhlavu/.rvm/bin:/home/nhlavu/.rvm/bin:/home/nhlavu/.rvm/bin:/home/nhlavu/.rvm/bin:/home/nhlavu/.rvm/bin
@@ -26,7 +26,7 @@ npm manifest:
       "start": "pm2 start src/index.ts --node-args='-r dotenv/config'",
       "deploy": "export DEBUG=\"prisma\"; cd src/; prisma deploy --env-file ../.env",
       "dev": " export DEBUG=\"nodemon\"; nodemon -e ts,graphql -x ts-node -r dotenv/config src/index.ts",
-      "test": "PRISMA_ENDPOINT=https://fakeaddress jest",
+      "test": "PRISMA_ENDPOINT=https://fakeaddress jest --detectOpenHandles",
       "test:coverage": "PRISMA_ENDPOINT=https://fakeaddress jest --coverage",
       "test:watch": "PRISMA_ENDPOINT=https://fakeaddress jest --watch",
       "format": "prettier --write '{*.json,src/**/*.{js,ts,tsx,json,graphql}}'",
@@ -51,6 +51,7 @@ npm manifest:
       "@types/express-session": "^1.15.11",
       "@types/graphql": "^14.0.5",
       "@types/moment": "^2.13.0",
+      "@types/mysql": "^2.15.6",
       "@types/node": "^11.13.5",
       "@types/nodemailer": "^4.6.7",
       "@types/passport": "^1.0.0",
@@ -64,11 +65,14 @@ npm manifest:
       "graphql-yoga": "^1.17.1",
       "isemail": "^3.2.0",
       "moment": "^2.24.0",
+      "mysql": "^2.17.1",
+      "mysql2": "^1.6.5",
       "nodemailer": "^6.1.0",
       "nodemon": "^1.18.9",
       "passport": "^0.4.0",
       "passport-local": "^1.0.0",
       "prisma-client-lib": "^1.25.4",
+      "promise-mysql": "^4.0.4",
       "ts-node": "^8.0.2",
       "ts-promisify": "^3.3.2",
       "typescript": "^3.2.4"
@@ -500,6 +504,10 @@ Lockfile:
     version "3.0.0"
     resolved "https://registry.yarnpkg.com/@types/bcrypt/-/bcrypt-3.0.0.tgz#851489a9065a067cb7f3c9cbe4ce9bed8bba0876"
   
+  "@types/bluebird@^3.5.26":
+    version "3.5.27"
+    resolved "https://registry.yarnpkg.com/@types/bluebird/-/bluebird-3.5.27.tgz#61eb4d75dc6bfbce51cf49ee9bbebe941b2cb5d0"
+  
   "@types/body-parser@*", "@types/body-parser@^1.17.0":
     version "1.17.0"
     resolved "https://registry.yarnpkg.com/@types/body-parser/-/body-parser-1.17.0.tgz#9f5c9d9bd04bb54be32d5eb9fc0d8c974e6cf58c"
@@ -597,6 +605,12 @@ Lockfile:
     resolved "https://registry.yarnpkg.com/@types/moment/-/moment-2.13.0.tgz#604ebd189bc3bc34a1548689404e61a2a4aac896"
     dependencies:
       moment "*"
+  
+  "@types/mysql@^2.15.2", "@types/mysql@^2.15.6":
+    version "2.15.6"
+    resolved "https://registry.yarnpkg.com/@types/mysql/-/mysql-2.15.6.tgz#8718a66e362a4cfde73fe731792bdf453ef3a541"
+    dependencies:
+      "@types/node" "*"
   
   "@types/node@*", "@types/node@^10.12.0":
     version "10.12.19"
@@ -1047,9 +1061,17 @@ Lockfile:
       nan "2.12.1"
       node-pre-gyp "0.12.0"
   
+  bignumber.js@7.2.1:
+    version "7.2.1"
+    resolved "https://registry.yarnpkg.com/bignumber.js/-/bignumber.js-7.2.1.tgz#80c048759d826800807c4bfd521e50edbba57a5f"
+  
   binary-extensions@^1.0.0:
     version "1.12.0"
     resolved "https://registry.yarnpkg.com/binary-extensions/-/binary-extensions-1.12.0.tgz#c2d780f53d45bba8317a8902d4ceeaf3a6385b14"
+  
+  bluebird@^3.5.1:
+    version "3.5.5"
+    resolved "https://registry.yarnpkg.com/bluebird/-/bluebird-3.5.5.tgz#a8d0afd73251effbbd5fe384a77d73003c17a71f"
   
   body-parser-graphql@1.1.0:
     version "1.1.0"
@@ -1594,6 +1616,10 @@ Lockfile:
     version "1.0.0"
     resolved "https://registry.yarnpkg.com/delegates/-/delegates-1.0.0.tgz#84c6e159b81904fdca59a0ef44cd870d31250f9a"
   
+  denque@^1.4.0:
+    version "1.4.1"
+    resolved "https://registry.yarnpkg.com/denque/-/denque-1.4.1.tgz#6744ff7641c148c3f8a69c307e51235c1f4a37cf"
+  
   depd@~1.1.1, depd@~1.1.2:
     version "1.1.2"
     resolved "https://registry.yarnpkg.com/depd/-/depd-1.1.2.tgz#9bcd52e14c097763e749b274c4346ed2e560b5a9"
@@ -2072,6 +2098,12 @@ Lockfile:
       strip-ansi "^3.0.1"
       wide-align "^1.1.0"
   
+  generate-function@^2.3.1:
+    version "2.3.1"
+    resolved "https://registry.yarnpkg.com/generate-function/-/generate-function-2.3.1.tgz#f069617690c10c868e73b8465746764f97c3479f"
+    dependencies:
+      is-property "^1.0.2"
+  
   get-caller-file@^1.0.1:
     version "1.0.3"
     resolved "https://registry.yarnpkg.com/get-caller-file/-/get-caller-file-1.0.3.tgz#f978fa4c90d1dfe7ff2d6beda2a515e713bdcf4a"
@@ -2421,7 +2453,7 @@ Lockfile:
     dependencies:
       safer-buffer ">= 2.1.2 < 3"
   
-  iconv-lite@0.4.24, iconv-lite@^0.4.4:
+  iconv-lite@0.4.24, iconv-lite@^0.4.24, iconv-lite@^0.4.4:
     version "0.4.24"
     resolved "https://registry.yarnpkg.com/iconv-lite/-/iconv-lite-0.4.24.tgz#2022b4b25fbddc21d2f524974a474aafe733908b"
     dependencies:
@@ -2680,6 +2712,10 @@ Lockfile:
   is-promise@^2.1.0:
     version "2.1.0"
     resolved "https://registry.yarnpkg.com/is-promise/-/is-promise-2.1.0.tgz#79a2a9ece7f096e80f36d2b2f3bc16c1ff4bf3fa"
+  
+  is-property@^1.0.2:
+    version "1.0.2"
+    resolved "https://registry.yarnpkg.com/is-property/-/is-property-1.0.2.tgz#57fe1c4e48474edd65b09911f26b1cd4095dda84"
   
   is-redirect@^1.0.0:
     version "1.0.0"
@@ -3509,6 +3545,10 @@ Lockfile:
       cli-cursor "^2.0.0"
       wrap-ansi "^3.0.1"
   
+  long@^4.0.0:
+    version "4.0.0"
+    resolved "https://registry.yarnpkg.com/long/-/long-4.0.0.tgz#9a7b71cfb7d361a194ea555241c92f7468d5bf28"
+  
   loose-envify@^1.0.0:
     version "1.4.0"
     resolved "https://registry.yarnpkg.com/loose-envify/-/loose-envify-1.4.0.tgz#71ee51fa7be4caec1a63839f7e682d8132d30caf"
@@ -3519,7 +3559,7 @@ Lockfile:
     version "1.0.1"
     resolved "https://registry.yarnpkg.com/lowercase-keys/-/lowercase-keys-1.0.1.tgz#6f9e30b47084d971a7c820ff15a6c5167b74c26f"
   
-  lru-cache@^4.0.1:
+  lru-cache@^4.0.1, lru-cache@^4.1.3:
     version "4.1.5"
     resolved "https://registry.yarnpkg.com/lru-cache/-/lru-cache-4.1.5.tgz#8bbe50ea85bed59bc9e33dcab8235ee9bcf443cd"
     dependencies:
@@ -3706,6 +3746,34 @@ Lockfile:
   ms@^2.1.1:
     version "2.1.1"
     resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.1.tgz#30a5864eb3ebb0a66f2ebe6d727af06a09d86e0a"
+  
+  mysql2@^1.6.5:
+    version "1.6.5"
+    resolved "https://registry.yarnpkg.com/mysql2/-/mysql2-1.6.5.tgz#6695304fa2ce793dda5c98e8bbec65cbd2e6cb9d"
+    dependencies:
+      denque "^1.4.0"
+      generate-function "^2.3.1"
+      iconv-lite "^0.4.24"
+      long "^4.0.0"
+      lru-cache "^4.1.3"
+      named-placeholders "^1.1.2"
+      seq-queue "^0.0.5"
+      sqlstring "^2.3.1"
+  
+  mysql@^2.17.1:
+    version "2.17.1"
+    resolved "https://registry.yarnpkg.com/mysql/-/mysql-2.17.1.tgz#62bba4a039a9b2f73638cd1652ce50fc6f682899"
+    dependencies:
+      bignumber.js "7.2.1"
+      readable-stream "2.3.6"
+      safe-buffer "5.1.2"
+      sqlstring "2.3.1"
+  
+  named-placeholders@^1.1.2:
+    version "1.1.2"
+    resolved "https://registry.yarnpkg.com/named-placeholders/-/named-placeholders-1.1.2.tgz#ceb1fbff50b6b33492b5cf214ccf5e39cef3d0e8"
+    dependencies:
+      lru-cache "^4.1.3"
   
   nan@2.12.1, nan@^2.9.2:
     version "2.12.1"
@@ -4267,6 +4335,15 @@ Lockfile:
     version "2.0.0"
     resolved "https://registry.yarnpkg.com/process-nextick-args/-/process-nextick-args-2.0.0.tgz#a37d732f4271b4ab1ad070d35508e8290788ffaa"
   
+  promise-mysql@^4.0.4:
+    version "4.0.4"
+    resolved "https://registry.yarnpkg.com/promise-mysql/-/promise-mysql-4.0.4.tgz#e7bc47ad9b4e3119e559ae5b0c519f19b1952ee4"
+    dependencies:
+      "@types/bluebird" "^3.5.26"
+      "@types/mysql" "^2.15.2"
+      bluebird "^3.5.1"
+      mysql "^2.17.1"
+  
   prompts@^2.0.1:
     version "2.0.1"
     resolved "https://registry.yarnpkg.com/prompts/-/prompts-2.0.1.tgz#201b3718b4276fb407f037db48c0029d6465245c"
@@ -4390,7 +4467,7 @@ Lockfile:
       isarray "0.0.1"
       string_decoder "~0.10.x"
   
-  readable-stream@^2.0.1, readable-stream@^2.0.2, readable-stream@^2.0.6, readable-stream@^2.2.2, readable-stream@^2.3.5:
+  readable-stream@2.3.6, readable-stream@^2.0.1, readable-stream@^2.0.2, readable-stream@^2.0.6, readable-stream@^2.2.2, readable-stream@^2.3.5:
     version "2.3.6"
     resolved "https://registry.yarnpkg.com/readable-stream/-/readable-stream-2.3.6.tgz#b11c27d88b8ff1fbe070643cf94b0c79ae1b0aaf"
     dependencies:
@@ -4641,6 +4718,10 @@ Lockfile:
       range-parser "~1.2.0"
       statuses "~1.4.0"
   
+  seq-queue@^0.0.5:
+    version "0.0.5"
+    resolved "https://registry.yarnpkg.com/seq-queue/-/seq-queue-0.0.5.tgz#d56812e1c017a6e4e7c3e3a37a1da6d78dd3c93e"
+  
   serve-static@1.13.2:
     version "1.13.2"
     resolved "https://registry.yarnpkg.com/serve-static/-/serve-static-1.13.2.tgz#095e8472fd5b46237db50ce486a43f4b86c6cec1"
@@ -4799,6 +4880,10 @@ Lockfile:
   sprintf-js@~1.0.2:
     version "1.0.3"
     resolved "https://registry.yarnpkg.com/sprintf-js/-/sprintf-js-1.0.3.tgz#04e6926f662895354f3dd015203633b857297e2c"
+  
+  sqlstring@2.3.1, sqlstring@^2.3.1:
+    version "2.3.1"
+    resolved "https://registry.yarnpkg.com/sqlstring/-/sqlstring-2.3.1.tgz#475393ff9e91479aea62dcaf0ca3d14983a7fb40"
   
   sshpk@^1.7.0:
     version "1.16.1"
@@ -5538,17 +5623,14 @@ Lockfile:
     resolved "https://registry.yarnpkg.com/zen-observable/-/zen-observable-0.8.13.tgz#a9f1b9dbdfd2d60a08761ceac6a861427d44ae2e"
 
 Trace: 
-  Error: Command failed.
-  Exit code: 1
-  Command: sh
-  Arguments: -c PRISMA_ENDPOINT=https://fakeaddress jest
-  Directory: /home/nhlavu/nhlavu/da/backend/data-archive-backend
-  Output:
-  
-      at ProcessTermError.MessageError (/usr/lib/node_modules/yarn/lib/cli.js:186:110)
-      at new ProcessTermError (/usr/lib/node_modules/yarn/lib/cli.js:226:113)
-      at ChildProcess.<anonymous> (/usr/lib/node_modules/yarn/lib/cli.js:30281:17)
+  Error: https://registry.yarnpkg.com/@types%2fpromise-mysql: Not found
+      at Request.params.callback [as _callback] (/usr/lib/node_modules/yarn/lib/cli.js:65019:18)
+      at Request.self.callback (/usr/lib/node_modules/yarn/lib/cli.js:132430:22)
       at emitTwo (events.js:126:13)
-      at ChildProcess.emit (events.js:214:7)
-      at maybeClose (internal/child_process.js:925:16)
-      at Process.ChildProcess._handle.onexit (internal/child_process.js:209:5)
+      at Request.emit (events.js:214:7)
+      at Request.<anonymous> (/usr/lib/node_modules/yarn/lib/cli.js:133413:10)
+      at emitOne (events.js:116:13)
+      at Request.emit (events.js:211:7)
+      at IncomingMessage.<anonymous> (/usr/lib/node_modules/yarn/lib/cli.js:133333:12)
+      at Object.onceWrapper (events.js:313:30)
+      at emitNone (events.js:111:20)
