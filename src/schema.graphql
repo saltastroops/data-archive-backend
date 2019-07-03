@@ -28,6 +28,16 @@ type Query {
   Checks if the given token is valid.
   """
   passwordResetTokenStatus(token: String!): Status
+
+  """
+  Data preview.
+  """
+  dataPreview(
+    """
+    Data file ID.
+    """
+    dataFileId: Int!
+  ): DataPreview!
 }
 
 """
@@ -185,4 +195,18 @@ type Status {
     Message is ever the status has one.
     """
     message: String
+}
+
+"""
+Data preview.
+"""
+type DataPreview {
+  """
+  A list of data preview file path.
+  """
+  dataPreviewFilePaths: [String!]!
+  """
+  The FITS headers as a sting for the data preview
+  """
+  dataPreviewFitsHeaders: String!
 }

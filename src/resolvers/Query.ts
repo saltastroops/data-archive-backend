@@ -1,10 +1,18 @@
+import fs from "fs";
 import moment from "moment";
+import Database from "../db/connection";
 import { Prisma } from "../generated/prisma-client";
 
 // Defining the context interface
 interface IContext {
   prisma: Prisma;
   user: { id: string }; // TODO user interface
+}
+
+// Defining the data preview interface
+interface IDataPreview {
+  dataPreviewFilePaths: string[];
+  dataPreviewFitsHeaders: string;
 }
 
 // Defining Query methods
@@ -77,6 +85,51 @@ const Query = {
     }
 
     return { status: true };
+  },
+  /**
+   * A query to retrieve the data file previews.
+   * returns an object that consists of the list
+   * of images paths and a string of FITS hearders.
+   * e.g. {
+   *    dataPreviewFitsHeaders: 'TEST = 5555\nTEST1 = 2222\n',
+   *    dataPreviewFilePaths: ['
+   *      /home/path/to/preview_file/image.png
+   *    ']
+   * }
+   */
+  async dataPreview(root: any, args: { dataFileId: number }, ctx: IContext) {
+    // Creates the database connection
+    const conn = new Database();
+    // Query for retrieving the data previews
+    const sql = `
+      SELECT dataPreviewType, path, dataFileId
+      FROM DataPreview AS dp 
+      JOIN DataPreviewType AS dpt ON dp.previewTypeId = dpt.dataPreviewTypeId
+      WHERE dp.dataFileId = ?
+    `;
+    // Querying the data previews
+    const rows = await conn.query(sql, [args.dataFileId]);
+
+    let dataPreviewFitsHeaders: string = "";
+    const dataPreviewFilePaths: string[] = [];
+
+    rows.forEach((row: { path: string; dataPreviewType: string }) => {
+      if (row.dataPreviewType === "Header") {
+        // Read the file that contains FITS headers as a string
+        dataPreviewFitsHeaders = fs.readFileSync(row.path, "utf-8");
+      } else if (row.dataPreviewType === "Image") {
+        // Add all the image paths to the list
+        dataPreviewFilePaths.push(row.path);
+      }
+    });
+
+    // Close the connection.
+    conn.close();
+
+    return {
+      dataPreviewFilePaths,
+      dataPreviewFitsHeaders
+    };
   }
 };
 
