@@ -22,10 +22,9 @@ const Query = {
     });
   },
 
-  async search(root: any, args: any, ctx: IContext) {
-    return {
-      data: await queryDataFiles(args.columns, args.where)
-    };
+  async dataFiles(root: any, args: any, ctx: IContext) {
+    const results = await queryDataFiles(args.columns, args.where);
+    return results;
   },
 
   // Query for the current user's data requests

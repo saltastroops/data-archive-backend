@@ -24,17 +24,20 @@ export const queryDataFiles = async (columns: any, whereCondition: any) => {
   const sqlFrom = createFromExpression(columns, dataModel);
 
   const sql = `SELECT 
+        DataFile.dataFileId as id,
         ${columns.join(", ")}
     FROM ${sqlFrom} WHERE ${sqlWhere.sql}`;
 
   const results = await connection.query(sql, sqlWhere.values);
 
   return results.map((row: any) => ({
-    row: [
+    id: row.id,
+    metadata: [
       ...Object.entries(row).map(entry => ({
-        column: entry[0],
+        name: entry[0],
         value: entry[1]
       }))
-    ]
+    ],
+    ownedByUser: true
   }));
 };

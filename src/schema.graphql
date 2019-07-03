@@ -18,7 +18,7 @@ type Query {
 #  Checks if the given token is valid.
   passwordResetTokenStatus(token: String!): Status
 
-  search (where: String!, columns: [String!]!): Search
+  dataFiles (where: String!, columns: [String!]!): [DataFile]
 }
 
 #The schema's root mutation type.
@@ -127,15 +127,17 @@ type Status {
     message: String
 }
 
-type ColumnValue {
-  column: String!
+type MetadataItem {
+  name: String!
   value: String
 }
 
-type Result {
-  row: [ColumnValue!]!
+type DataFile {
+    id: ID!
+    ownedByUser: Boolean!
+    metadata : [MetadataItem!]!
 }
 
-type Search {
-    data : [Result]
+type DDTY {
+    dataFiles: [DataFile]
 }
