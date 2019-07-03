@@ -70,9 +70,9 @@ export const queryDataFiles = async (
 
   // Collect all the details
   const pageInfo = {
-    startIndex,
     itemsPerPage: limit,
-    itemsTotal
+    itemsTotal,
+    startIndex
   };
   const dataFiles = itemResults.map((row: any) => ({
     id: row["DataFile.dataFileId"],
