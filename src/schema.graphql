@@ -212,12 +212,12 @@ Data preview.
 """
 type DataPreview {
   """
-  File paths of the preview images.
+  URIs for the data preview images.
   """
-  dataPreviewFilePaths: [String!]!
+  imageURIs: [String!]!
 
   """
   FITS headers as a string.
   """
-  dataPreviewFitsHeaders: String!
+  fitsHeaders: String!
 }

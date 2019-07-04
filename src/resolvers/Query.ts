@@ -1,6 +1,6 @@
 import fs from "fs";
 import moment from "moment";
-import Database from "../db/connection";
+import { dbConnection } from "../db/connection";
 import { Prisma } from "../generated/prisma-client";
 
 // Defining the context interface
@@ -11,8 +11,8 @@ interface IContext {
 
 // Defining the data preview interface
 interface IDataPreview {
-  dataPreviewFilePaths: string[];
-  dataPreviewFitsHeaders: string;
+  imageURIs: string[];
+  fitsHeaders: string;
 }
 
 // Defining Query methods
@@ -97,45 +97,41 @@ const Query = {
    * For example:
    *
    * {
-   *    dataPreviewFitsHeaders: 'TEST = 5555\nTEST1 = 2222\n',
-   *    dataPreviewFilePaths: [
+   *    fitsHeaders: 'TEST = 5555\nTEST1 = 2222\n',
+   *    imageURIs: [
    *      '/previews/Preview-1234.png'
    *    ']
    * }
    */
   async dataPreview(root: any, args: { dataFileId: number }, ctx: IContext) {
-    // Creates the database connection
-    const conn = new Database();
     // Query for retrieving the data previews
     const sql = `
       SELECT dataPreviewType, path, dataFileId
       FROM DataPreview AS dp 
       JOIN DataPreviewType AS dpt ON dp.previewTypeId = dpt.dataPreviewTypeId
       WHERE dp.dataFileId = ?
+      ORDER BY dp.previewOrder
     `;
     // Querying the data previews
-    const rows = await conn.query(sql, [args.dataFileId]);
+    const rows = await dbConnection.query(sql, [args.dataFileId]);
 
-    let dataPreviewFitsHeaders: string = "";
-    const dataPreviewFilePaths: string[] = [];
+    const results: IDataPreview = {
+      fitsHeaders: "",
+      imageURIs: []
+    };
 
-    rows.forEach((row: { path: string; dataPreviewType: string }) => {
+    (rows as any).forEach((row: { path: string; dataPreviewType: string }) => {
       if (row.dataPreviewType === "Header") {
-        // Read the file that contains FITS headers as a string
-        dataPreviewFitsHeaders = fs.readFileSync(row.path, "utf-8");
+        // Read the file that contains FITS headers,
+        // If there are multiple files, include all FITS headers in a string
+        results.fitsHeaders += fs.readFileSync(row.path, "utf-8");
       } else if (row.dataPreviewType === "Image") {
-        // Add all the image paths to the list
-        dataPreviewFilePaths.push(row.path);
+        // Add all the image URIs to the list
+        results.imageURIs.push(row.path);
       }
     });
 
-    // Close the connection.
-    conn.close();
-
-    return {
-      dataPreviewFilePaths,
-      dataPreviewFitsHeaders
-    };
+    return results;
   }
 };
 

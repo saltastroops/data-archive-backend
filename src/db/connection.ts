@@ -1,44 +1,31 @@
 import mysql from "mysql";
 import util from "util";
 
-/**
- * A database class
- */
-class Database {
-  public connection: any;
+// Database configuration parameters
+const config = {
+  database: process.env.DATABASE_NAME,
+  host: process.env.DATABASE_HOST,
+  password: process.env.DATABASE_PASSWORD,
+  user: process.env.DATABASE_USER
+};
 
-  private config = {
-    database: process.env.DATABASE_NAME,
-    host: process.env.DATABASE_HOST,
-    password: process.env.DATABASE_PASSWORD,
-    user: process.env.DATABASE_USER
-  };
+// Creating a pool of database connections
+// It is a good practice to use a pool of connections
+// for database connection management purposes
+const dbConnection = mysql.createPool(config);
 
-  /**
-   * A constructor function which creates the new database connection
-   */
-  constructor() {
-    this.connection = mysql.createConnection(this.config);
-    // Promisifying the query and end functions so that can use async / wait
-    this.connection.query = util.promisify(this.connection.query);
-    this.connection.end = util.promisify(this.connection.end);
+// Establishing the database connection
+dbConnection.getConnection((err, connection) => {
+  if (err) {
+    throw Error("Something went wrong, please try again later.");
   }
+  if (connection) {
+    connection.release();
+  }
+  return;
+});
 
-  /**
-   * A function that is responsible for making the SQL query.
-   * It returns a Promise.
-   *
-   * @param sql the SQL query e.g 'SELECT * FROM table'
-   * @param args the paremeters for the SQL query e.g. [pram1, param2]
-   */
-  query = async (sql: any, args?: any[]) => {
-    return this.connection.query(sql, args);
-  };
+// Promisifying the query function so that async / wait can be used
+(dbConnection.query as any) = util.promisify(dbConnection.query);
 
-  /**
-   * A function that is responsible for closing the database connection.
-   * It returns a Promise
-   */
-  close = async () => this.connection.end();
-}
-export default Database;
+export { dbConnection };
