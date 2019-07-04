@@ -41,6 +41,11 @@ export const queryDataFiles = async (
     whereDetails = new WhereConditionContent("1=1", [], new Set());
   }
 
+  // Make sure there are columns to return
+  if (!columns.length) {
+    throw new Error("The list of columns must not be empty.");
+  }
+
   // Columns to include in the search results
   const allColumns = new Set(columns);
   allColumns.add("DataFile.dataFileId");
