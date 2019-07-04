@@ -1,7 +1,8 @@
 import Database from "../connection";
 import {
   createFromExpression,
-  parseWhereCondition
+  parseWhereCondition,
+  WhereConditionContent
 } from "../util/observationsQuery";
 import { dataModel } from "../util/tables";
 
@@ -32,7 +33,13 @@ export const queryDataFiles = async (
   const connection = new Database();
 
   // Object containing where sql columns and mapping values
-  const whereDetails = parseWhereCondition(where);
+  const whereObject = JSON.parse(where);
+  let whereDetails: WhereConditionContent;
+  if (Object.keys(whereObject).length) {
+    whereDetails = parseWhereCondition(where);
+  } else {
+    whereDetails = new WhereConditionContent("1=1", [], new Set());
+  }
 
   // Columns to include in the search results
   const allColumns = new Set(columns);

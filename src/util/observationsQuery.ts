@@ -10,7 +10,7 @@
  */
 import { DatabaseModel } from "./DatabaseModel";
 
-class WhereConditionContent {
+export class WhereConditionContent {
   private columnsSet: Set<string>;
 
   private sqlString: string;
