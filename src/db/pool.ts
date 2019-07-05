@@ -10,12 +10,10 @@ const config = {
 };
 
 // Creating a pool of database connections
-// It is a good practice to use a pool of connections
-// for database connection management purposes
-const dbConnection = mysql.createPool(config);
+const pool = mysql.createPool(config);
 
 // Establishing the database connection
-dbConnection.getConnection((err, connection) => {
+pool.getConnection((err, connection) => {
   if (err) {
     throw Error("Something went wrong, please try again later.");
   }
@@ -26,6 +24,6 @@ dbConnection.getConnection((err, connection) => {
 });
 
 // Promisifying the query function so that async / wait can be used
-(dbConnection.query as any) = util.promisify(dbConnection.query);
+(pool.query as any) = util.promisify(pool.query);
 
-export { dbConnection };
+export default pool;

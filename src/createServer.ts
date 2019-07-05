@@ -6,6 +6,7 @@ import session from "express-session";
 import { GraphQLServer } from "graphql-yoga";
 import passport from "passport";
 import passportLocal from "passport-local";
+import pool from "./db/pool";
 import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
 
@@ -175,6 +176,53 @@ const createServer = async () => {
       success: true
     });
   });
+
+  /**
+   * Endpoint for downloading the data file preview iamge.
+   *
+   * The URL includes the following parameters.
+   *
+   * :dataFileId
+   *     The id of the data file.
+   * :dataPreviewFileName
+   *     The data preview filename.
+   */
+  server.express.get(
+    "/previews/:dataFileId/:dataPreviewFileName",
+    async (req, res) => {
+
+      // Get the data request
+      const notFound = {
+        message: "The requested file does not exist.",
+        success: false
+      };
+
+      // Get all the params from the request
+      const { dataFileId, dataPreviewFileName } = req.params;
+
+      // Download the data file preview image
+      // Query for retrieving the data previews
+      const sql = `
+      SELECT path
+      FROM DataPreview AS dp 
+      WHERE dp.dataFileId = ?
+      AND dp.dataPreviewFileName = ?
+    `;
+      // Querying the data preview image path
+      const { path }  = (await pool.query(sql, [dataFileId, dataPreviewFileName]) as any)[0];
+
+      // Download the data request file
+      res.download(path, dataPreviewFileName, err => {
+        if (err) {
+          if (!res.headersSent) {
+            res.status(404).send(notFound);
+          } else {
+            res.end();
+          }
+        }
+      });
+    }
+  );
 
   /**
    * Endpoint for downloading the data for a full data request.

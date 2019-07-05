@@ -217,7 +217,7 @@ type DataPreview {
   imageURIs: [String!]!
 
   """
-  FITS headers as a string.
+  FITS header as a string.
   """
-  fitsHeaders: String!
+  fitsHeader: String!
 }
