@@ -18,7 +18,14 @@ type Query {
 #  Checks if the given token is valid.
   passwordResetTokenStatus(token: String!): Status
 
+#  Data file GraphQL query
   dataFiles (where: String!, columns: [String!]!): [DataFile]
+
+#  The data preview content for a data file.
+  dataPreview(
+#    Data file ID.
+    dataFileId: ID!
+  ): DataPreview!
 }
 
 #The schema's root mutation type.
@@ -90,7 +97,7 @@ type Mutation {
   requestPasswordReset(
 #    The email address of the user for whom a password reset request is made.
     email: String!
-    ): User!
+  ): User!
 }
 
 
@@ -119,12 +126,21 @@ type User {
   roles: [Role!]!
 }
 
-
 type Status {
 #   Success status.
     status: Boolean!
 #   Message is ever the status has one.
     message: String
+}
+
+
+#Data preview.
+type DataPreview {
+#  URIs for the data preview images.
+  imageURIs: [String!]!
+
+#  FITS headers as a string.
+  fitsHeaders: String!
 }
 
 type MetadataItem {
@@ -138,6 +154,3 @@ type DataFile {
     metadata : [MetadataItem!]!
 }
 
-type DDTY {
-    dataFiles: [DataFile]
-}
