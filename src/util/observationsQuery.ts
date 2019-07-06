@@ -9,6 +9,7 @@
  * Boolean values are mapped to 1 for true and to 0 for false.
  */
 import { DatabaseModel } from "./DatabaseModel";
+import { prune } from "../../../frontend/src/util/query/whereCondition";
 
 export class WhereConditionContent {
   private columnsSet: Set<string>;
@@ -166,10 +167,19 @@ export function parseWhereCondition(where: string): WhereConditionContent {
       values = [o.GREATER_EQUAL.value];
       columns.add(o.GREATER_EQUAL.column);
     } else if (o.CONTAINS) {
+      const escapeChars = ["|", "#", "=", "@"];
+      const escapeChar = escapeChars.find(c => !o.CONTAINS.value.includes(c));
+      if (!escapeChar) {
+        throw new Error(
+          `A text search string must not contain all of ${escapeChars.join(
+            ", "
+          )}.`
+        );
+      }
       validateColumn(o.CONTAINS.column);
       validateValue(o.CONTAINS.value);
-      sql = "(" + o.CONTAINS.column + " LIKE ?)";
-      values = [o.CONTAINS.value];
+      sql = "(" + o.CONTAINS.column + " LIKE ? ESCAPE '" + escapeChar + "')";
+      values = ["%" + o.CONTAINS.value.replace(/[%_]/, escapeChar + "%") + "%"];
       columns.add(o.CONTAINS.column);
     } else if (o.WITHIN_RADIUS) {
       const rightAscensionColumn = o.WITHIN_RADIUS.rightAscensionColumn;
@@ -276,7 +286,12 @@ export function parseWhereCondition(where: string): WhereConditionContent {
     return new WhereConditionContent(sql, values, columns);
   }
 
-  const w = JSON.parse(where);
+  const w = prune(JSON.parse(where));
+
+  if (!Object.keys(w).length) {
+    return new WhereConditionContent("1=1", [], new Set());
+  }
+
   return convertToSQL(w);
 }
 

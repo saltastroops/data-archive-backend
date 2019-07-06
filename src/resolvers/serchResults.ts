@@ -5,6 +5,7 @@ import {
   WhereConditionContent
 } from "../util/observationsQuery";
 import { dataModel } from "../util/tables";
+import { prune } from "../../../frontend/src/util/query/whereCondition";
 
 /**
  *
@@ -33,13 +34,7 @@ export const queryDataFiles = async (
   const connection = new Database();
 
   // Object containing where sql columns and mapping values
-  const whereObject = JSON.parse(where);
-  let whereDetails: WhereConditionContent;
-  if (Object.keys(whereObject).length) {
-    whereDetails = parseWhereCondition(where);
-  } else {
-    whereDetails = new WhereConditionContent("1=1", [], new Set());
-  }
+  const whereDetails = parseWhereCondition(where);
 
   // Make sure there are columns to return
   if (!columns.length) {
