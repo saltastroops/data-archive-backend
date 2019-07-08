@@ -8,8 +8,9 @@
  *
  * Boolean values are mapped to 1 for true and to 0 for false.
  */
-import { DatabaseModel } from "./DatabaseModel";
+
 import { prune } from "../../../frontend/src/util/query/whereCondition";
+import { DatabaseModel } from "./DatabaseModel";
 
 export class WhereConditionContent {
   private columnsSet: Set<string>;

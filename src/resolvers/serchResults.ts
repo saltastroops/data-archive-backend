@@ -1,11 +1,9 @@
 import Database from "../connection";
 import {
   createFromExpression,
-  parseWhereCondition,
-  WhereConditionContent
+  parseWhereCondition
 } from "../util/observationsQuery";
 import { dataModel } from "../util/tables";
-import { prune } from "../../../frontend/src/util/query/whereCondition";
 
 /**
  *
