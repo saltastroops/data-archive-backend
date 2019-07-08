@@ -167,20 +167,30 @@ export function parseWhereCondition(where: string): WhereConditionContent {
       values = [o.GREATER_EQUAL.value];
       columns.add(o.GREATER_EQUAL.column);
     } else if (o.CONTAINS) {
-      const escapeChars = ["|", "#", "=", "@"];
-      const escapeChar = escapeChars.find(c => !o.CONTAINS.value.includes(c));
-      if (!escapeChar) {
-        throw new Error(
-          `A text search string must not contain all of ${escapeChars.join(
-            ", "
-          )}.`
-        );
-      }
       validateColumn(o.CONTAINS.column);
       validateValue(o.CONTAINS.value);
+      const escapeChar = escapeCharacter(o.CONTAINS.value);
       sql = "(" + o.CONTAINS.column + " LIKE ? ESCAPE '" + escapeChar + "')";
-      values = ["%" + o.CONTAINS.value.replace(/[%_]/, escapeChar + "%") + "%"];
+      values = [
+        "%" + o.CONTAINS.value.replace(/([%_])/g, escapeChar + "$1") + "%"
+      ];
       columns.add(o.CONTAINS.column);
+    } else if (o.STARTS_WITH) {
+      validateColumn(o.STARTS_WITH.column);
+      validateValue(o.STARTS_WITH.value);
+      const escapeChar = escapeCharacter(o.STARTS_WITH.value);
+      sql = "(" + o.STARTS_WITH.column + " LIKE ? ESCAPE '" + escapeChar + "')";
+      values = [
+        o.STARTS_WITH.value.replace(/([%_])/g, escapeChar + "$1") + "%"
+      ];
+      columns.add(o.STARTS_WITH.column);
+    } else if (o.ENDS_WITH) {
+      validateColumn(o.ENDS_WITH.column);
+      validateValue(o.ENDS_WITH.value);
+      const escapeChar = escapeCharacter(o.ENDS_WITH.value);
+      sql = "(" + o.ENDS_WITH.column + " LIKE ? ESCAPE '" + escapeChar + "')";
+      values = ["%" + o.ENDS_WITH.value.replace(/([%_])/g, escapeChar + "$1")];
+      columns.add(o.ENDS_WITH.column);
     } else if (o.WITHIN_RADIUS) {
       const rightAscensionColumn = o.WITHIN_RADIUS.rightAscensionColumn;
       const rightAscension: any = o.WITHIN_RADIUS.rightAscension;
@@ -293,6 +303,30 @@ export function parseWhereCondition(where: string): WhereConditionContent {
   }
 
   return convertToSQL(w);
+}
+
+/**
+ * Return a string which can be used as escape character in a LIKE condition
+ * with in a given text.
+ *
+ * Parameters:
+ * -----------
+ * text:
+ *     Text
+ *
+ * Returns:
+ * --------
+ * The escape character.
+ */
+function escapeCharacter(text: string): string {
+  const escapeChars = ["|", "#", "=", "@"];
+  const escapeChar = escapeChars.find(c => !text.includes(c));
+  if (!escapeChar) {
+    throw new Error(
+      `A text search string must not contain all of ${escapeChars.join(", ")}.`
+    );
+  }
+  return escapeChar;
 }
 
 /**
