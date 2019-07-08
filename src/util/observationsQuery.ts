@@ -238,20 +238,20 @@ export function parseWhereCondition(where: string): WhereConditionContent {
         const minRA = rightAscension - dRA;
         const maxRA = rightAscension + dRA;
         if (minRA < 0) {
-          sql += `((\`${rightAscensionColumn}\` BETWEEN 0 AND ?) OR (\`${rightAscensionColumn}\` BETWEEN ? AND 360))`;
+          sql += `((${rightAscensionColumn} BETWEEN 0 AND ?) OR (${rightAscensionColumn} BETWEEN ? AND 360))`;
           values.push(maxRA, 360 + minRA);
         } else if (maxRA > 360) {
-          sql += `((\`${rightAscensionColumn}\` BETWEEN 0 AND ?) OR (\`${rightAscensionColumn}\` BETWEEN ? AND 360))`;
+          sql += `((${rightAscensionColumn} BETWEEN 0 AND ?) OR (${rightAscensionColumn} BETWEEN ? AND 360))`;
           values.push(maxRA - 360, minRA);
         } else {
-          sql += `(\`${rightAscensionColumn}\` BETWEEN ? AND ?)`;
+          sql += `(${rightAscensionColumn} BETWEEN ? AND ?)`;
           values.push(minRA, maxRA);
         }
 
         // limiting declination
         const minDec = declination - 2 * radius;
         const maxDec = declination + 2 * radius;
-        sql += ` AND (\`${declinationColumn}\` BETWEEN ? AND ?)`;
+        sql += ` AND (${declinationColumn} BETWEEN ? AND ?)`;
         values.push(minDec, maxDec);
 
         sql += ")";
@@ -260,7 +260,7 @@ export function parseWhereCondition(where: string): WhereConditionContent {
         // restrict right ascension values.
         const minDec = Math.max(declination - 2 * radius, -90);
         const maxDec = Math.min(declination + 2 * radius, 90);
-        sql += `(\`${declinationColumn}\` BETWEEN ? AND ?)`;
+        sql += `(${declinationColumn} BETWEEN ? AND ?)`;
         values.push(minDec, maxDec);
       }
 
@@ -275,8 +275,8 @@ export function parseWhereCondition(where: string): WhereConditionContent {
       // See
       // https://www.plumislandmedia.net/mysql/vicenty-great-circle-distance-formula/
       // for a possible implementation of the function.
-      sql += ` AND (ANGULAR_DISTANCE(\`${declinationColumn}\`, \`${rightAscensionColumn}\`, ?, ?) <= ?)`;
-      values.push(declination, rightAscension);
+      sql += ` AND (ANGULAR_DISTANCE(${declinationColumn}, ${rightAscensionColumn}, ?, ?) <= ?)`;
+      values.push(declination, rightAscension, radius);
       sql += ")";
 
       columns.add(declinationColumn).add(rightAscensionColumn);
