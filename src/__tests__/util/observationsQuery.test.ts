@@ -259,7 +259,7 @@ describe("parseWhereCondition", () => {
 
     it("should generate the correct SQL", () => {
       const isNull = { IS_NULL: { column: "A.B" } };
-      expect(objectToSQL(isNull)).toEqual("(`A.B` IS NULL)");
+      expect(objectToSQL(isNull)).toEqual("(A.B IS NULL)");
       expect(objectToValues(isNull)).toEqual([]);
     });
 
@@ -289,7 +289,7 @@ describe("parseWhereCondition", () => {
 
     it("should generate the correct SQL", () => {
       const equals = { EQUALS: { column: "A.B", value: "Simbad" } };
-      expect(objectToSQL(equals)).toEqual("(`A.B` = ?)");
+      expect(objectToSQL(equals)).toEqual("(A.B = ?)");
       expect(objectToValues(equals)).toEqual(["Simbad"]);
     });
 
@@ -319,7 +319,7 @@ describe("parseWhereCondition", () => {
 
     it("should generate the correct SQL", () => {
       const lessThan = { LESS_THAN: { column: "A.B", value: "Doe" } };
-      expect(objectToSQL(lessThan)).toEqual("(`A.B` < ?)");
+      expect(objectToSQL(lessThan)).toEqual("(A.B < ?)");
       expect(objectToValues(lessThan)).toEqual(["Doe"]);
     });
 
@@ -349,7 +349,7 @@ describe("parseWhereCondition", () => {
 
     it("should generate the correct SQL", () => {
       const greaterThan = { GREATER_THAN: { column: "A.B", value: "Doe" } };
-      expect(objectToSQL(greaterThan)).toEqual("(`A.B` > ?)");
+      expect(objectToSQL(greaterThan)).toEqual("(A.B > ?)");
       expect(objectToValues(greaterThan)).toEqual(["Doe"]);
     });
 
@@ -379,7 +379,7 @@ describe("parseWhereCondition", () => {
 
     it("should generate the correct SQL", () => {
       const lessEqual = { LESS_EQUAL: { column: "A.B", value: "Doe" } };
-      expect(objectToSQL(lessEqual)).toEqual("(`A.B` <= ?)");
+      expect(objectToSQL(lessEqual)).toEqual("(A.B <= ?)");
       expect(objectToValues(lessEqual)).toEqual(["Doe"]);
     });
 
@@ -409,7 +409,7 @@ describe("parseWhereCondition", () => {
 
     it("should generate the correct SQL", () => {
       const greaterEqual = { GREATER_EQUAL: { column: "A.B", value: "Doe" } };
-      expect(objectToSQL(greaterEqual)).toEqual("(`A.B` >= ?)");
+      expect(objectToSQL(greaterEqual)).toEqual("(A.B >= ?)");
       expect(objectToValues(greaterEqual)).toEqual(["Doe"]);
     });
 
@@ -438,14 +438,76 @@ describe("parseWhereCondition", () => {
     });
 
     it("should generate the correct SQL", () => {
-      const contains = { CONTAINS: { column: "A.B", value: "SCI-024" } };
-      expect(objectToSQL(contains)).toEqual("(`A.B` LIKE ?)");
-      expect(objectToValues(contains)).toEqual(["SCI-024"]);
+      const contains = { CONTAINS: { column: "A.B", value: "SCI-%-_024" } };
+      expect(objectToSQL(contains)).toEqual("(A.B LIKE ? ESCAPE '|')");
+      expect(objectToValues(contains)).toEqual(["%SCI-|%-|_024%"]);
     });
 
     it("should collect the columns", () => {
       expect(
         objectToColumns({ CONTAINS: { column: "A.B", value: "AGN" } })
+      ).toEqual(new Set<string>(["A.B"]));
+    });
+  });
+
+  describe("STARTS_WITH", () => {
+    it("should fail for a missing column", () => {
+      const f = () => objectToSQL({ STARTS_WITH: { value: "SCI-024" } });
+      expect(f).toThrow("undefined");
+    });
+
+    it("should fail for an invalid column", () => {
+      const f = () =>
+        objectToSQL({ STARTS_WITH: { column: "Proposal", value: "SCI-024" } });
+      expect(f).toThrow("A.B");
+    });
+
+    it("should fail for a missing value", () => {
+      const f = () => objectToSQL({ STARTS_WITH: { column: "A.B" } });
+      expect(f).toThrow("undefined");
+    });
+
+    it("should generate the correct SQL", () => {
+      const startsWith = {
+        STARTS_WITH: { column: "A.B", value: "SCI-%-_024" }
+      };
+      expect(objectToSQL(startsWith)).toEqual("(A.B LIKE ? ESCAPE '|')");
+      expect(objectToValues(startsWith)).toEqual(["SCI-|%-|_024%"]);
+    });
+
+    it("should collect the columns", () => {
+      expect(
+        objectToColumns({ STARTS_WITH: { column: "A.B", value: "AGN" } })
+      ).toEqual(new Set<string>(["A.B"]));
+    });
+  });
+
+  describe("ENDS_WITH", () => {
+    it("should fail for a missing column", () => {
+      const f = () => objectToSQL({ ENDS_WITH: { value: "SCI-024" } });
+      expect(f).toThrow("undefined");
+    });
+
+    it("should fail for an invalid column", () => {
+      const f = () =>
+        objectToSQL({ ENDS_WITH: { column: "Proposal", value: "SCI-024" } });
+      expect(f).toThrow("A.B");
+    });
+
+    it("should fail for a missing value", () => {
+      const f = () => objectToSQL({ ENDS_WITH: { column: "A.B" } });
+      expect(f).toThrow("undefined");
+    });
+
+    it("should generate the correct SQL", () => {
+      const endsWith = { ENDS_WITH: { column: "A.B", value: "SCI-%-_024" } };
+      expect(objectToSQL(endsWith)).toEqual("(A.B LIKE ? ESCAPE '|')");
+      expect(objectToValues(endsWith)).toEqual(["%SCI-|%-|_024"]);
+    });
+
+    it("should collect the columns", () => {
+      expect(
+        objectToColumns({ STARTS_WITH: { column: "A.B", value: "AGN" } })
       ).toEqual(new Set<string>(["A.B"]));
     });
   });

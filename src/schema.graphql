@@ -2,135 +2,144 @@
 
 #The schema's root query type.
 type Query {
-
-#  The currently logged in user. An error is raised if the user is not logged in.
+  #  The currently logged in user. An error is raised if the user is not logged in.
   user: User
 
-#  The data requests made by the currently logged in user, ordered in descending order by the time they were made.
+  #  The data requests made by the currently logged in user, ordered in descending order by the time they were made.
   dataRequests(
-#    The maximum number of data requests to return.
+    #  The maximum number of data requests to return.
     limit: Int
 
-#    The index of the first data request to return.
+    #  The index of the first data request to return.
     startIndex: Int!
   ): [DataRequest!]!
 
-#  Checks if the given token is valid.
+  #  Checks if the given token is valid.
   passwordResetTokenStatus(token: String!): Status
 
-#  Data file GraphQL query
-  dataFiles (where: String!, columns: [String!]!): [DataFile]
-
-#  The data preview content for a data file.
+  #  The data preview content for a data file.
   dataPreview(
-#    Data file ID.
+    #  Data file ID.
     dataFileId: ID!
   ): DataPreview!
+  #  Details about data files.
+  dataFiles(
+    #  Filter condition for the database query.
+    where: String!
+
+    #  Database columns whose values should be included in the results.
+    columns: [String!]!
+
+    #  The index of the first result to include in the search results. An offset of zero is assumed, i.e. a start index of
+    #  5 refers to the 6th result.
+    startIndex: Int = 0
+
+    #  Maximum number of data files to return.
+    limit: Int = 1000
+  ): DataFileConnection!
 }
 
-#The schema's root mutation type.
+#  The schema's root mutation type.
 type Mutation {
   # TODO UPDATE
-#  Register a new data archive user.
-#
-#  Neither the username nor the email address must be used by another user already.
+  #  Register a new data archive user.
+  #
+  #  Neither the username nor the email address must be used by another user already.
 
   signup(
-#    Family name ("surname").
+    #  Family name ("surname").
     familyName: String!
 
-#    Given name ("first name").
+    #  Given name ("first name").
     givenName: String!
 
-#    Username, which must not contain upper case letters.
+    #  Username, which must not contain upper case letters.
     username: String!
 
-#    Email address, which will be stored as lower case.
+    #  Email address, which will be stored as lower case.
     email: String!
 
-#    Affiliation, such as a university or an institute.
+    #  Affiliation, such as a university or an institute.
     affiliation: String!
 
-#    Password.
+    #  Password.
     password: String!
   ): User!
 
-#  Update the data archive user information.
-#
-#  Neither the username nor the email address updated must be used by another user already.
-#  To update the data archive user information, the current password must be provided.
+  #  Update the data archive user information.
+  #
+  #  Neither the username nor the email address updated must be used by another user already.
+  #  To update the data archive user information, the current password must be provided.
   updateUser(
-#    Unique user ID
+    #  Unique user ID
     id: ID
 
-#    Family name ("surname").
+    #  Family name ("surname").
     familyName: String
 
-#    Given name ("first name").
+    #  Given name ("first name").
     givenName: String
 
-#    Username, which must not contain upper case letters.
+    #  Username, which must not contain upper case letters.
     username: String
 
-#    Email address, which will be stored as lower case.
+    #  Email address, which will be stored as lower case.
     email: String
 
-#    Affiliation, such as a university or an institute.
+    #  Affiliation, such as a university or an institute.
     affiliation: String
 
-#    Password.
+    #  Password.
     password: String!
 
-#    New password.
+    #  New password.
     newPassword: String
   ): User!
 
-#  Reset a user's password.
+  #  Reset a user's password.
   resetPassword(
-#     The new password, which must have at least seven characters.
-      password: String!
-#     The unique token identifying the user.
-      token: String!
-      ): User!
+    #  The new password, which must have at least seven characters.
+    password: String!
+    #  The unique token identifying the user.
+    token: String!
+  ): User!
 
-#  Request a password reset.
+  #  Request a password reset.
   requestPasswordReset(
-#    The email address of the user for whom a password reset request is made.
+    #  The email address of the user for whom a password reset request is made.
     email: String!
   ): User!
 }
 
-
-#A data archive user.
+#  A data archive user.
 type User {
-
-#  User id.
+  #  User id.
   id: ID!
 
-#  Family name ("surname").
+  #  Family name ("surname").
   familyName: String!
 
-#  Given name ("first name").
+  #  Given name ("first name").
   givenName: String!
 
-#  Username, which must not contain upper case letters.
+  #  Username, which must not contain upper case letters.
   username: String!
 
-#  Email address, which will be stored as lower case.
+  #  Email address, which will be stored as lower case.
   email: String!
 
-#  Affiliation, such as a university or an institute.
+  #  Affiliation, such as a university or an institute.
   affiliation: String!
 
-#  User roles, which defines the user's permissions.
+  #  User roles, which defines the user's permissions.
   roles: [Role!]!
 }
 
 type Status {
-#   Success status.
-    status: Boolean!
-#   Message is ever the status has one.
-    message: String
+  #   Success status.
+  status: Boolean!
+  #   Message is ever the status has one.
+  message: String
 }
 
 
@@ -143,14 +152,47 @@ type DataPreview {
   fitsHeaders: String!
 }
 
+#  Information about a search results page.
+type PageInfo {
+  #  The index of the first search result on the page. An index offset of 0 is assumed. So, for example, if the start index
+  #  is 100, the first 100 search results have been skipped and 101st result is the first result included in the page's
+  #  items.
+  startIndex: Int!
+
+  #  The (maximum) number of results included on a page. Depending on the values of the start index and the items total
+  #  the actual number returned may be smaller.
+  itemsPerPage: Int!
+
+  #  The total number of search results.
+  itemsTotal: Int!
+}
+
+#  A metadata item.
 type MetadataItem {
+  #  Name of the metadata item.
   name: String!
+
+  #  Value of the metadata item.
   value: String
 }
 
-type DataFile {
-    id: ID!
-    ownedByUser: Boolean!
-    metadata : [MetadataItem!]!
+#  Results for a data file query.
+type DataFileConnection {
+  #  List of data files.
+  dataFiles: [DataFile!]!
+
+  #  Search page details.
+  pageInfo: PageInfo!
 }
 
+#  Details about a data file.
+type DataFile {
+  #  Id of the data file.
+  id: ID!
+
+  #  Whether the currently logged in user owns the data in the file, and hence may access it even if it proprietary.
+  ownedByUser: Boolean!
+
+  #  Metadata for the data file.
+  metadata: [MetadataItem!]!
+}

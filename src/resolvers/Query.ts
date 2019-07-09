@@ -30,8 +30,12 @@ const Query = {
     });
   },
 
-  async dataFiles(root: any, args: any, ctx: IContext) {
-    const results = await queryDataFiles(args.columns, args.where);
+  async dataFiles(
+    root: any,
+    { columns, limit, startIndex, where }: any,
+    ctx: IContext
+  ) {
+    const results = await queryDataFiles(columns, where, startIndex, limit);
     return results;
   },
 
