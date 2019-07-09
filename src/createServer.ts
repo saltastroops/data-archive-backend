@@ -1,6 +1,7 @@
 import * as Sentry from "@sentry/node";
 import bcrypt from "bcrypt";
 import bodyParser from "body-parser";
+import * as Path from "path";
 import { Request, Response } from "express";
 import session from "express-session";
 import { GraphQLServer } from "graphql-yoga";
@@ -178,7 +179,7 @@ const createServer = async () => {
   });
 
   /**
-   * Endpoint for downloading the data file preview iamge.
+   * Endpoint for downloading the data file preview image.
    *
    * The URL includes the following parameters.
    *
@@ -197,6 +198,12 @@ const createServer = async () => {
         success: false
       };
 
+      // Internal server error
+      const internalServerError= {
+        message: "There has been an internal server error retrieving a preview image.",
+        success: false
+      };
+
       // Get all the params from the request
       const { dataFileId, dataPreviewFileName } = req.params;
 
@@ -204,18 +211,26 @@ const createServer = async () => {
       // Query for retrieving the data previews
       const sql = `
       SELECT path
-      FROM DataPreview AS dp 
+      FROM DataPreview AS dp
       WHERE dp.dataFileId = ?
       AND dp.dataPreviewFileName = ?
     `;
       // Querying the data preview image path
       const { path }  = (await pool.query(sql, [dataFileId, dataPreviewFileName]) as any)[0];
 
+      if (!path) {
+        return res.status(404).send(notFound);
+      }
+      // Get the base path if exist
+      const basePath = process.env.PREVIEW_BASE_DIR ? process.env.PREVIEW_BASE_DIR : ""
+      // Form a full path for the image location
+      const fullPath = Path.join(basePath, path)
+
       // Download the data request file
-      res.download(path, dataPreviewFileName, err => {
+      res.download(fullPath, dataPreviewFileName, err => {
         if (err) {
           if (!res.headersSent) {
-            res.status(404).send(notFound);
+            res.status(500).send(internalServerError);
           } else {
             res.end();
           }

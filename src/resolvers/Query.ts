@@ -1,5 +1,6 @@
 import fs from "fs";
 import moment from "moment";
+import * as Path from "path";
 import pool from "../db/pool";
 import { Prisma } from "../generated/prisma-client";
 
@@ -127,10 +128,17 @@ const Query = {
         path: string;
       }) => {
         if (row.dataPreviewType === "Header") {
+          // Get the base path if exist
+          const basePath = process.env.PREVIEW_BASE_DIR
+            ? process.env.PREVIEW_BASE_DIR
+            : "";
+          // Form a full path for the image location
+          const fullPath = Path.join(basePath, row.path);
+
           // Read in the file, which contains a FITS header.
           // If there are multiple FITS header files,
           // all headers are combined in a single string.
-          results.fitsHeader += fs.readFileSync(row.path, "utf-8");
+          results.fitsHeader += fs.readFileSync(fullPath, "utf-8");
         } else if (row.dataPreviewType === "Image") {
           // Add all the image URIs to the list
           results.imageURIs.push(
