@@ -1,5 +1,19 @@
 import { DatabaseModel } from "./DatabaseModel";
 
+/**
+ *
+ * SSDA tables
+ * See tables.sql on data archive database code(different project) for full description of each
+ *
+ * @type:
+ *      join: string;
+ *          JOIN ON string. For table(s) on Set rightOf
+ *      name: string;
+ *          Table name
+ *      rightOf: Set
+ *          All tables that this table is right of
+ */
+
 const DataFile = {
   join: "",
   name: "DataFile",
@@ -42,7 +56,7 @@ const Salticam = {
   rightOf: new Set(["DataFile"])
 };
 const Observation = {
-  join: "DataFile.observationId=Observation.observationId", // TODO: how to join in multiple table using MYSQL using condition
+  join: "DataFile.observationId=Observation.observationId",
   name: "Observation",
   rightOf: new Set(["DataFile"])
 };
@@ -73,20 +87,6 @@ const ProposalInvestigator = {
   rightOf: new Set(["Proposal"])
 };
 
-//
-// RSS                 => [DataFile]
-// HRS                 => [DataFile]
-// Salticam            => [DataFile]
-// DataFile            => [DataCategory, Target, Observation]
-// DataCategory        => []
-// Target              => [TargetType]
-// TargetType          => []
-// Observation         => [ObservationStatus, Telescope, Proposal]
-// Telescope           => [Institution]
-// Proposal            => [Institution]
-// ObservationStatus   => []
-// Institution           => []
-// ProposalInvestigator=> [Proposal]
 export const dataModel = new DatabaseModel(
   new Set([
     RSS,
@@ -105,8 +105,3 @@ export const dataModel = new DatabaseModel(
     ProposalInvestigator
   ])
 );
-// export const dataModel = new DatabaseModel(
-//     new Set([
-//         DataFile, HRS, DataCategory, Target, Observation, TargetType
-//     ])
-// );

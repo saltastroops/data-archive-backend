@@ -1,4 +1,4 @@
-import Database from "../connection";
+import Database, { ssdaConfig } from "../connection";
 import {
   createFromExpression,
   parseWhereCondition
@@ -29,7 +29,7 @@ export const queryDataFiles = async (
   limit: number
 ) => {
   //  Database connection
-  const connection = new Database();
+  const connection = new Database(ssdaConfig);
 
   // Object containing where sql columns and mapping values
   const whereDetails = parseWhereCondition(where);
