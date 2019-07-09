@@ -1,12 +1,12 @@
 import * as Sentry from "@sentry/node";
 import bcrypt from "bcrypt";
 import bodyParser from "body-parser";
-import * as path from "path";
 import { Request, Response } from "express";
 import session from "express-session";
 import { GraphQLServer } from "graphql-yoga";
 import passport from "passport";
 import passportLocal from "passport-local";
+import * as path from "path";
 import pool from "./db/pool";
 import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
@@ -191,7 +191,6 @@ const createServer = async () => {
   server.express.get(
     "/previews/:dataFileId/:dataPreviewFileName",
     async (req, res) => {
-
       // Get the data request
       const notFound = {
         message: "The requested file does not exist.",
@@ -199,8 +198,9 @@ const createServer = async () => {
       };
 
       // Internal server error
-      const internalServerError= {
-        message: "There has been an internal server error while retrieving a preview image.",
+      const internalServerError = {
+        message:
+          "There has been an internal server error while retrieving a preview image.",
         success: false
       };
 
@@ -215,7 +215,10 @@ const createServer = async () => {
       WHERE dp.dataFileId = ? AND dp.dataPreviewFileName = ?
     `;
       // Querying the data preview image path
-      const results: any = await pool.query(sql, [dataFileId, dataPreviewFileName]);
+      const results: any = await pool.query(sql, [
+        dataFileId,
+        dataPreviewFileName
+      ]);
       if (!results.length) {
         return res.status(404).send(notFound);
       }
