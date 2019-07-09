@@ -9,7 +9,6 @@
  * Boolean values are mapped to 1 for true and to 0 for false.
  */
 
-import { prune } from "../../../frontend/src/util/query/whereCondition";
 import { DatabaseModel } from "./DatabaseModel";
 
 export class WhereConditionContent {
@@ -297,7 +296,7 @@ export function parseWhereCondition(where: string): WhereConditionContent {
     return new WhereConditionContent(sql, values, columns);
   }
 
-  const w = prune(JSON.parse(where));
+  const w = JSON.parse(where);
 
   if (!Object.keys(w).length) {
     return new WhereConditionContent("1=1", [], new Set());
