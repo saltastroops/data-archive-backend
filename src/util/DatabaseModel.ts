@@ -23,7 +23,7 @@ export class DatabaseModel {
   public table(name: string) {
     const t = Array.from(this.tables).find(v => v.name === name);
     if (!t) {
-      throw new Error(`The table ${t} does not exist in the database model.`);
+      throw new Error("The table does not exist in the database model.");
     }
     return t;
   }
