@@ -113,6 +113,7 @@ const Query = {
       WHERE dp.dataFileId = ?
       ORDER BY dp.dataPreviewOrder
     `;
+
     // Querying the data previews
     const rows = await pool.query(sql, [args.dataFileId]);
 
@@ -128,11 +129,10 @@ const Query = {
         path: string;
       }) => {
         if (row.dataPreviewType === "Header") {
-          // Get the base path if exist
-          const basePath = process.env.PREVIEW_BASE_DIR
-            ? process.env.PREVIEW_BASE_DIR
-            : "";
-          // Form a full path for the image location
+          // Get the base path if it exists
+          const basePath = process.env.PREVIEW_BASE_DIR || "";
+
+          // Form a full path for the file location
           const fullPath = Path.join(basePath, row.path);
 
           // Read in the file, which contains a FITS header.
@@ -140,7 +140,7 @@ const Query = {
           // all headers are combined in a single string.
           results.fitsHeader += fs.readFileSync(fullPath, "utf-8");
         } else if (row.dataPreviewType === "Image") {
-          // Add all the image URIs to the list
+          // Add the image URI to the list of image URIs
           results.imageURIs.push(
             `/previews/${args.dataFileId}/${row.dataPreviewFileName}`
           );
