@@ -1,6 +1,7 @@
 import fs from "fs";
 import moment from "moment";
-import { dbConnection } from "../db/connection";
+import * as Path from "path";
+import pool from "../db/pool";
 import { Prisma } from "../generated/prisma-client";
 import { queryDataFiles } from "./serchResults";
 
@@ -12,8 +13,8 @@ interface IContext {
 
 // Defining the data preview interface
 interface IDataPreview {
+  fitsHeader: string;
   imageURIs: string[];
-  fitsHeaders: string;
 }
 
 // Defining Query methods
@@ -116,30 +117,46 @@ const Query = {
   async dataPreview(root: any, args: { dataFileId: number }, ctx: IContext) {
     // Query for retrieving the data previews
     const sql = `
-      SELECT dataPreviewType, path, dataFileId
+      SELECT dataPreviewFileName, dataPreviewType, path
       FROM DataPreview AS dp 
-      JOIN DataPreviewType AS dpt ON dp.previewTypeId = dpt.dataPreviewTypeId
+      JOIN DataPreviewType AS dpt ON dp.dataPreviewTypeId = dpt.dataPreviewTypeId
       WHERE dp.dataFileId = ?
-      ORDER BY dp.previewOrder
+      ORDER BY dp.dataPreviewOrder
     `;
+
     // Querying the data previews
-    const rows = await dbConnection.query(sql, [args.dataFileId]);
+    const rows = await pool.query(sql, [args.dataFileId]);
 
     const results: IDataPreview = {
-      fitsHeaders: "",
+      fitsHeader: "",
       imageURIs: []
     };
 
-    (rows as any).forEach((row: { path: string; dataPreviewType: string }) => {
-      if (row.dataPreviewType === "Header") {
-        // Read the file that contains FITS headers,
-        // If there are multiple files, include all FITS headers in a string
-        results.fitsHeaders += fs.readFileSync(row.path, "utf-8");
-      } else if (row.dataPreviewType === "Image") {
-        // Add all the image URIs to the list
-        results.imageURIs.push(row.path);
+    (rows as any).forEach(
+      (row: {
+        dataPreviewFileName: string;
+        dataPreviewType: string;
+        path: string;
+      }) => {
+        if (row.dataPreviewType === "Header") {
+          // Get the base path if it exists
+          const basePath = process.env.PREVIEW_BASE_DIR || "";
+
+          // Form a full path for the file location
+          const fullPath = Path.join(basePath, row.path);
+
+          // Read in the file, which contains a FITS header.
+          // If there are multiple FITS header files,
+          // all headers are combined in a single string.
+          results.fitsHeader += fs.readFileSync(fullPath, "utf-8");
+        } else if (row.dataPreviewType === "Image") {
+          // Add the image URI to the list of image URIs
+          results.imageURIs.push(
+            `/previews/${args.dataFileId}/${row.dataPreviewFileName}`
+          );
+        }
       }
-    });
+    );
 
     return results;
   }

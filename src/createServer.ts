@@ -6,6 +6,8 @@ import session from "express-session";
 import { GraphQLServer } from "graphql-yoga";
 import passport from "passport";
 import passportLocal from "passport-local";
+import * as path from "path";
+import pool from "./db/pool";
 import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
 
@@ -175,6 +177,71 @@ const createServer = async () => {
       success: true
     });
   });
+
+  /**
+   * Endpoint for downloading the data file preview file.
+   *
+   * The URL includes the following parameters.
+   *
+   * :dataFileId
+   *     The id of the data file.
+   * :dataPreviewFileName
+   *     The data preview filename.
+   */
+  server.express.get(
+    "/previews/:dataFileId/:dataPreviewFileName",
+    async (req, res) => {
+      // Get the data request
+      const notFound = {
+        message: "The requested file does not exist.",
+        success: false
+      };
+
+      // Internal server error
+      const internalServerError = {
+        message:
+          "There has been an internal server error while retrieving a preview image.",
+        success: false
+      };
+
+      // Get all the params from the request
+      const { dataFileId, dataPreviewFileName } = req.params;
+
+      // Download the data file preview image
+      // Query for retrieving the data previews
+      const sql = `
+      SELECT path
+             FROM DataPreview AS dp
+      WHERE dp.dataFileId = ? AND dp.dataPreviewFileName = ?
+    `;
+      // Querying the data preview image path
+      const results: any = await pool.query(sql, [
+        dataFileId,
+        dataPreviewFileName
+      ]);
+      if (!results.length) {
+        return res.status(404).send(notFound);
+      }
+      const { path: previewPath } = results[0];
+
+      // Get the base path if exist
+      const basePath = process.env.PREVIEW_BASE_DIR || "";
+
+      // Form a full path for the image location
+      const fullPath = path.join(basePath, previewPath);
+
+      // Download the preview file
+      res.download(fullPath, dataPreviewFileName, err => {
+        if (err) {
+          if (!res.headersSent) {
+            res.status(500).send(internalServerError);
+          } else {
+            res.end();
+          }
+        }
+      });
+    }
+  );
 
   /**
    * Endpoint for downloading the data for a full data request.

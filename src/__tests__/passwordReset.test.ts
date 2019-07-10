@@ -68,7 +68,9 @@ describe("Request password reset", () => {
       );
       expect(true).toBeFalsy();
     } catch (e) {
-      expect(e.message).toContain("Please try again.");
+      expect(e.message).toContain(
+        "Oops, something went wrong while generating a token"
+      );
     }
 
     expect(prisma.user).toHaveBeenCalled();
@@ -94,9 +96,13 @@ describe("Request password reset", () => {
       );
       expect(true).toBeFalsy();
     } catch (e) {
-      expect(e.message).toContain("could not be sent");
+      expect(e.message).toContain(
+        "The email with the password reset link could not be sent."
+      );
     }
 
+    // All the various bits and pieces of the password reset method were called;
+    // the error was raised by the transport function.
     expect(prisma.user).toHaveBeenCalled();
     expect(prisma.updateUser).toHaveBeenCalled();
     expect(transporter.sendMail).toHaveBeenCalled();
