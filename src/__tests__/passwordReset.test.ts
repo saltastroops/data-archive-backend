@@ -75,7 +75,7 @@ describe("Request password reset", () => {
 
     expect(prisma.user).toHaveBeenCalled();
     expect(prisma.updateUser).toHaveBeenCalled();
-    expect(transporter.sendMail).toHaveBeenCalled();
+    expect(transporter.sendMail).not.toHaveBeenCalled();
   });
 
   it("should fail if no email could be sent to the user", async () => {
@@ -103,7 +103,7 @@ describe("Request password reset", () => {
 
     expect(prisma.user).toHaveBeenCalled();
     expect(prisma.updateUser).toHaveBeenCalled();
-    expect(transporter.sendMail).toHaveBeenCalled();
+    expect(transporter.sendMail).not.toHaveBeenCalled();
   });
 
   it("should send an email if the token could be generated and stored", async () => {
