@@ -625,7 +625,7 @@ describe("parseWhereCondition", () => {
       const declination = (Math.acos(0.25) * 180) / Math.PI - 2 * 0.5;
       const wr = withinRadius(0.1, declination, 0.5);
       expect(objectToSQL(wr)).toEqual(
-        "((((`Target.RA` BETWEEN 0 AND ?) OR (`Target.RA` BETWEEN ? AND 360)) AND (`Target.Dec` BETWEEN ? AND ?)) AND (ANGULAR_DISTANCE(`Target.Dec`, `Target.RA`, ?, ?) <= ?))"
+        "((((Target.RA BETWEEN 0 AND ?) OR (Target.RA BETWEEN ? AND 360)) AND (Target.Dec BETWEEN ? AND ?)) AND (ANGULAR_DISTANCE(Target.Dec, Target.RA, ?, ?) <= ?))"
       );
       const expected = [
         2.1,
@@ -633,7 +633,8 @@ describe("parseWhereCondition", () => {
         declination - 2 * 0.5,
         declination + 2 * 0.5,
         declination,
-        0.1
+        0.1,
+        0.5
       ];
       const values = objectToValues(wr);
       expect(values.length).toBe(expected.length);
@@ -646,7 +647,7 @@ describe("parseWhereCondition", () => {
       const declination = (Math.acos(0.25) * 180) / Math.PI - 2 * 0.5;
       const wr = withinRadius(359.9, declination, 0.5);
       expect(objectToSQL(wr)).toEqual(
-        "((((`Target.RA` BETWEEN 0 AND ?) OR (`Target.RA` BETWEEN ? AND 360)) AND (`Target.Dec` BETWEEN ? AND ?)) AND (ANGULAR_DISTANCE(`Target.Dec`, `Target.RA`, ?, ?) <= ?))"
+        "((((Target.RA BETWEEN 0 AND ?) OR (Target.RA BETWEEN ? AND 360)) AND (Target.Dec BETWEEN ? AND ?)) AND (ANGULAR_DISTANCE(Target.Dec, Target.RA, ?, ?) <= ?))"
       );
       const expected = [
         1.9,
@@ -654,7 +655,8 @@ describe("parseWhereCondition", () => {
         declination - 2 * 0.5,
         declination + 2 * 0.5,
         declination,
-        359.9
+        359.9,
+        0.5
       ];
       const values = objectToValues(wr);
       expect(values.length).toBe(expected.length);
@@ -666,9 +668,9 @@ describe("parseWhereCondition", () => {
     it("should generate the correct SQL close to the celestial south pole", () => {
       const wr = withinRadius(12.9, -89.9, 0.5);
       expect(objectToSQL(wr)).toEqual(
-        "((`Target.Dec` BETWEEN ? AND ?) AND (ANGULAR_DISTANCE(`Target.Dec`, `Target.RA`, ?, ?) <= ?))"
+        "((Target.Dec BETWEEN ? AND ?) AND (ANGULAR_DISTANCE(Target.Dec, Target.RA, ?, ?) <= ?))"
       );
-      const expected = [-90, -88.9, -89.9, 12.9];
+      const expected = [-90, -88.9, -89.9, 12.9, 0.5];
       const values = objectToValues(wr);
       expect(values.length).toBe(expected.length);
       values.forEach((v: any, i: number) =>
@@ -679,9 +681,9 @@ describe("parseWhereCondition", () => {
     it("should generate the correct SQL close to the celestial north pole", () => {
       const wr = withinRadius(12.9, 89.9, 0.5);
       expect(objectToSQL(wr)).toEqual(
-        "((`Target.Dec` BETWEEN ? AND ?) AND (ANGULAR_DISTANCE(`Target.Dec`, `Target.RA`, ?, ?) <= ?))"
+        "((Target.Dec BETWEEN ? AND ?) AND (ANGULAR_DISTANCE(Target.Dec, Target.RA, ?, ?) <= ?))"
       );
-      const expected = [88.9, 90, 89.9, 12.9];
+      const expected = [88.9, 90, 89.9, 12.9, 0.5];
       const values = objectToValues(wr);
       expect(values.length).toBe(expected.length);
       values.forEach((v: any, i: number) =>
