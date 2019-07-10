@@ -28,6 +28,16 @@ type Query {
   Checks if the given token is valid.
   """
   passwordResetTokenStatus(token: String!): Status
+
+  """
+  The data preview content for a data file.
+  """
+  dataPreview(
+    """
+    Data file ID.
+    """
+    dataFileId: Int!
+  ): DataPreview!
 }
 
 """
@@ -120,19 +130,29 @@ type Mutation {
     newPassword: String
   ): User!
 
-  """Reset a user's password."""
+  """
+  Reset a user's password.
+  """
   resetPassword(
-      """The new password, which must have at least seven characters."""
-      password: String!
-      """The unique token identifying the user."""
-      token: String!
-      ): User!
+    """
+    The new password, which must have at least seven characters.
+    """
+    password: String!
+    """
+    The unique token identifying the user.
+    """
+    token: String!
+  ): User!
 
-  """Request a password reset."""
+  """
+  Request a password reset.
+  """
   requestPasswordReset(
-    """The email address of the user for whom a password reset request is made."""
+    """
+    The email address of the user for whom a password reset request is made.
+    """
     email: String!
-    ): User!
+  ): User!
 }
 
 """
@@ -175,14 +195,29 @@ type User {
   roles: [Role!]!
 }
 
-
 type Status {
-    """
-    Success status.
-    """
-    status: Boolean!
-    """
-    Message is ever the status has one.
-    """
-    message: String
+  """
+  Success status.
+  """
+  status: Boolean!
+
+  """
+  Message is ever the status has one.
+  """
+  message: String
+}
+
+"""
+Data preview.
+"""
+type DataPreview {
+  """
+  URIs for the data preview images.
+  """
+  imageURIs: [String!]!
+
+  """
+  FITS header as a string.
+  """
+  fitsHeader: String!
 }
