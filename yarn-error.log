@@ -26,7 +26,7 @@ npm manifest:
       "start": "pm2 start src/index.ts --node-args='-r dotenv/config'",
       "deploy": "export DEBUG=\"prisma\"; cd src/; prisma deploy --env-file ../.env",
       "dev": " export DEBUG=\"nodemon\"; nodemon -e ts,graphql -x ts-node -r dotenv/config src/index.ts",
-      "test": "PRISMA_ENDPOINT=https://fakeaddress jest",
+      "test": "PRISMA_ENDPOINT=https://fakeaddress jest --detectOpenHandles",
       "test:coverage": "PRISMA_ENDPOINT=https://fakeaddress jest --coverage",
       "test:watch": "PRISMA_ENDPOINT=https://fakeaddress jest --watch",
       "format": "prettier --write '{*.json,src/**/*.{js,ts,tsx,json,graphql}}'",
@@ -51,6 +51,7 @@ npm manifest:
       "@types/express-session": "^1.15.11",
       "@types/graphql": "^14.0.5",
       "@types/moment": "^2.13.0",
+      "@types/mysql": "^2.15.6",
       "@types/node": "^11.13.5",
       "@types/nodemailer": "^4.6.7",
       "@types/passport": "^1.0.0",
@@ -64,6 +65,7 @@ npm manifest:
       "graphql-yoga": "^1.17.1",
       "isemail": "^3.2.0",
       "moment": "^2.24.0",
+      "mysql": "^2.17.1",
       "nodemailer": "^6.1.0",
       "nodemon": "^1.18.9",
       "passport": "^0.4.0",
@@ -598,6 +600,12 @@ Lockfile:
     dependencies:
       moment "*"
   
+  "@types/mysql@^2.15.6":
+    version "2.15.6"
+    resolved "https://registry.yarnpkg.com/@types/mysql/-/mysql-2.15.6.tgz#8718a66e362a4cfde73fe731792bdf453ef3a541"
+    dependencies:
+      "@types/node" "*"
+  
   "@types/node@*", "@types/node@^10.12.0":
     version "10.12.19"
     resolved "https://registry.yarnpkg.com/@types/node/-/node-10.12.19.tgz#ca1018c26be01f07e66ac7fefbeb6407e4490c61"
@@ -1046,6 +1054,10 @@ Lockfile:
     dependencies:
       nan "2.12.1"
       node-pre-gyp "0.12.0"
+  
+  bignumber.js@7.2.1:
+    version "7.2.1"
+    resolved "https://registry.yarnpkg.com/bignumber.js/-/bignumber.js-7.2.1.tgz#80c048759d826800807c4bfd521e50edbba57a5f"
   
   binary-extensions@^1.0.0:
     version "1.12.0"
@@ -3707,6 +3719,15 @@ Lockfile:
     version "2.1.1"
     resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.1.tgz#30a5864eb3ebb0a66f2ebe6d727af06a09d86e0a"
   
+  mysql@^2.17.1:
+    version "2.17.1"
+    resolved "https://registry.yarnpkg.com/mysql/-/mysql-2.17.1.tgz#62bba4a039a9b2f73638cd1652ce50fc6f682899"
+    dependencies:
+      bignumber.js "7.2.1"
+      readable-stream "2.3.6"
+      safe-buffer "5.1.2"
+      sqlstring "2.3.1"
+  
   nan@2.12.1, nan@^2.9.2:
     version "2.12.1"
     resolved "https://registry.yarnpkg.com/nan/-/nan-2.12.1.tgz#7b1aa193e9aa86057e3c7bbd0ac448e770925552"
@@ -4390,7 +4411,7 @@ Lockfile:
       isarray "0.0.1"
       string_decoder "~0.10.x"
   
-  readable-stream@^2.0.1, readable-stream@^2.0.2, readable-stream@^2.0.6, readable-stream@^2.2.2, readable-stream@^2.3.5:
+  readable-stream@2.3.6, readable-stream@^2.0.1, readable-stream@^2.0.2, readable-stream@^2.0.6, readable-stream@^2.2.2, readable-stream@^2.3.5:
     version "2.3.6"
     resolved "https://registry.yarnpkg.com/readable-stream/-/readable-stream-2.3.6.tgz#b11c27d88b8ff1fbe070643cf94b0c79ae1b0aaf"
     dependencies:
@@ -4799,6 +4820,10 @@ Lockfile:
   sprintf-js@~1.0.2:
     version "1.0.3"
     resolved "https://registry.yarnpkg.com/sprintf-js/-/sprintf-js-1.0.3.tgz#04e6926f662895354f3dd015203633b857297e2c"
+  
+  sqlstring@2.3.1:
+    version "2.3.1"
+    resolved "https://registry.yarnpkg.com/sqlstring/-/sqlstring-2.3.1.tgz#475393ff9e91479aea62dcaf0ca3d14983a7fb40"
   
   sshpk@^1.7.0:
     version "1.16.1"
@@ -5541,8 +5566,8 @@ Trace:
   Error: Command failed.
   Exit code: 1
   Command: sh
-  Arguments: -c PRISMA_ENDPOINT=https://fakeaddress jest
-  Directory: /home/nhlavu/nhlavu/da/backend/data-archive-backend
+  Arguments: -c PRISMA_ENDPOINT=https://fakeaddress jest --detectOpenHandles
+  Directory: /home/nhlavu/nhlavu/da/site/data-archive-backend
   Output:
   
       at ProcessTermError.MessageError (/usr/lib/node_modules/yarn/lib/cli.js:186:110)

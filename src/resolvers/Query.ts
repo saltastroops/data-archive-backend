@@ -3,6 +3,7 @@ import moment from "moment";
 import * as Path from "path";
 import pool from "../db/pool";
 import { Prisma } from "../generated/prisma-client";
+import { queryDataFiles } from "./serchResults";
 
 // Defining the context interface
 interface IContext {
@@ -28,6 +29,15 @@ const Query = {
     return ctx.prisma.user({
       id: ctx.user.id
     });
+  },
+
+  async dataFiles(
+    root: any,
+    { columns, limit, startIndex, where }: any,
+    ctx: IContext
+  ) {
+    const results = await queryDataFiles(columns, where, startIndex, limit);
+    return results;
   },
 
   // Query for the current user's data requests
