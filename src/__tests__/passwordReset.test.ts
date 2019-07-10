@@ -68,12 +68,14 @@ describe("Request password reset", () => {
       );
       expect(true).toBeFalsy();
     } catch (e) {
-      expect(e.message).toContain("Please try again.");
+      expect(e.message).toContain(
+        "The email with the password reset link could not be sent."
+      );
     }
 
     expect(prisma.user).toHaveBeenCalled();
     expect(prisma.updateUser).toHaveBeenCalled();
-    expect(transporter.sendMail).not.toHaveBeenCalled();
+    expect(transporter.sendMail).toHaveBeenCalled();
   });
 
   it("should fail if no email could be sent to the user", async () => {
@@ -94,7 +96,9 @@ describe("Request password reset", () => {
       );
       expect(true).toBeFalsy();
     } catch (e) {
-      expect(e.message).toContain("could not be sent");
+      expect(e.message).toContain(
+        "The email with the password reset link could not be sent."
+      );
     }
 
     expect(prisma.user).toHaveBeenCalled();
