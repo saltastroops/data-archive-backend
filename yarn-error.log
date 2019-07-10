@@ -1,5 +1,5 @@
 Arguments: 
-  /usr/bin/node /usr/bin/yarn deploy
+  /usr/bin/node /usr/bin/yarn test
 
 PATH: 
   /home/nhlavu/mongodb/mongodb-linux-x86_64-3.6.5/bin/:/home/nhlavu/.rvm/gems/ruby-2.4.1/bin:/home/nhlavu/.rvm/gems/ruby-2.4.1@global/bin:/home/nhlavu/.rvm/rubies/ruby-2.4.1/bin:/home/nhlavu/bin:/home/nhlavu/.local/bin:/home/nhlavu/mongodb/mongodb-linux-x86_64-3.6.5/bin/:/home/nhlavu/mongodb/mongodb-linux-x86_64-3.6.5/bin/:/home/nhlavu/bin:/home/nhlavu/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/nhlavu/.rvm/bin:/home/nhlavu/.rvm/bin:/home/nhlavu/.rvm/bin:/home/nhlavu/.rvm/bin:/home/nhlavu/.rvm/bin
@@ -603,10 +603,6 @@ Lockfile:
   "@types/mysql@^2.15.6":
     version "2.15.6"
     resolved "https://registry.yarnpkg.com/@types/mysql/-/mysql-2.15.6.tgz#8718a66e362a4cfde73fe731792bdf453ef3a541"
-  <<<<<<< .merge_file_Q39Rp0
-  =======
-    integrity sha512-PJBY2R3jGJwGrmFgGAJ+1nj4S/PLkF6nT+HvUygniq9ZcVht0mTH1TLAjjyfIXf9FfrELs8mbqOrWa/Tn89NCA==
-  >>>>>>> .merge_file_bwI7f0
     dependencies:
       "@types/node" "*"
   
@@ -1062,10 +1058,6 @@ Lockfile:
   bignumber.js@7.2.1:
     version "7.2.1"
     resolved "https://registry.yarnpkg.com/bignumber.js/-/bignumber.js-7.2.1.tgz#80c048759d826800807c4bfd521e50edbba57a5f"
-  <<<<<<< .merge_file_Q39Rp0
-  =======
-    integrity sha512-S4XzBk5sMB+Rcb/LNcpzXr57VRTxgAvaAEDAl1AwRx27j00hT84O6OkteE7u8UB3NuaaygCRrEpqox4uDOrbdQ==
-  >>>>>>> .merge_file_bwI7f0
   
   binary-extensions@^1.0.0:
     version "1.12.0"
@@ -3730,10 +3722,6 @@ Lockfile:
   mysql@^2.17.1:
     version "2.17.1"
     resolved "https://registry.yarnpkg.com/mysql/-/mysql-2.17.1.tgz#62bba4a039a9b2f73638cd1652ce50fc6f682899"
-  <<<<<<< .merge_file_Q39Rp0
-  =======
-    integrity sha512-7vMqHQ673SAk5C8fOzTG2LpPcf3bNt0oL3sFpxPEEFp1mdlDcrLK0On7z8ZYKaaHrHwNcQ/MTUz7/oobZ2OyyA==
-  >>>>>>> .merge_file_bwI7f0
     dependencies:
       bignumber.js "7.2.1"
       readable-stream "2.3.6"
@@ -4836,10 +4824,6 @@ Lockfile:
   sqlstring@2.3.1:
     version "2.3.1"
     resolved "https://registry.yarnpkg.com/sqlstring/-/sqlstring-2.3.1.tgz#475393ff9e91479aea62dcaf0ca3d14983a7fb40"
-  <<<<<<< .merge_file_Q39Rp0
-  =======
-    integrity sha1-R1OT/56RR5rqYtyvDKPRSYOn+0A=
-  >>>>>>> .merge_file_bwI7f0
   
   sshpk@^1.7.0:
     version "1.16.1"
@@ -5582,8 +5566,8 @@ Trace:
   Error: Command failed.
   Exit code: 1
   Command: sh
-  Arguments: -c export DEBUG="prisma"; cd src/; prisma deploy --env-file ../.env
-  Directory: /home/nhlavu/nhlavu/da/backend/data-archive-backend
+  Arguments: -c PRISMA_ENDPOINT=https://fakeaddress jest --detectOpenHandles
+  Directory: /home/nhlavu/nhlavu/da/site/data-archive-backend
   Output:
   
       at ProcessTermError.MessageError (/usr/lib/node_modules/yarn/lib/cli.js:186:110)
