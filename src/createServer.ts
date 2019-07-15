@@ -179,6 +179,69 @@ const createServer = async () => {
   });
 
   /**
+   * Endpoint for downloading the data FITS header file.
+   *
+   * The URL includes the following parameters.
+   *
+   * :dataFileId
+   *     The id of the data file.
+   */
+  server.express.get(
+    "/headers/:dataFileId",
+    async (req, res) => {
+      // NOt found error
+      const notFound = {
+        message: "The requested file does not exist.",
+        success: false
+      };
+
+      // Internal server error
+      const internalServerError = {
+        message:
+          "There has been an internal server error while retrieving a preview image.",
+        success: false
+      };
+
+      // Get all the params from the request
+      const { dataFileId } = req.params;
+
+      // Download the data FITS header file
+      // Query for retrieving the data FITS header file
+      const sql = `
+        SELECT path
+        FROM DataFile AS df
+        WHERE df.dataFileId = ?
+    `;
+      // Querying the data preview image path
+      const results: any = await pool.query(sql, [
+        dataFileId
+      ]);
+      if (!results.length) {
+        return res.status(404).send(notFound);
+      }
+
+      const { path: previewPath } = results[0];
+
+      // Get the base path if exist
+      const basePath = process.env.FITS_BASE_DIR || "";
+
+      // Form a full path for the FITS header file location
+      const fullPath = path.join(basePath, previewPath);
+
+      // Download the FITS header file
+      res.download(fullPath, err => {
+        if (err) {
+          if (!res.headersSent) {
+            res.status(500).send(internalServerError);
+          } else {
+            res.end();
+          }
+        }
+      });
+    }
+  );
+
+  /**
    * Endpoint for downloading the data file preview file.
    *
    * The URL includes the following parameters.
