@@ -4,6 +4,7 @@ import bodyParser from "body-parser";
 import { Request, Response } from "express";
 import session from "express-session";
 import { GraphQLServer } from "graphql-yoga";
+import moment = require("moment");
 import passport from "passport";
 import passportLocal from "passport-local";
 import * as path from "path";
@@ -202,14 +203,21 @@ const createServer = async () => {
         success: false
       };
 
+      // Proprietary error
+      const proprietary = {
+        message: "The file you trying to view is proprietary.",
+        success: false
+      }
+
       // Get all the params from the request
       const { dataFileId } = req.params;
 
       // Download the data FITS header file
       // Query for retrieving the data FITS header file
       const sql = `
-        SELECT path
+        SELECT path, publicFrom
         FROM DataFile AS df
+        JOIN Observation AS ob ON ob.observationId = df.observationId
         WHERE df.dataFileId = ?
     `;
       // Querying the data preview image path
@@ -220,7 +228,11 @@ const createServer = async () => {
         return res.status(404).send(notFound);
       }
 
-      const { path: previewPath } = results[0];
+      const { path: previewPath, publicFrom } = results[0];
+
+      if (moment(publicFrom) > moment(Date.now())) {
+        return res.status(403).send(proprietary);
+      }
 
       // Get the base path if exist
       const basePath = process.env.FITS_BASE_DIR || "";
