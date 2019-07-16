@@ -180,7 +180,7 @@ const createServer = async () => {
   });
 
   /**
-   * Endpoint for downloading the data FITS header file.
+   * Endpoint for downloading the data file.
    *
    * The URL includes the following parameters.
    *
