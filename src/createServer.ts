@@ -186,9 +186,11 @@ const createServer = async () => {
    *
    * :dataFileId
    *     The id of the data file.
+   * :dataFilename
+   *     The data filename.
    */
   server.express.get(
-    "/headers/:dataFileId",
+    "/data/:dataFileId/:dataFilename",
     async (req, res) => {
       // NOt found error
       const notFound = {
@@ -210,7 +212,7 @@ const createServer = async () => {
       }
 
       // Get all the params from the request
-      const { dataFileId } = req.params;
+      const { dataFileId, dataFilename } = req.params;
 
       // Download the data FITS header file
       // Query for retrieving the data FITS header file
@@ -242,7 +244,7 @@ const createServer = async () => {
       const fullPath = path.join(basePath, previewPath);
 
       // Download the FITS header file
-      res.download(fullPath, err => {
+      res.download(fullPath, dataFilename, err => {
         if (err) {
           if (!res.headersSent) {
             res.status(500).send(internalServerError);
