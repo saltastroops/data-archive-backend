@@ -230,6 +230,7 @@ const createServer = async () => {
 
       const { path: previewPath, publicFrom } = results[0];
 
+      // Check for proprietary period
       if (moment(publicFrom) > moment(Date.now())) {
         return res.status(403).send(proprietary);
       }
