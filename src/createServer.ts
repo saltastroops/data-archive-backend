@@ -233,7 +233,7 @@ const createServer = async () => {
       const { path: previewPath, publicFrom } = results[0];
 
       // Check for proprietary period
-      if (moment(publicFrom) > moment(Date.now())) {
+      if (publicFrom > Date.now()) {
         return res.status(403).send(proprietary);
       }
 
@@ -244,7 +244,10 @@ const createServer = async () => {
       const fullPath = path.join(basePath, previewPath);
 
       // Download the FITS header file
-      res.download(fullPath, dataFilename, err => {
+      res.type('application/fits');
+      res.download(fullPath,
+                   dataFilename,
+                   err => {
         if (err) {
           if (!res.headersSent) {
             res.status(500).send(internalServerError);
