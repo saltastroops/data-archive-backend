@@ -180,7 +180,7 @@ const createServer = async () => {
   });
 
   /**
-   * Endpoint for downloading the data file.
+   * Endpoint for downloading the FITS file.
    *
    * The URL includes the following parameters.
    *
@@ -192,37 +192,35 @@ const createServer = async () => {
   server.express.get(
     "/data/:dataFileId/:dataFilename",
     async (req, res) => {
-      // NOt found error
+      // Not found error
       const notFound = {
-        message: "The requested file does not exist.",
+        message: "The requested FITS file does not exist.",
         success: false
       };
 
       // Internal server error
       const internalServerError = {
         message:
-          "There has been an internal server error while retrieving a preview image.",
+          "There has been an internal server error while retrieving the FITS file.",
         success: false
       };
 
       // Proprietary error
       const proprietary = {
-        message: "The file you trying to view is proprietary.",
+        message: "The file you are trying to download is proprietary.",
         success: false
-      }
+      };
 
       // Get all the params from the request
       const { dataFileId, dataFilename } = req.params;
 
-      // Download the data FITS header file
-      // Query for retrieving the data FITS header file
+      // Query for retrieving the FITS file
       const sql = `
         SELECT path, publicFrom
         FROM DataFile AS df
         JOIN Observation AS ob ON ob.observationId = df.observationId
         WHERE df.dataFileId = ?
     `;
-      // Querying the data preview image path
       const results: any = await pool.query(sql, [
         dataFileId
       ]);
@@ -237,10 +235,10 @@ const createServer = async () => {
         return res.status(403).send(proprietary);
       }
 
-      // Get the base path if exist
+      // Get the base path
       const basePath = process.env.FITS_BASE_DIR || "";
 
-      // Form a full path for the FITS header file location
+      // Form a full path for the FITS file location
       const fullPath = path.join(basePath, previewPath);
 
       // Download the FITS header file
