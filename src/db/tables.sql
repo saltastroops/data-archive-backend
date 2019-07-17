@@ -4,8 +4,8 @@
 
 DROP TABLE IF EXISTS `Role`;
 CREATE TABLE `Role` (
-  `roleId` INT(11) NOT NULL AUTO_INCREMENT,
-  `role` VARCHAR(45) NOT NULL,
+  `roleId` INT(11) NOT NULL AUTO_INCREMENT COMMENT "Table's Id",
+  `role` VARCHAR(45) NOT NULL COMMENT "Role for the user e.g ADMIN",
   PRIMARY KEY (`roleId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -17,8 +17,8 @@ INSERT INTO `Role` (`roleId`, `role`) values (1, "ADMIN")
 
 DROP TABLE IF EXISTS `DataRequestStatus`;
 CREATE TABLE `DataRequestStatus` (
-  `dataRequestStatusId` INT(11) NOT NULL AUTO_INCREMENT,
-  `dataRequestStatus` VARCHAR(45) NOT NULL,
+  `dataRequestStatusId` INT(11) NOT NULL AUTO_INCREMENT COMMENT "Table's Id",
+  `dataRequestStatus` VARCHAR(45) NOT NULL COMMENT "A Data request status e.g SUCCESSFUL",
   PRIMARY KEY (`dataRequestStatusId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 INSERT INTO `dataRequestStatus` (`dataRequestStatus`) values ("SUCCESSFUL"), ("PENDING"), ("FAILED")
@@ -26,7 +26,6 @@ INSERT INTO `dataRequestStatus` (`dataRequestStatus`) values ("SUCCESSFUL"), ("P
 --
 -- Table structure for table `User`
 --
-
 DROP TABLE IF EXISTS `User`;
 CREATE TABLE `User` (
   `userId` INT(11) NOT NULL AUTO_INCREMENT,
@@ -41,10 +40,14 @@ CREATE TABLE `User` (
   PRIMARY KEY (`userId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+--
+-- Table structure for table `UserRole`
+-- A single user can have multiple roles
+--
 DROP TABLE IF EXISTS `UserRole`;
 CREATE TABLE `UserRole` (
-  `userId` INT(11) NOT NULL,
-  `roleId` INT(11) NOT NULL,
+  `userId` INT(11) NOT NULL COMMENT "An id of a table `User`",
+  `roleId` INT(11) NOT NULL COMMENT "An id of a table `Role`",
   PRIMARY KEY (`userId`, `roleId`),
   KEY `fk_UserRoleUser_idx` (`userId`),
   KEY `fk_UserRoleRole_idx` (`roleId`),
@@ -59,11 +62,11 @@ CREATE TABLE `UserRole` (
 
 DROP TABLE IF EXISTS `DataRequest`;
 CREATE TABLE `dataRequest` (
-  `dataRequestId` INT(11) NOT NULL AUTO_INCREMENT,
-  `userId` INT(11) NOT NULL,
-  `dataRequestStatusId` INT(11) NOT NULL,
-  `dataRequest` VARCHAR(45) NOT NULL,
-  `madeAt` CURRENT_DATE NOT NULL,
+  `dataRequestId` INT(11) NOT NULL AUTO_INCREMENT COMMENT "Table's id",
+  `userId` INT(11) NOT NULL COMMENT "An id for a table `User`",
+  `dataRequestStatusId` INT(11) NOT NULL COMMENT "An id for a table `DataRequestStatus`",
+  `dataRequest` VARCHAR(255) NOT NULL COMMENT "@Christian do we have a name for data request if not please remove",
+  `madeAt` DATETIME NOT NULL COMMENT "Date and time a data request is made",
   PRIMARY KEY (`dataRequestId`),
   KEY `fk_DataRequestUser_idx` (`userId`),
   KEY `fk_DataRequestStatus_idx` (`statusId`),
@@ -78,8 +81,8 @@ CREATE TABLE `dataRequest` (
 
 DROP TABLE IF EXISTS `DataRequestFiles`;
 CREATE TABLE `dataRequest` (
-  `dataRequestId` INT(11) NOT NULL ,
-  `fileId` INT(11) NOT NULL,
+  `dataRequestId` INT(11) NOT NULL  COMMENT "An Id for a table ``DataRequest",
+  `fileId` INT(11) NOT NULL COMMENT "An id from SSDA for a data file this need to be checked before it is created",
   PRIMARY KEY (`dataRequestId`,`fileId` ),
   KEY `fk_DataRequestFileDataRequest_idx` (`dataRequestId`),
   CONSTRAINT `fk_DataRequestFilesDataRequest` FOREIGN KEY (`dataRequestId`) REFERENCES `DataRequest` (`dataRequestId`) ON DELETE NO ACTION ON UPDATE NO ACTION
