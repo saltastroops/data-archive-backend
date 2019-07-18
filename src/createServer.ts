@@ -4,13 +4,13 @@ import bodyParser from "body-parser";
 import { Request, Response } from "express";
 import session from "express-session";
 import { GraphQLServer } from "graphql-yoga";
-import moment = require("moment");
 import passport from "passport";
 import passportLocal from "passport-local";
 import * as path from "path";
 import pool from "./db/pool";
 import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
+import { isAdmin } from "./util/user";
 
 // Set up Sentry
 if (process.env.NODE_ENV === "production") {
@@ -189,73 +189,84 @@ const createServer = async () => {
    * :dataFilename
    *     The data filename.
    */
-  server.express.get(
-    "/data/:dataFileId/:dataFilename",
-    async (req, res) => {
-      // Not found error
-      const notFound = {
-        message: "The requested FITS file does not exist.",
+  server.express.get("/data/:dataFileId/:dataFilename", async (req, res) => {
+    // Not found error
+    const notFound = {
+      message: "The requested FITS file does not exist.",
+      success: false
+    };
+
+    // Internal server error
+    const internalServerError = {
+      message:
+        "There has been an internal server error while retrieving the FITS file.",
+      success: false
+    };
+
+    // Proprietary error
+    const proprietary = {
+      message: "The file you are trying to download is proprietary.",
+      success: false
+    };
+
+    // Check if the user is logged in
+    if (!req.user) {
+      return res.status(401).send({
+        message: "You must be logged in.",
         success: false
-      };
+      });
+    }
 
-      // Internal server error
-      const internalServerError = {
-        message:
-          "There has been an internal server error while retrieving the FITS file.",
+    // Check that the user may download FITS files because they are an administrator.
+    // If the user is not an ADMIN, forbid the user from downloading.
+    if (!isAdmin(req.user)) {
+      return res.status(403).send({
+        message: "You are not allowed to download FITS file.",
         success: false
-      };
+      });
+    }
 
-      // Proprietary error
-      const proprietary = {
-        message: "The file you are trying to download is proprietary.",
-        success: false
-      };
+    // Get all the params from the request
+    const { dataFileId, dataFilename } = req.params;
 
-      // Get all the params from the request
-      const { dataFileId, dataFilename } = req.params;
-
-      // Query for retrieving the FITS file
-      const sql = `
+    // Query for retrieving the FITS file
+    const sql = `
         SELECT path, publicFrom
         FROM DataFile AS df
         JOIN Observation AS ob ON ob.observationId = df.observationId
         WHERE df.dataFileId = ?
-    `;
-      const results: any = await pool.query(sql, [
-        dataFileId
-      ]);
-      if (!results.length) {
-        return res.status(404).send(notFound);
-      }
+      `;
 
-      const { path: previewPath, publicFrom } = results[0];
-
-      // Check for proprietary period
-      if (publicFrom > Date.now()) {
-        return res.status(403).send(proprietary);
-      }
-
-      // Get the base path
-      const basePath = process.env.FITS_BASE_DIR || "";
-
-      // Form a full path for the FITS file location
-      const fullPath = path.join(basePath, previewPath);
-
-      // Download the FITS header file
-      res.type('application/fits');
-      res.download(fullPath,
-                   dataFilename,
-                   err => {
-        if (err) {
-          if (!res.headersSent) {
-            res.status(500).send(internalServerError);
-          } else {
-            res.end();
-          }
-        }
-      });
+    const results: any = await pool.query(sql, [dataFileId]);
+    if (!results.length) {
+      return res.status(404).send(notFound);
     }
-  );
+
+    const { path: previewPath, publicFrom } = results[0];
+
+    // Check for proprietary period
+    if (publicFrom > Date.now()) {
+      return res.status(403).send(proprietary);
+    }
+
+    // Get the base path
+    const basePath = process.env.FITS_BASE_DIR || "";
+
+    // Form a full path for the FITS file location
+    const fullPath = path.join(basePath, previewPath);
+
+    // Download the FITS header file
+    res.type("application/fits");
+    res.download(fullPath, dataFilename, err => {
+      if (err) {
+        if (!res.headersSent) {
+          res.status(500).send(internalServerError);
+        } else {
+          res.end();
+        }
+      }
+    });
+  });
 
   /**
    * Endpoint for downloading the data file preview file.
@@ -282,6 +293,23 @@ const createServer = async () => {
           "There has been an internal server error while retrieving a preview image.",
         success: false
       };
+
+      // Check if the user is logged in
+      if (!req.user) {
+        return res.status(401).send({
+          message: "You must be logged in.",
+          success: false
+        });
+      }
+
+      // Check that the user may download preview files because they are an administrator.
+      // If the user is not an ADMIN, forbid the user from downloading.
+      if (!isAdmin(req.user)) {
+        return res.status(403).send({
+          message: "You are not allowed to download preview file.",
+          success: false
+        });
+      }
 
       // Get all the params from the request
       const { dataFileId, dataPreviewFileName } = req.params;
@@ -436,8 +464,7 @@ async function downloadDataRequest({
   // Check that the user may download content for the data request, either
   // because they own the request or because they are an administrator.
   const mayDownload =
-    (dataRequest as any).user.id === req.user.id ||
-    req.user.roles.find((role: string) => role === "ADMIN");
+    (dataRequest as any).user.id === req.user.id || isAdmin(req.user);
 
   // If the user does not own the data request to download,
   // nor is an ADMIN, forbid the user from downloading
