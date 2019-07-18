@@ -1,3 +1,5 @@
+use `ssda-prisma`;
+SET FOREIGN_KEY_CHECKS=0;
 --
 -- Table structure for table `Role`
 --
@@ -9,7 +11,7 @@ CREATE TABLE `Role` (
   PRIMARY KEY (`roleId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-INSERT INTO `Role` (`roleId`, `role`) values (1, "ADMIN")
+INSERT INTO `Role` (`roleId`, `role`) values (1, "ADMIN");
 
 --
 -- Table structure for table `DataRequestStatus`
@@ -21,7 +23,7 @@ CREATE TABLE `DataRequestStatus` (
   `dataRequestStatus` VARCHAR(45) NOT NULL COMMENT "A Data request status e.g SUCCESSFUL",
   PRIMARY KEY (`dataRequestStatusId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-INSERT INTO `dataRequestStatus` (`dataRequestStatus`) values ("SUCCESSFUL"), ("PENDING"), ("FAILED")
+INSERT INTO `DataRequestStatus` (`dataRequestStatus`) values ("SUCCESSFUL"), ("PENDING"), ("FAILED");
 
 --
 -- Table structure for table `User`
@@ -61,7 +63,7 @@ CREATE TABLE `UserRole` (
 --
 
 DROP TABLE IF EXISTS `DataRequest`;
-CREATE TABLE `dataRequest` (
+CREATE TABLE `DataRequest` (
   `dataRequestId` INT(11) NOT NULL AUTO_INCREMENT COMMENT "Table's id",
   `userId` INT(11) NOT NULL COMMENT "An id for a table `User`",
   `dataRequestStatusId` INT(11) NOT NULL COMMENT "An id for a table `DataRequestStatus`",
@@ -69,7 +71,7 @@ CREATE TABLE `dataRequest` (
   `madeAt` DATETIME NOT NULL COMMENT "Date and time a data request is made",
   PRIMARY KEY (`dataRequestId`),
   KEY `fk_DataRequestUser_idx` (`userId`),
-  KEY `fk_DataRequestStatus_idx` (`statusId`),
+  KEY `fk_DataRequestStatus_idx` (`dataRequestStatusId`),
   CONSTRAINT `fk_DataRequestUser` FOREIGN KEY (`userId`) REFERENCES `User` (`userId`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   CONSTRAINT `fk_DataRequestDataRequestStatus` FOREIGN KEY (`dataRequestStatusId`) REFERENCES `DataRequestStatus` (`dataRequestStatusId`) ON DELETE NO ACTION ON UPDATE NO ACTION
 
@@ -80,7 +82,7 @@ CREATE TABLE `dataRequest` (
 --
 
 DROP TABLE IF EXISTS `DataRequestFiles`;
-CREATE TABLE `dataRequest` (
+CREATE TABLE `DataRequestFiles` (
   `dataRequestId` INT(11) NOT NULL  COMMENT "An Id for a table ``DataRequest",
   `fileId` INT(11) NOT NULL COMMENT "An id from SSDA for a data file this need to be checked before it is created",
   PRIMARY KEY (`dataRequestId`,`fileId` ),
@@ -88,3 +90,4 @@ CREATE TABLE `dataRequest` (
   CONSTRAINT `fk_DataRequestFilesDataRequest` FOREIGN KEY (`dataRequestId`) REFERENCES `DataRequest` (`dataRequestId`) ON DELETE NO ACTION ON UPDATE NO ACTION
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+SET FOREIGN_KEY_CHECKS=1;
