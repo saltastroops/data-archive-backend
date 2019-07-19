@@ -1,4 +1,3 @@
-
 -- Create (and use) the database.
 
 CREATE DATABASE IF NOT EXISTS `ssda-admin`;
@@ -51,12 +50,11 @@ CREATE TABLE `DataRequestStatus` (
   PRIMARY KEY (`dataRequestStatusId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-INSERT INTO `DataRequestStatus` (`dataRequestStatus`) VALUES ("SUCCESSFUL"), ("PENDING"), ("FAILED");
+INSERT INTO `DataRequestStatus` (`dataRequestStatus`) VALUES ("SUCCESSFUL"), ("PENDING"), ("FAILED"), ("EXPIRED");
 
 --
 -- An institution to whose accounts a user can be linked
 --
-
 DROP TABLE IF EXISTS `Institution`;
 
 CREATE TABLE `Institution` (
