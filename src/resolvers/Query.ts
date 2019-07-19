@@ -116,19 +116,6 @@ const Query = {
    * }
    */
   async dataPreview(root: any, args: { dataFileId: number }, ctx: IContext) {
-    // Check if the user is logged in
-    if (!ctx.user) {
-      return null;
-    }
-
-    // Check that the user may download preview files because they are an administrator.
-    // If the user is not an ADMIN, forbid the user from downloading.
-    if (!isAdmin(ctx.user)) {
-      throw Error(
-        "You do not have permission to update details of another user."
-      );
-    }
-
     // Query for retrieving the data previews
     const sql = `
       SELECT dataPreviewFileName, dataPreviewType, path

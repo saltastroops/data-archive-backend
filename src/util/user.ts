@@ -4,6 +4,6 @@
  * @param user user information
  */
 const isAdmin = (user: any) =>
-  user.roles.find((role: string) => role === "ADMIN");
+  user && user.roles.some((role: string) => role === "ADMIN");
 
 export { isAdmin };

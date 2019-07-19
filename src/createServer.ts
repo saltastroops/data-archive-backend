@@ -209,23 +209,6 @@ const createServer = async () => {
       success: false
     };
 
-    // Check if the user is logged in
-    if (!req.user) {
-      return res.status(401).send({
-        message: "You must be logged in.",
-        success: false
-      });
-    }
-
-    // Check that the user may download FITS files because they are an administrator.
-    // If the user is not an ADMIN, forbid the user from downloading.
-    if (!isAdmin(req.user)) {
-      return res.status(403).send({
-        message: "You are not allowed to download FITS file.",
-        success: false
-      });
-    }
-
     // Get all the params from the request
     const { dataFileId, dataFilename } = req.params;
 
@@ -244,8 +227,10 @@ const createServer = async () => {
 
     const { path: previewPath, publicFrom } = results[0];
 
-    // Check for proprietary period
-    if (publicFrom > Date.now()) {
+    // Check for proprietary period, if still in the proprietary period
+    // Check that the user may download FITS files because they are an administrator.
+    // If the user is not an ADMIN, forbid the user from downloading.
+    if (publicFrom > Date.now() || (req.user && !isAdmin(req.user))) {
       return res.status(403).send(proprietary);
     }
 
@@ -293,23 +278,6 @@ const createServer = async () => {
           "There has been an internal server error while retrieving a preview image.",
         success: false
       };
-
-      // Check if the user is logged in
-      if (!req.user) {
-        return res.status(401).send({
-          message: "You must be logged in.",
-          success: false
-        });
-      }
-
-      // Check that the user may download preview files because they are an administrator.
-      // If the user is not an ADMIN, forbid the user from downloading.
-      if (!isAdmin(req.user)) {
-        return res.status(403).send({
-          message: "You are not allowed to download preview file.",
-          success: false
-        });
-      }
 
       // Get all the params from the request
       const { dataFileId, dataPreviewFileName } = req.params;
