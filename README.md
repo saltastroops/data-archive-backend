@@ -29,13 +29,14 @@ The server requires the following environment variables.
 
 Variable | Description | Example
 ---- | ---- | ----
+APP_SECRET | The secret key for this server | anothertopsecretkey
+BASE_FITS_DIRS | Base directory where the fits files are located | /home/user/data
 FRONTEND_URL | The URL of the frontend accessing this server | https://ssda.saao.ac.za
+PORT | Port on which the server should be listening | 4000
 PRISMA_ENDPOINT | The URL of the Prisma server | https://ssdadb.saao.ac.za
 PRISMA_SECRET | The secret key for the Prisma server | topsecretkey
-SESSION_SECRET | The secret key for for signing the session ID cookie | anothertopsecretkey
-APP_SECRET | The secret key for this server | anothertopsecretkey
-PORT | Port on which the server should be listening | 443
 SENTRY_DSN | The Sentry DSN (Data Source Name) | https://d6251ee8232d4au0b57cbhy38c059af6@sentry.io/237524
+SESSION_SECRET | The secret key for for signing the session ID cookie | anothertopsecretkey
 
 The [Sentry](https://sentry.io) DSN (Data Source Name) can be obtained from the client keys tab in your Sentry project's settings.
 
@@ -105,7 +106,7 @@ The name and location of the configuration file depends on your nginx installati
 /etc/nginx/sites-available
 ```
 
-with a name like `dassapi.saao.ac.za.conf`, and then activate it by creating a symbolic link to it,
+with a name like `ssdaapi.saao.ac.za.conf`, and then activate it by creating a symbolic link to it,
 
 ```bash
 ln -s /etc/nginx/sites-available/ssdaapi.saao.ac.za.conf /etc/nginx/sites-enabled/
@@ -140,6 +141,11 @@ The server can then be started by running
 
 ```bash
 pm2 start
+```
+If the pm2 is running already you can restart with 
+
+```bash
+pm2 restart all
 ```
 
 If you want to the server to launch automatically after a system reboot, you may use PM2's startup command.
