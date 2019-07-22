@@ -4,7 +4,6 @@ import bodyParser from "body-parser";
 import { Request, Response } from "express";
 import session from "express-session";
 import { GraphQLServer } from "graphql-yoga";
-import moment = require("moment");
 import passport from "passport";
 import passportLocal from "passport-local";
 import * as path from "path";
