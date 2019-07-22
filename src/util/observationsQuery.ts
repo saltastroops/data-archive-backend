@@ -166,6 +166,17 @@ export function parseWhereCondition(where: string): WhereConditionContent {
       sql = "(" + o.GREATER_EQUAL.column + " >= ?)";
       values = [o.GREATER_EQUAL.value];
       columns.add(o.GREATER_EQUAL.column);
+    } else if (o.IS_IN) {
+      validateColumn(o.IS_IN.column);
+      o.IS_IN.values.forEach((value: any) => validateValue(value));
+      sql =
+        "(" +
+        o.IS_IN.column +
+        " IN (" +
+        o.IS_IN.values.map((v: any) => "?").join(", ") +
+        "))";
+      values = [...o.IS_IN.values];
+      columns.add(o.IS_IN.column);
     } else if (o.CONTAINS) {
       validateColumn(o.CONTAINS.column);
       validateValue(o.CONTAINS.value);
