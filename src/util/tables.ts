@@ -81,6 +81,18 @@ const RSS = {
   rightOf: new Set(["DataFile"])
 };
 
+const RssFabryPerotMode = {
+  join: "RssFabryPerotMode.rssFabryPerotModeId=RSS.rssFabryPerotModeId",
+  name: "RssFabryPerotMode",
+  rightOf: new Set(["RSS"])
+};
+
+const RssMode = {
+  join: "RssMode.rssModeId=RSS.rssModeId",
+  name: "RssMode",
+  rightOf: new Set(["RSS"])
+};
+
 const Salticam = {
   join: "Salticam.dataFileId=DataFile.dataFileId",
   name: "Salticam",
@@ -118,6 +130,8 @@ export const dataModel = new DatabaseModel(
     Proposal,
     ProposalInvestigator,
     RSS,
+    RssFabryPerotMode,
+    RssMode,
     Salticam,
     Target,
     TargetType,
