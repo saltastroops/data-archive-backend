@@ -1,15 +1,20 @@
-import { isAdmin } from "../../util/user";
+import { isAdmin, IUser } from "../../util/user";
 
 describe("User is admin", () => {
-  it("should retur true is user has admin role", () => {
-    expect(isAdmin({ roles: ["ADMIN"] })).toBeTruthy();
+  const user: IUser = {
+    roles: []
+  };
+  it("should return true if the user has the admin role", () => {
+    const adminUser = { ...user, roles: ["ADMIN"] };
+    expect(isAdmin(adminUser)).toBeTruthy();
   });
 
-  it("should return false if user has roles other then admin", () => {
-    expect(isAdmin({ roles: ["USER"] })).toBeFalsy();
+  it("should return false if the user has only roles other than admin", () => {
+    const normalUser = { ...user, roles: ["USER"] };
+    expect(isAdmin(normalUser)).toBeFalsy();
   });
 
-  it("should return false if user has no roles", () => {
-    expect(isAdmin(null)).toBeFalsy();
+  it("should return false if the user has no roles", () => {
+    expect(isAdmin(undefined)).toBeFalsy();
   });
 });
