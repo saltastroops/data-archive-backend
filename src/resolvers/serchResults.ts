@@ -1,4 +1,4 @@
-import Database, { ssdaConfig } from "../connection";
+import pool from "../db/pool";
 import {
   createFromExpression,
   parseWhereCondition
@@ -28,9 +28,6 @@ export const queryDataFiles = async (
   startIndex: number,
   limit: number
 ) => {
-  //  Database connection
-  const connection = new Database(ssdaConfig);
-
   // Object containing where sql columns and mapping values
   const whereDetails = parseWhereCondition(where);
 
@@ -51,7 +48,7 @@ export const queryDataFiles = async (
   const countSQL = `
       SELECT COUNT(*) as itemsTotal FROM ${sqlFrom} WHERE ${whereDetails.sql}
       `;
-  const countResults = await connection.query(countSQL, [
+  const countResults: any = await pool.query(countSQL, [
     ...whereDetails.values
   ]);
   const itemsTotal = countResults[0].itemsTotal;
@@ -67,7 +64,7 @@ export const queryDataFiles = async (
       ORDER BY DataFile.startTime DESC
       LIMIT ? OFFSET ?
              `;
-  const itemResults = await connection.query(itemSQL, [
+  const itemResults: any = await pool.query(itemSQL, [
     ...whereDetails.values,
     limit,
     startIndex

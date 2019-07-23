@@ -4,7 +4,6 @@ import bodyParser from "body-parser";
 import { Request, Response } from "express";
 import session from "express-session";
 import { GraphQLServer } from "graphql-yoga";
-import moment = require("moment");
 import passport from "passport";
 import passportLocal from "passport-local";
 import * as path from "path";
@@ -189,73 +188,66 @@ const createServer = async () => {
    * :dataFilename
    *     The data filename.
    */
-  server.express.get(
-    "/data/:dataFileId/:dataFilename",
-    async (req, res) => {
-      // Not found error
-      const notFound = {
-        message: "The requested FITS file does not exist.",
-        success: false
-      };
+  server.express.get("/data/:dataFileId/:dataFilename", async (req, res) => {
+    // Not found error
+    const notFound = {
+      message: "The requested FITS file does not exist.",
+      success: false
+    };
 
-      // Internal server error
-      const internalServerError = {
-        message:
-          "There has been an internal server error while retrieving the FITS file.",
-        success: false
-      };
+    // Internal server error
+    const internalServerError = {
+      message:
+        "There has been an internal server error while retrieving the FITS file.",
+      success: false
+    };
 
-      // Proprietary error
-      const proprietary = {
-        message: "The file you are trying to download is proprietary.",
-        success: false
-      };
+    // Proprietary error
+    const proprietary = {
+      message: "The file you are trying to download is proprietary.",
+      success: false
+    };
 
-      // Get all the params from the request
-      const { dataFileId, dataFilename } = req.params;
+    // Get all the params from the request
+    const { dataFileId, dataFilename } = req.params;
 
-      // Query for retrieving the FITS file
-      const sql = `
+    // Query for retrieving the FITS file
+    const sql = `
         SELECT path, publicFrom
         FROM DataFile AS df
         JOIN Observation AS ob ON ob.observationId = df.observationId
         WHERE df.dataFileId = ?
     `;
-      const results: any = await pool.query(sql, [
-        dataFileId
-      ]);
-      if (!results.length) {
-        return res.status(404).send(notFound);
-      }
-
-      const { path: previewPath, publicFrom } = results[0];
-
-      // Check for proprietary period
-      if (publicFrom > Date.now()) {
-        return res.status(403).send(proprietary);
-      }
-
-      // Get the base path
-      const basePath = process.env.FITS_BASE_DIR || "";
-
-      // Form a full path for the FITS file location
-      const fullPath = path.join(basePath, previewPath);
-
-      // Download the FITS header file
-      res.type('application/fits');
-      res.download(fullPath,
-                   dataFilename,
-                   err => {
-        if (err) {
-          if (!res.headersSent) {
-            res.status(500).send(internalServerError);
-          } else {
-            res.end();
-          }
-        }
-      });
+    const results: any = await pool.query(sql, [dataFileId]);
+    if (!results.length) {
+      return res.status(404).send(notFound);
     }
-  );
+
+    const { path: previewPath, publicFrom } = results[0];
+
+    // Check for proprietary period
+    if (publicFrom > Date.now()) {
+      return res.status(403).send(proprietary);
+    }
+
+    // Get the base path
+    const basePath = process.env.FITS_BASE_DIR || "";
+
+    // Form a full path for the FITS file location
+    const fullPath = path.join(basePath, previewPath);
+
+    // Download the FITS header file
+    res.type("application/fits");
+    res.download(fullPath, dataFilename, err => {
+      if (err) {
+        if (!res.headersSent) {
+          res.status(500).send(internalServerError);
+        } else {
+          res.end();
+        }
+      }
+    });
+  });
 
   /**
    * Endpoint for downloading the data file preview file.
