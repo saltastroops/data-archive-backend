@@ -10,6 +10,7 @@ import * as path from "path";
 import pool from "./db/pool";
 import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
+import {getSaltUserById, loginSaltUser} from "./util/sdbUser";
 
 // Set up Sentry
 if (process.env.NODE_ENV === "production") {
@@ -36,16 +37,23 @@ const createServer = async () => {
   passport.use(
     // Authenticate against a username and password
     new passportLocal.Strategy(
-      { usernameField: "username", passwordField: "password" },
-      async (username, password, done) => {
-        // Only retrieving a user with the supplied username
-        const user = await prisma.user({ username });
+      { usernameField: "username", passwordField: "password", passReqToCallback: true},
+      async (request, username, password, done, ) => {
 
-        // Check if the user exists and add it to the request
-        if (user && (await bcrypt.compare(password, user.password))) {
-          done(null, user);
+        if (request.body.affiliation.toLowerCase() === "web manager"){
+          const user = await loginSaltUser(username, password) ;
+
+          done(null, user ? user : false)
         } else {
-          done(null, false);
+          // Only retrieving a user with the supplied username
+          const user = await prisma.user({username});
+
+          // Check if the user exists and add it to the request
+          if (user && (await bcrypt.compare(password, user.password))) {
+            done(null, user);
+          } else {
+            done(null, false);
+          }
         }
       }
     )
@@ -103,13 +111,18 @@ const createServer = async () => {
   // Serialize and deserialize for every request. Only the user id is stored
   // in the session.
 
-  passport.serializeUser((user: { id: string }, done) => {
-    done(null, user.id);
+  passport.serializeUser((user: any, done) => {
+    done(null, {userId: user.id, affiliation: user.affiliation});
   });
 
-  passport.deserializeUser(async (id: string, done) => {
-    const user = await prisma.user({ id });
-    done(null, user ? user : false);
+  passport.deserializeUser(async (user: any, done) => {
+    if (user.affiliation === "SALT"){
+      const saltUser = await getSaltUserById(user.userId);
+      done(null, saltUser ? saltUser : false)
+    }else {
+      const SaaoSaltuser = await prisma.user({ id: user.userId });
+      done(null, SaaoSaltuser ? SaaoSaltuser : false);
+    }
   });
 
   /**
