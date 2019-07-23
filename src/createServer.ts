@@ -231,7 +231,7 @@ const createServer = async () => {
     // Check that the user may download FITS files because they either 
     // own it are an administrator. If the user does not own the file 
     // nor is an ADMIN, forbid the user from downloading.
-    if (publicFrom > Date.now() || ownsDataFile(req.user) || isAdmin(req.user)) {
+    if (publicFrom > Date.now() || !ownsDataFile(req.user) || !isAdmin(req.user)) {
       return res.status(403).send(proprietary);
     }
 
