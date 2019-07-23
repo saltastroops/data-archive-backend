@@ -25,17 +25,36 @@ CREATE TABLE `DataRequest` (
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+
+--
+-- Data request observation
+--
+DROP TABLE IF EXISTS `DataRequestObservation`;
+
+CREATE TABLE `DataRequestObservation` (
+  `dataRequestObservationId` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT "Primary key",
+  `dataRequestObservationName` VARCHAR(255) NOT NULL COMMENT "Data request observation name",
+  `dataRequestId` INT(11) UNSIGNED NOT NULL COMMENT "Data requrest id",
+  PRIMARY KEY (`dataRequestObservationId`),
+  KEY `fk_DataRequestObservationDataRequest_idx` (`dataRequestId`),
+  CONSTRAINT `fk_DataRequestObservationDataRequest` FOREIGN KEY (`dataRequestId`) REFERENCES `DataRequest` (`dataRequestId`) ON DELETE NO ACTION ON UPDATE NO ACTION
+
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 --
 -- File in a data request.
 --
 DROP TABLE IF EXISTS `DataRequestFile`;
 
 CREATE TABLE `DataRequestFile` (
-  `dataRequestId` INT(11) UNSIGNED NOT NULL  COMMENT "An Id for a table ``DataRequest",
-  `fileId` INT(11) UNSIGNED NOT NULL COMMENT "An id from SSDA for a data file this need to be checked before it is created",
-  PRIMARY KEY (`dataRequestId`,`fileId` ),
-  KEY `fk_DataRequestFileDataRequest_idx` (`dataRequestId`),
-  CONSTRAINT `fk_DataRequestFilesDataRequest` FOREIGN KEY (`dataRequestId`) REFERENCES `DataRequest` (`dataRequestId`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  `dataRequestFileId` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT "Primary key",
+  `dataRequestObservationId` INT(11) UNSIGNED NOT NULL  COMMENT "An Id for a table DataRequestObservation",
+  `fileId` BINARY(16) NOT NULL COMMENT "An id from SSDA for a data file this need to be checked before it is created",
+  PRIMARY KEY (`dataRequestFileId` ),
+  KEY `fk_DataRequestFileDataRequestObservation_idx` (`dataRequestObservationId`),
+  KEY `fk_DataRequestFileDataFile_idx` (`fileId`),
+  CONSTRAINT `fk_DataRequestFileDataRequestObservation` FOREIGN KEY (`dataRequestObservationId`) REFERENCES `DataRequestObservation` (`dataRequestObservationId`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_DataRequestFileDataFile` FOREIGN KEY (`fileId`) REFERENCES `DataFile` (`fileId`) ON DELETE NO ACTION ON UPDATE NO ACTION
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

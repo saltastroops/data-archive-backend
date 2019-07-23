@@ -30,7 +30,7 @@ The server requires the following environment variables.
 Variable | Description | Example
 ---- | ---- | ----
 APP_SECRET | The secret key for this server | anothertopsecretkey
-BASE_FITS_DIRS | Base directory where the fits files are located | /home/user/data
+FITS_BASE_DIR | Base directory where the fits files are located | /home/user/data
 FRONTEND_URL | The URL of the frontend accessing this server | https://ssda.saao.ac.za
 PORT | Port on which the server should be listening | 4000
 PRISMA_ENDPOINT | The URL of the Prisma server | https://ssdadb.saao.ac.za
