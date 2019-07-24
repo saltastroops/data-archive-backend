@@ -14,30 +14,14 @@ DROP TABLE IF EXISTS `DataRequest`;
 
 CREATE TABLE `DataRequest` (
   `dataRequestId` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT "Primary key",
-  `userId` INT(11) UNSIGNED NOT NULL COMMENT "User id",
   `dataRequestStatusId` INT(11) UNSIGNED NOT NULL COMMENT "Data requrest status id",
   `madeAt` DATETIME NOT NULL COMMENT "Time when the request was made",
+  `userId` INT(11) UNSIGNED NOT NULL COMMENT "User id",
   PRIMARY KEY (`dataRequestId`),
   KEY `fk_DataRequestUser_idx` (`userId`),
   KEY `fk_DataRequestStatus_idx` (`dataRequestStatusId`),
   CONSTRAINT `fk_DataRequestUser` FOREIGN KEY (`userId`) REFERENCES `User` (`userId`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   CONSTRAINT `fk_DataRequestDataRequestStatus` FOREIGN KEY (`dataRequestStatusId`) REFERENCES `DataRequestStatus` (`dataRequestStatusId`) ON DELETE NO ACTION ON UPDATE NO ACTION
-
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-
---
--- Data request observation
---
-DROP TABLE IF EXISTS `DataRequestObservation`;
-
-CREATE TABLE `DataRequestObservation` (
-  `dataRequestObservationId` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT "Primary key",
-  `dataRequestObservationName` VARCHAR(255) NOT NULL COMMENT "Data request observation name",
-  `dataRequestId` INT(11) UNSIGNED NOT NULL COMMENT "Data requrest id",
-  PRIMARY KEY (`dataRequestObservationId`),
-  KEY `fk_DataRequestObservationDataRequest_idx` (`dataRequestId`),
-  CONSTRAINT `fk_DataRequestObservationDataRequest` FOREIGN KEY (`dataRequestId`) REFERENCES `DataRequest` (`dataRequestId`) ON DELETE NO ACTION ON UPDATE NO ACTION
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -49,12 +33,28 @@ DROP TABLE IF EXISTS `DataRequestFile`;
 CREATE TABLE `DataRequestFile` (
   `dataRequestFileId` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT "Primary key",
   `dataRequestObservationId` INT(11) UNSIGNED NOT NULL  COMMENT "An Id for a table DataRequestObservation",
-  `fileId` BINARY(16) NOT NULL COMMENT "An id from SSDA for a data file this need to be checked before it is created",
-  PRIMARY KEY (`dataRequestFileId` ),
+  `fileId` BINARY(16) NOT NULL COMMENT "The unique identifier for the data file. This must be the same as the identifier assigned in the SSDA database for this data file.",
+  `name` VARCHAR(255) NOT NULL COMMENT "Data request file name",
+  PRIMARY KEY (`dataRequestFileId`),
   KEY `fk_DataRequestFileDataRequestObservation_idx` (`dataRequestObservationId`),
   KEY `fk_DataRequestFileDataFile_idx` (`fileId`),
   CONSTRAINT `fk_DataRequestFileDataRequestObservation` FOREIGN KEY (`dataRequestObservationId`) REFERENCES `DataRequestObservation` (`dataRequestObservationId`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   CONSTRAINT `fk_DataRequestFileDataFile` FOREIGN KEY (`fileId`) REFERENCES `DataFile` (`fileId`) ON DELETE NO ACTION ON UPDATE NO ACTION
+
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Data request observation
+--
+DROP TABLE IF EXISTS `DataRequestObservation`;
+
+CREATE TABLE `DataRequestObservation` (
+  `dataRequestObservationId` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT "Primary key",
+  `dataRequestId` INT(11) UNSIGNED NOT NULL COMMENT "Data requrest id",
+  `name` VARCHAR(255) NOT NULL COMMENT "Data request observation name",
+  PRIMARY KEY (`dataRequestObservationId`),
+  KEY `fk_DataRequestObservationDataRequest_idx` (`dataRequestId`),
+  CONSTRAINT `fk_DataRequestObservationDataRequest` FOREIGN KEY (`dataRequestId`) REFERENCES `DataRequest` (`dataRequestId`) ON DELETE NO ACTION ON UPDATE NO ACTION
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
