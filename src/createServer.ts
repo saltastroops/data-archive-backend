@@ -10,7 +10,7 @@ import * as path from "path";
 import pool from "./db/pool";
 import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
-import { isAdmin, ownsDataFile } from "./util/user";
+import { isAdmin, ownsDataFile, ownsDataRequest } from "./util/user";
 
 // Set up Sentry
 if (process.env.NODE_ENV === "production") {
@@ -225,13 +225,15 @@ const createServer = async () => {
       return res.status(404).send(notFound);
     }
 
-    const { path: previewPath, publicFrom } = results[0];
+    const { id, path: previewPath, publicFrom } = results[0];
 
-    // Check for proprietary period, if still in the proprietary period
-    // Check that the user may download FITS files because they either 
-    // own it are an administrator. If the user does not own the file 
-    // nor is an ADMIN, forbid the user from downloading.
-    if (publicFrom > Date.now() || !ownsDataFile(req.user) || !isAdmin(req.user)) {
+    // Check whether the data file is public or the user may access it
+    // because they own the data or are an administrator.
+    if (
+      publicFrom > Date.now() &&
+      !ownsDataFile(req.user, dataFileId) &&
+      !isAdmin(req.user)
+    ) {
       return res.status(403).send(proprietary);
     }
 
@@ -434,7 +436,7 @@ async function downloadDataRequest({
   // Check that the user may download content for the data request, either
   // because they own the request or because they are an administrator.
   const mayDownload =
-    (dataRequest as any).user.id === req.user.id || isAdmin(req.user);
+    ownsDataRequest(dataRequest, req.user) || isAdmin(req.user);
 
   // If the user does not own the data request to download,
   // nor is an ADMIN, forbid the user from downloading

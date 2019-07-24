@@ -2,6 +2,7 @@ import { isAdmin, IUser } from "../../util/user";
 
 describe("User is admin", () => {
   const user: IUser = {
+    id: "",
     roles: []
   };
   it("should return true if the user has the admin role", () => {

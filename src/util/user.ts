@@ -1,5 +1,6 @@
 // TODO UPDATE according to mysql database
 export interface IUser {
+  id: string; // In mysql this is a number
   roles: string[];
 }
 /**
@@ -10,6 +11,21 @@ export interface IUser {
 const isAdmin = (user: IUser | undefined) =>
   user && user.roles.some((role: string) => role === "ADMIN");
 
-const ownsDataFile = (user: IUser | undefined) => false;
+/**
+ * A function that checks if the user owns the data file
+ *
+ * @param user  user information
+ * @param fileId data file id
+ */
+const ownsDataFile = (user: IUser | undefined, fileId: number) => false;
 
-export { isAdmin, ownsDataFile };
+/**
+ * A function that checks if the user owns the data request
+ *
+ * @param dataReqeust the data reuest
+ * @param user user information
+ */
+const ownsDataRequest = (dataReqeust: any, user: IUser) =>
+  dataReqeust.user.id === user.id;
+
+export { isAdmin, ownsDataFile, ownsDataRequest };
