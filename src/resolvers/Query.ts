@@ -3,6 +3,7 @@ import moment from "moment";
 import * as Path from "path";
 import pool from "../db/pool";
 import { Prisma } from "../generated/prisma-client";
+import { isAdmin } from "../util/user";
 import { queryDataFiles } from "./serchResults";
 
 // Defining the context interface
