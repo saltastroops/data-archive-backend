@@ -291,4 +291,36 @@ type DataFile {
 
   #  Metadata for the data file.
   metadata: [MetadataItem!]!
+
+  #  Data file name
+  name: String!
+}
+
+# Details about a data request
+type DataRequest {
+  # Id of the data request
+  id: ID!
+  # User who owns the data request
+  user: User!
+  # The date a data request was made
+  madeAt: DateTime!
+  # The data request observations
+  parts: [DataRequestPart!]!
+  # The status of the data request
+  status: DataRequestStatus!
+}
+
+# Details about the data request oobservation
+type DataRequestPart {
+  # Id of the data data request observation
+  id: ID!
+  # The data request observation files
+  dataFiles: [DataFile!]!
+}
+
+# The data request status
+enum DataRequestStatus {
+  PENDING
+  FAILED
+  SUCCESSFUL
 }

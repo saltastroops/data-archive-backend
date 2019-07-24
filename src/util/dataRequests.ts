@@ -1,20 +1,33 @@
 import DataLoader from "dataloader";
 import { groupBy, map } from "ramda";
-
 import { ssdaAdminPool } from "../db/pool";
 
+/**
+ * A data request data loader function
+ */
 const dataRequestDataLoader = () => {
   return new DataLoader(dataRequestsByUserIds);
 };
 
+/**
+ * A data request observation data loader function
+ */
 const dataRequestObservationDataLoader = () => {
   return new DataLoader(dataRequestObservationByDataRequestIds);
 };
 
+/**
+ * A data request data file data loader
+ */
 const dataRequestFileDataLoader = () => {
   return new DataLoader(dataRequestFilesByDataRequestObservationIds);
 };
 
+/**
+ * A function that return the user data requests
+ *
+ * @param userIds users information
+ */
 const dataRequestsByUserIds = async (userIds: any) => {
   const sql = `
     SELECT dataRequestId AS id, dataRequestStatus AS status, madeAt, userId
@@ -47,10 +60,7 @@ const dataRequestsByUserIds = async (userIds: any) => {
     });
   }
 
-  console.log("DDDDDDDDDDDDDDDDDD", dataRequestWithObservations);
-
   const groupedById = groupBy((dataRequest: any) => {
-    console.log(dataRequest);
     return dataRequest.userId;
   }, dataRequestWithObservations);
 
@@ -61,6 +71,11 @@ const dataRequestsByUserIds = async (userIds: any) => {
   return grouped;
 };
 
+/**
+ * A function that returns data request observations
+ *
+ * @param dataRequestIds data request ids
+ */
 const dataRequestObservationByDataRequestIds = async (dataRequestIds: any) => {
   const sql = `
     SELECT dataRequestObservationId AS id, dataRequestId, name
@@ -83,6 +98,11 @@ const dataRequestObservationByDataRequestIds = async (dataRequestIds: any) => {
   return grouped;
 };
 
+/**
+ * A function that returns the data request observation files
+ *
+ * @param dataRequestObservationIds data request observation ids
+ */
 const dataRequestFilesByDataRequestObservationIds = async (
   dataRequestObservationIds: any
 ) => {

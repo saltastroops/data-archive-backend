@@ -96,13 +96,12 @@ type DataRequest {
     user: User!
     madeAt: DateTime!
     parts: [DataRequestPart!]!
-    uri: String
+    status: DataRequestStatus! @default (value: PENDING)
 }
 
 type DataRequestPart {
     id: ID! @id
     dataFiles: [DataFile!]!
-    status: DataRequestStatus! @default (value: PENDING)
     statusReason: String! @default (value: "none")
     uri: String
 }
