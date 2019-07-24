@@ -37,10 +37,7 @@ CREATE TABLE `DataRequestFile` (
   `name` VARCHAR(255) NOT NULL COMMENT "Data request file name",
   PRIMARY KEY (`dataRequestFileId`),
   KEY `fk_DataRequestFileDataRequestObservation_idx` (`dataRequestObservationId`),
-  KEY `fk_DataRequestFileDataFile_idx` (`fileId`),
-  CONSTRAINT `fk_DataRequestFileDataRequestObservation` FOREIGN KEY (`dataRequestObservationId`) REFERENCES `DataRequestObservation` (`dataRequestObservationId`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `fk_DataRequestFileDataFile` FOREIGN KEY (`fileId`) REFERENCES `DataFile` (`fileId`) ON DELETE NO ACTION ON UPDATE NO ACTION
-
+  CONSTRAINT `fk_DataRequestFileDataRequestObservation` FOREIGN KEY (`dataRequestObservationId`) REFERENCES `DataRequestObservation` (`dataRequestObservationId`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
