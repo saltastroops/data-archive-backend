@@ -3,13 +3,15 @@ import moment from "moment";
 import * as Path from "path";
 import pool from "../db/pool";
 import { Prisma } from "../generated/prisma-client";
+import { saltUserById } from "../util/sdbUser";
 import { isAdmin } from "../util/user";
 import { queryDataFiles } from "./serchResults";
+import { AuthProvider } from "../createServer";
 
 // Defining the context interface
 interface IContext {
   prisma: Prisma;
-  user: { id: string }; // TODO user interface
+  user: { id: string; authProvider: AuthProvider }; // TODO user interface
 }
 
 // Defining the data preview interface
@@ -23,13 +25,19 @@ const Query = {
   /**
    * Get the currently logged in user,
    */
-  user(root: any, args: {}, ctx: IContext) {
+  async user(root: any, args: {}, ctx: IContext) {
     if (!ctx.user) {
       return null;
     }
-    return ctx.prisma.user({
-      id: ctx.user.id
-    });
+    let user;
+    if (ctx.user.authProvider === "SDB") {
+      user = await saltUserById(ctx.user.id);
+    } else {
+      user = await ctx.prisma.user({
+        id: ctx.user.id
+      });
+    }
+    return user ? user : null;
   },
 
   async dataFiles(
