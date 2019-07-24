@@ -420,6 +420,42 @@ describe("parseWhereCondition", () => {
     });
   });
 
+  describe("IS_IN", () => {
+    it("should fail for a missing column", () => {
+      const f = () => objectToSQL({ IS_IN: { values: [17] } });
+      expect(f).toThrow("undefined");
+    });
+
+    it("should fail for an invalid column", () => {
+      const f = () =>
+        objectToSQL({ IS_IN: { column: "Proposal", values: [17] } });
+      expect(f).toThrow("A.B");
+    });
+
+    it("should fail for missing values", () => {
+      const f = () => objectToSQL({ IS_IN: { column: "A.B" } });
+      expect(f).toThrow("undefined");
+    });
+
+    it("should generate the correct SQL", () => {
+      const isInOneItem = { IS_IN: { column: "A.B", values: ["Doe"] } };
+      expect(objectToSQL(isInOneItem)).toEqual("(A.B IN (?))");
+      expect(objectToValues(isInOneItem)).toEqual(["Doe"]);
+
+      const isInThreeItems = {
+        IS_IN: { column: "A.B", values: ["John", "Peter", "Vuyo"] }
+      };
+      expect(objectToSQL(isInThreeItems)).toEqual("(A.B IN (?, ?, ?))");
+      expect(objectToValues(isInThreeItems)).toEqual(["John", "Peter", "Vuyo"]);
+    });
+
+    it("should collect the columns", () => {
+      expect(
+        objectToColumns({ IS_IN: { column: "A.B", values: [14] } })
+      ).toEqual(new Set<string>(["A.B"]));
+    });
+  });
+
   describe("CONTAINS", () => {
     it("should fail for a missing column", () => {
       const f = () => objectToSQL({ CONTAINS: { value: "SCI-024" } });
