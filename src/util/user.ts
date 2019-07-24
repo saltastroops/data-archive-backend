@@ -17,7 +17,7 @@ const isAdmin = (user: IUser | undefined) =>
  * @param user  user information
  * @param fileId data file id
  */
-const ownsDataFile = (user: IUser | undefined, fileId: number) => false;
+const ownsDataFile = (user: IUser | undefined, fileId: string) => false;
 
 /**
  * A function that checks if the user owns the data request

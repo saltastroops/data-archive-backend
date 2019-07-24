@@ -225,7 +225,7 @@ const createServer = async () => {
       return res.status(404).send(notFound);
     }
 
-    const { id, path: previewPath, publicFrom } = results[0];
+    const { path: filePath, publicFrom } = results[0];
 
     // Check whether the data file is public or the user may access it
     // because they own the data or are an administrator.
@@ -241,7 +241,7 @@ const createServer = async () => {
     const basePath = process.env.FITS_BASE_DIR || "";
 
     // Form a full path for the FITS file location
-    const fullPath = path.join(basePath, previewPath);
+    const fullPath = path.join(basePath, filePath);
 
     // Download the FITS header file
     res.type("application/fits");
@@ -438,8 +438,6 @@ async function downloadDataRequest({
   const mayDownload =
     ownsDataRequest(dataRequest, req.user) || isAdmin(req.user);
 
-  // If the user does not own the data request to download,
-  // nor is an ADMIN, forbid the user from downloading
   if (!mayDownload) {
     return res.status(403).send({
       message: "You are not allowed to download the requested file.",
