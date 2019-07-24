@@ -122,13 +122,28 @@ CREATE TABLE `User` (
   `userId` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
   `familyName` VARCHAR(255) NOT NULL COMMENT "Family name (surname)",
   `givenName` VARCHAR(255) NOT NULL COMMENT "Given name (first name)",
-  `username` VARCHAR(255) NOT NULL UNIQUE COMMENT "Username, which must not contain upper case letters",
   `email` VARCHAR(255) NOT NULL UNIQUE COMMENT "Email address",
   `affiliation` VARCHAR(255) NOT NULL COMMENT "Affiliation, such as a university or an institute",
+  `belongsTo` VARCHAR(255) NOT NULL COMMENT "BelongsTo, an observatory the user is affaliated with e.g. SALT or SAAO",
+  `aliasUserId` INT(11) UNSIGNED NOT NULL COMMENT "AliasUserId, a unique identifire of the user from the affaliated observatory",
+  PRIMARY KEY (`userId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+--
+-- User admin
+-- NB! I am not sure which field has to be the primary key, userId or username? They both will always be unique I think?
+DROP TABLE IF EXISTS `UserAdmin`;
+
+CREATE TABLE `UserAdmin` (
+  `userId` INT(11) UNSIGNED NOT NULL UNIQUE COMMENT "User admin id as it is in the User table",
+  `username` VARCHAR(255) NOT NULL UNIQUE COMMENT "Username, which must not contain upper case letters",
   `password` VARCHAR(255) NOT NULL COMMENT "Password, which must have at least 7 characters",
   `passwordResetToken` VARCHAR(255) UNIQUE COMMENT "Token to reset the user's password",
   `passwordResetTokenExpiry` DATETIME COMMENT "Time when the password reset token will expire",
-  PRIMARY KEY (`userId`)
+  PRIMARY KEY (`userId`),
+  KEY `fk_UserAdminUser_idx` (`userId`),
+  CONSTRAINT `fk_UserAdminUser` FOREIGN KEY (`userId`) REFERENCES `User` (`userId`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
