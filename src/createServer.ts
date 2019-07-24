@@ -11,6 +11,7 @@ import pool from "./db/pool";
 import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
 import {saltUserById, saltUserByUsernameAndPassword} from "./util/sdbUser";
+import { isAdmin, ownsDataFile, ownsDataRequest } from "./util/user";
 
 // Set up Sentry
 if (process.env.NODE_ENV === "production") {
@@ -240,16 +241,22 @@ const createServer = async () => {
         FROM DataFile AS df
         JOIN Observation AS ob ON ob.observationId = df.observationId
         WHERE df.dataFileId = ?
-    `;
+      `;
+
     const results: any = await pool.query(sql, [dataFileId]);
     if (!results.length) {
       return res.status(404).send(notFound);
     }
 
-    const { path: previewPath, publicFrom } = results[0];
+    const { path: filePath, publicFrom } = results[0];
 
-    // Check for proprietary period
-    if (publicFrom > Date.now()) {
+    // Check whether the data file is public or the user may access it
+    // because they own the data or are an administrator.
+    if (
+      publicFrom > Date.now() &&
+      !ownsDataFile(req.user, dataFileId) &&
+      !isAdmin(req.user)
+    ) {
       return res.status(403).send(proprietary);
     }
 
@@ -257,7 +264,7 @@ const createServer = async () => {
     const basePath = process.env.FITS_BASE_DIR || "";
 
     // Form a full path for the FITS file location
-    const fullPath = path.join(basePath, previewPath);
+    const fullPath = path.join(basePath, filePath);
 
     // Download the FITS header file
     res.type("application/fits");
@@ -448,14 +455,12 @@ async function downloadDataRequest({
     return res.status(404).send(notFound);
   }
 
+  // TODO UPDATE include dataRequest interface according to the mysql database
   // Check that the user may download content for the data request, either
   // because they own the request or because they are an administrator.
   const mayDownload =
-    (dataRequest as any).user.id === req.user.id ||
-    req.user.roles.find((role: string) => role === "ADMIN");
+    ownsDataRequest(dataRequest, req.user) || isAdmin(req.user);
 
-  // If the user does not own the data request to download,
-  // nor is an ADMIN, forbid the user from downloading
   if (!mayDownload) {
     return res.status(403).send({
       message: "You are not allowed to download the requested file.",

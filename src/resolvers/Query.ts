@@ -4,6 +4,7 @@ import * as Path from "path";
 import pool from "../db/pool";
 import { Prisma } from "../generated/prisma-client";
 import { saltUserById } from "../util/sdbUser";
+import { isAdmin } from "../util/user";
 import { queryDataFiles } from "./serchResults";
 import { AuthProvider } from "../createServer";
 
