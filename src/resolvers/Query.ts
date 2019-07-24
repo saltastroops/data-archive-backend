@@ -1,14 +1,16 @@
 import fs from "fs";
 import moment from "moment";
 import * as Path from "path";
-import pool from "../db/pool";
+import { ssdaPool } from "../db/pool";
 import { Prisma } from "../generated/prisma-client";
+import { getUserById, getUserByToken } from "../util/user";
 import { queryDataFiles } from "./serchResults";
 
 // Defining the context interface
 interface IContext {
+  loaders: { dataRequestLoader: any };
   prisma: Prisma;
-  user: { id: string }; // TODO user interface
+  user: { id: number }; // TODO user interface
 }
 
 // Defining the data preview interface
@@ -22,13 +24,12 @@ const Query = {
   /**
    * Get the currently logged in user,
    */
-  user(root: any, args: {}, ctx: IContext) {
+  async user(root: any, args: {}, ctx: IContext) {
     if (!ctx.user) {
       return null;
     }
-    return ctx.prisma.user({
-      id: ctx.user.id
-    });
+
+    return getUserById(ctx.user.id);
   },
 
   async dataFiles(
@@ -51,6 +52,13 @@ const Query = {
       throw new Error("You must be logged in");
     }
 
+    const { loaders } = ctx;
+    const { dataRequestLoader } = loaders;
+
+    const dataLoaderResults = await dataRequestLoader.load(ctx.user.id);
+
+    console.log(dataLoaderResults);
+
     const limit = args.limit ? Math.min(args.limit, 200) : 200;
 
     return ctx.prisma.dataRequests({
@@ -67,10 +75,6 @@ const Query = {
         uri
         dataFiles {
           id
-          name
-          observation {
-            name
-          }
         }
       }
     }`);
@@ -81,9 +85,7 @@ const Query = {
     { token }: any,
     { prisma }: IContext
   ) {
-    const user = await prisma.user({
-      passwordResetToken: token
-    });
+    const user = await getUserByToken(token);
     if (!user) {
       return { status: false, message: "The token is unknown." };
     }
@@ -125,7 +127,7 @@ const Query = {
     `;
 
     // Querying the data previews
-    const rows = await pool.query(sql, [args.dataFileId]);
+    const rows = await ssdaPool.query(sql, [args.dataFileId]);
 
     const results: IDataPreview = {
       fitsHeader: "",

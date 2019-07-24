@@ -5,17 +5,25 @@ import {
   UserCreateInput,
   UserUpdateInput
 } from "../generated/prisma-client";
+import {
+  createUser,
+  getUserByEmail,
+  getUserById,
+  getUserByUsername,
+  isAdmin,
+  updateUser
+} from "../util/user";
 import { requestPasswordReset, resetPassword } from "./resetPassword";
 
 // Defining the context interface
 interface IContext {
   prisma: Prisma;
-  user: { id: string }; // TODO user interface
+  user: { id: number }; // TODO user interface
 }
 
 // Defining the update user interface
 interface IUserUpdateInput extends UserUpdateInput {
-  id?: string;
+  id?: number;
   newPassword?: string;
 }
 
@@ -91,10 +99,9 @@ const Mutation = {
     }
 
     // Check if there already exists a user with the submitted username
-    const usersWithGivenUsername = await ctx.prisma.users({
-      where: { username: args.username }
-    });
-    if (usersWithGivenUsername.length) {
+    const userWithGivenUsername = await getUserByUsername(args.username);
+
+    if (userWithGivenUsername) {
       throw new Error(
         `There already exists a user with the username ${args.username}.`
       );
@@ -109,10 +116,9 @@ const Mutation = {
     args.email = args.email.toLowerCase();
 
     // Check if there already exists a user with the submitted email address
-    const usersWithGivenEmail = await ctx.prisma.users({
-      where: { email: args.email }
-    });
-    if (usersWithGivenEmail.length) {
+    const userWithGivenEmail = await getUserByEmail(args.email);
+
+    if (userWithGivenEmail) {
       throw new Error(
         `There already exists a user with the email address ${args.email}.`
       );
@@ -124,15 +130,13 @@ const Mutation = {
     // Hash the password before storing it in the database
     const hashedPassword = await bcrypt.hash(args.password, 10);
 
-    // Add the new user to the database
-    return ctx.prisma.createUser({
-      affiliation: args.affiliation,
-      email: args.email,
-      familyName: args.familyName,
-      givenName: args.givenName,
-      password: hashedPassword,
-      username: args.username
-    });
+    // Create new user
+    await createUser(args, hashedPassword);
+
+    // Querying the user
+    const newuser: any = await getUserByUsername(args.username);
+
+    return newuser;
   },
 
   /**
@@ -165,9 +169,7 @@ const Mutation = {
     }
 
     // Get the currently logged user
-    const currentUser = await ctx.prisma.user({
-      id: ctx.user.id
-    });
+    const currentUser = await getUserById(ctx.user.id);
 
     // Check if the password matches that of the currently logged in user
     if (
@@ -177,18 +179,13 @@ const Mutation = {
       throw new Error("The old password is wrong.");
     }
 
-    const userUpdateInfo: UserUpdateInput = {};
-
     // Check if the user information to update is for the currently logged in
     // user. If it is for a different user, the currently logged in user must
     // be an admin.
     const loggedInUserId = ctx.user.id;
     const updatedUserId = args.id || loggedInUserId;
     if (updatedUserId !== loggedInUserId) {
-      const isAdmin =
-        currentUser && currentUser.roles.some(role => role === "ADMIN");
-
-      if (!isAdmin) {
+      if (!isAdmin(currentUser)) {
         throw Error(
           "You do not have permission to update details of another user."
         );
@@ -196,9 +193,8 @@ const Mutation = {
     }
 
     // Get the current details of the updated user.
-    const userToUpdate = await ctx.prisma.user({
-      id: updatedUserId
-    });
+    const userToUpdate = await getUserById(updatedUserId);
+    const userUpdateInfo = userToUpdate;
 
     if (!userToUpdate) {
       throw new Error(`There exists no user with the ID ${updatedUserId}.`);
@@ -215,11 +211,9 @@ const Mutation = {
         }
 
         // Check if there already exists a user with the submitted username
-        const usersWithGivenUsername = await ctx.prisma.users({
-          where: { username: args.username }
-        });
+        const userWithGivenUsername = await getUserByUsername(args.username);
 
-        if (usersWithGivenUsername.length) {
+        if (userWithGivenUsername) {
           throw new Error(
             `There already exists a user with the username ${args.username}.`
           );
@@ -240,11 +234,9 @@ const Mutation = {
         args.email = args.email.toLowerCase();
 
         // Check if there already exists a user with the submitted email address
-        const usersWithGivenEmail = await ctx.prisma.users({
-          where: { email: args.email }
-        });
+        const userWithGivenEmail = await getUserByEmail(args.email);
 
-        if (usersWithGivenEmail.length) {
+        if (userWithGivenEmail) {
           throw new Error(
             `There already exists a user with the email address ${args.email}.`
           );
@@ -279,14 +271,9 @@ const Mutation = {
     }
 
     // Update the user details
-    return ctx.prisma.updateUser({
-      data: {
-        ...userUpdateInfo
-      },
-      where: {
-        id: userToUpdate.id
-      }
-    });
+    await updateUser(userUpdateInfo, userToUpdate.id);
+
+    return getUserById(userToUpdate.id);
   }
 };
 

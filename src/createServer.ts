@@ -7,9 +7,11 @@ import { GraphQLServer } from "graphql-yoga";
 import passport from "passport";
 import passportLocal from "passport-local";
 import * as path from "path";
-import pool from "./db/pool";
+import { ssdaPool } from "./db/pool";
 import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
+import { dataRequestDataLoader } from "./util/dataRequests";
+import { getUserById, getUserByUsername } from "./util/user";
 
 // Set up Sentry
 if (process.env.NODE_ENV === "production") {
@@ -38,12 +40,11 @@ const createServer = async () => {
     new passportLocal.Strategy(
       { usernameField: "username", passwordField: "password" },
       async (username, password, done) => {
-        // Only retrieving a user with the supplied username
-        const user = await prisma.user({ username });
+        const user = await getUserByUsername(username);
 
         // Check if the user exists and add it to the request
         if (user && (await bcrypt.compare(password, user.password))) {
-          done(null, user);
+          done(null, { ...user });
         } else {
           done(null, false);
         }
@@ -54,6 +55,9 @@ const createServer = async () => {
   // Create the server
   const server = new GraphQLServer({
     context: (req: any) => ({
+      loaders: {
+        dataRequestLoader: dataRequestDataLoader()
+      },
       prisma,
       user: req.request.user
     }),
@@ -64,7 +68,7 @@ const createServer = async () => {
   // Enable CORS
   server.express.use((req, res, next) => {
     res.header("Access-Control-Allow-Credentials", "true");
-    res.header("Access-Control-Allow-Origin", process.env.FRONTEND_URL);
+    res.header("Access-Control-Allow-Origin", process.env.FRONTEND_HOST);
     res.header(
       "Access-Control-Allow-Headers",
       "Origin, X-Requested-With, Content-Type, Accept"
@@ -103,12 +107,12 @@ const createServer = async () => {
   // Serialize and deserialize for every request. Only the user id is stored
   // in the session.
 
-  passport.serializeUser((user: { id: string }, done) => {
+  passport.serializeUser((user: { id: number }, done) => {
     done(null, user.id);
   });
 
-  passport.deserializeUser(async (id: string, done) => {
-    const user = await prisma.user({ id });
+  passport.deserializeUser(async (id: number, done) => {
+    const user = await getUserById(id);
     done(null, user ? user : false);
   });
 
@@ -215,7 +219,7 @@ const createServer = async () => {
       WHERE dp.dataFileId = ? AND dp.dataPreviewFileName = ?
     `;
       // Querying the data preview image path
-      const results: any = await pool.query(sql, [
+      const results: any = await ssdaPool.query(sql, [
         dataFileId,
         dataPreviewFileName
       ]);

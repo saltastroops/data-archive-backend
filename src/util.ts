@@ -16,8 +16,7 @@ const transporter = nodemailer.createTransport({
     user: process.env.MAIL_USER
   },
   host: process.env.MAIL_HOST,
-  port: 465,
-  secure: true
+  port: 2525
 });
 
 export { IContext, transporter };
