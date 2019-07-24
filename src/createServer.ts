@@ -19,6 +19,11 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
+// Authentication providers
+export type AuthProvider =
+  | "SDB"    // SALT Science Database
+  | "SSDA"   // this data archive
+
 /**
  * Create the server.
  *
@@ -40,7 +45,7 @@ const createServer = async () => {
       { usernameField: "username", passwordField: "password", passReqToCallback: true},
       async (request, username, password, done, ) => {
 
-        if (request.body.affiliation.toLowerCase() === "web manager"){
+        if (request.body.authProvider as AuthProvider === "SDB"){
           const user = await loginSaltUser(username, password) ;
 
           done(null, user ? user : false)
@@ -112,16 +117,21 @@ const createServer = async () => {
   // in the session.
 
   passport.serializeUser((user: any, done) => {
-    done(null, {userId: user.id, affiliation: user.affiliation});
+    done(null, {userId: user.id, authProvider: user.authProvider});
   });
 
   passport.deserializeUser(async (user: any, done) => {
-    if (user.affiliation === "SALT"){
+    switch (user.authProvider as AuthProvider) {
+    case "SDB":
       const saltUser = await getSaltUserById(user.userId);
-      done(null, saltUser ? saltUser : false)
-    }else {
+      done(null, saltUser ? saltUser : false);
+      break;
+    case "SSDA":
       const SaaoSaltuser = await prisma.user({ id: user.userId });
       done(null, SaaoSaltuser ? SaaoSaltuser : false);
+      break;
+    default:
+      done(new Error(`Unsupported authentication provider: ${user.authProvider}`));
     }
   });
 

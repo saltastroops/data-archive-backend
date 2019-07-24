@@ -9,7 +9,7 @@ SELECT * FROM PiptUser JOIN Investigator USING(Investigator_Id) WHERE PiptUser.P
   );
   return user[0]
     ? {
-        affiliation: "SALT",
+        authProvider: "SDB",
         email: user[0].Email,
         familyName: user[0].Surname,
         givenName: user[0].FirstName,
@@ -29,7 +29,7 @@ SELECT * FROM PiptUser JOIN Investigator USING(Investigator_Id) WHERE Username=?
   );
   return user[0]
     ? {
-        affiliation: "SALT",
+        authProvider: "SDB",
         email: user[0].Email,
         familyName: user[0].Surname,
         givenName: user[0].FirstName,

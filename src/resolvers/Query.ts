@@ -5,11 +5,12 @@ import pool from "../db/pool";
 import { Prisma } from "../generated/prisma-client";
 import { getSaltUserById } from "../util/sdbUser";
 import { queryDataFiles } from "./serchResults";
+import { AuthProvider } from "../createServer";
 
 // Defining the context interface
 interface IContext {
   prisma: Prisma;
-  user: { id: string; affiliation: string }; // TODO user interface
+  user: { id: string; authProvider: AuthProvider }; // TODO user interface
 }
 
 // Defining the data preview interface
@@ -27,7 +28,7 @@ const Query = {
       return null;
     }
     let user;
-    if (ctx.user.affiliation === "SALT") {
+    if (ctx.user.authProvider === "SDB") {
       user = await getSaltUserById(ctx.user.id);
     } else {
       user = await ctx.prisma.user({
