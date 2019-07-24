@@ -3,7 +3,7 @@ import moment from "moment";
 import * as Path from "path";
 import pool from "../db/pool";
 import { Prisma } from "../generated/prisma-client";
-import { getSaltUserById } from "../util/sdbUser";
+import { saltUserById } from "../util/sdbUser";
 import { queryDataFiles } from "./serchResults";
 import { AuthProvider } from "../createServer";
 
@@ -23,13 +23,14 @@ interface IDataPreview {
 const Query = {
   /**
    * Get the currently logged in user,
-   */ async user(root: any, args: {}, ctx: IContext) {
+   */
+  async user(root: any, args: {}, ctx: IContext) {
     if (!ctx.user) {
       return null;
     }
     let user;
     if (ctx.user.authProvider === "SDB") {
-      user = await getSaltUserById(ctx.user.id);
+      user = await saltUserById(ctx.user.id);
     } else {
       user = await ctx.prisma.user({
         id: ctx.user.id

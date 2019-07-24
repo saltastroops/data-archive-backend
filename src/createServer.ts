@@ -10,7 +10,7 @@ import * as path from "path";
 import pool from "./db/pool";
 import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
-import {getSaltUserById, loginSaltUser} from "./util/sdbUser";
+import {saltUserById, saltUserByUsernameAndPassword} from "./util/sdbUser";
 
 // Set up Sentry
 if (process.env.NODE_ENV === "production") {
@@ -46,7 +46,7 @@ const createServer = async () => {
       async (request, username, password, done, ) => {
 
         if (request.body.authProvider as AuthProvider === "SDB"){
-          const user = await loginSaltUser(username, password) ;
+          const user = await saltUserByUsernameAndPassword(username, password) ;
 
           done(null, user ? user : false)
         } else {
@@ -123,12 +123,12 @@ const createServer = async () => {
   passport.deserializeUser(async (user: any, done) => {
     switch (user.authProvider as AuthProvider) {
     case "SDB":
-      const saltUser = await getSaltUserById(user.userId);
+      const saltUser = await saltUserById(user.userId);
       done(null, saltUser ? saltUser : false);
       break;
     case "SSDA":
-      const SaaoSaltuser = await prisma.user({ id: user.userId });
-      done(null, SaaoSaltuser ? SaaoSaltuser : false);
+      const ssdaUser = await prisma.user({ id: user.userId });
+      done(null, ssdaUser ? ssdaUser : false);
       break;
     default:
       done(new Error(`Unsupported authentication provider: ${user.authProvider}`));

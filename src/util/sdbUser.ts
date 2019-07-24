@@ -1,6 +1,6 @@
 import { sdbPool } from "../db/pool";
 
-export const getSaltUserById = async (userId: string) => {
+export const saltUserById = async (userId: string) => {
   const user: any = await sdbPool.query(
     `
 SELECT * FROM PiptUser JOIN Investigator USING(Investigator_Id) WHERE PiptUser.PiptUser_Id=?
@@ -20,7 +20,10 @@ SELECT * FROM PiptUser JOIN Investigator USING(Investigator_Id) WHERE PiptUser.P
     : undefined;
 };
 
-export const loginSaltUser = async (username: string, password: string) => {
+export const saltUserByUsernameAndPassword = async (
+  username: string,
+  password: string
+) => {
   const user: any = await sdbPool.query(
     `
 SELECT * FROM PiptUser JOIN Investigator USING(Investigator_Id) WHERE Username=? AND Password=MD5(?);
