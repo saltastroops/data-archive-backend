@@ -57,7 +57,9 @@ const Query = {
 
     const dataLoaderResults = await dataRequestLoader.load(ctx.user.id);
 
-    console.log(dataLoaderResults);
+    // console.log(dataLoaderResults);
+
+    return dataLoaderResults;
 
     const limit = args.limit ? Math.min(args.limit, 200) : 200;
 
