@@ -3,6 +3,7 @@ export interface IUser {
   id: string; // In mysql this is a number
   roles: string[];
 }
+
 /**
  * A function that checks if the user has an admin role.
  *
