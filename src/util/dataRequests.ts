@@ -54,7 +54,9 @@ const dataRequestsByUserIds = async (userIds: any) => {
     return dataRequest.userId;
   }, dataRequestWithObservations);
 
-  const grouped = map((userId: any) => groupedById[userId], userIds);
+  const grouped = Object.keys(groupedById).length
+    ? map((userId: any) => groupedById[userId], userIds)
+    : [[]];
 
   return grouped;
 };

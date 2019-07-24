@@ -3,9 +3,9 @@ import { ssdaAdminPool } from "../db/pool";
 
 const createUser = async (args: any, hashedPassword: string) => {
   // Query inserting a new user with with the supplied information
-  const sql = `
-    INSERT INTO User (affiliation, email, familyName, givenName, password, username) 
-    VALUES(?, ?, ?, ?, ?, ?) 
+  let sql = `
+    INSERT INTO User (affiliation, email, familyName, givenName) 
+    VALUES(?, ?, ?, ?)
   `;
 
   // Add the new user to the database
@@ -13,10 +13,17 @@ const createUser = async (args: any, hashedPassword: string) => {
     args.affiliation,
     args.email,
     args.familyName,
-    args.givenName,
-    hashedPassword,
-    args.username
+    args.givenName
   ]);
+
+  const { userId } = ((await ssdaAdminPool.query(
+    `SELECT MAX(userId) AS userId FROM User`
+  )) as any)[0];
+
+  sql = `INSERT INTO UserAdmin (userId, username, password) VALUES (?, ?, ?)`;
+
+  // Add the new user to the database
+  await ssdaAdminPool.query(sql, [userId, args.username, hashedPassword]);
 };
 
 /**
@@ -50,8 +57,9 @@ const userRoles = async (userId: number) => {
 const getUserById = async (userId: number) => {
   // Query for retrieving a user with the supplied id
   const sql = `
-    SELECT userId AS id, affiliation, email, familyName, givenName, password, username
-    FROM User AS u
+    SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username
+    FROM UserAdmin AS ua
+    JOIN User As u ON u.userId = ua.userId
     WHERE u.userId = ?
   `;
 
@@ -68,9 +76,10 @@ const getUserById = async (userId: number) => {
 const getUserByUsername = async (username: string) => {
   // Query for retrieving a user with the supplied username
   const sql = `
-    SELECT userId AS id, affiliation, email, familyName, givenName, password, username
-    FROM User AS u
-    WHERE u.username = ?
+    SELECT ua.userId AS id, affiliation, email, familyName, givenName, password, username
+    FROM UserAdmin AS ua
+    JOIN User As u ON u.userId = ua.userId
+    WHERE ua.username = ?
   `;
 
   // Querying the user
@@ -86,8 +95,9 @@ const getUserByUsername = async (username: string) => {
 const getUserByEmail = async (email: string) => {
   // Query for retrieving a user with the supplied email
   const sql = `
-    SELECT userId AS id, affiliation, email, familyName, givenName, password, username
-    FROM User AS u
+    SELECT ua.userId AS id, affiliation, email, familyName, givenName, password, username
+    FROM UserAdmin AS ua
+    JOIN User As u ON u.userId = ua.userId
     WHERE u.email = ?
   `;
 
@@ -104,10 +114,11 @@ const getUserByEmail = async (email: string) => {
 const getUserByToken = async (passwordResetToken: string) => {
   // Query for retrieving a user with the supplied email
   const sql = `
-    SELECT userId AS id, affiliation, email, familyName, givenName, 
+    SELECT ua.userId AS id, affiliation, email, familyName, givenName, 
     password, username, passwordResetToken, passwordResetTokenExpiry
-    FROM User AS u
-    WHERE u.passwordResetToken = ?
+    FROM UserAdmin AS ua
+    JOIN User As u ON u.userId = ua.userId
+    WHERE ua.passwordResetToken = ?
   `;
 
   // Querying the user
