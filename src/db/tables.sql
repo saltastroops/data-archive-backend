@@ -124,8 +124,8 @@ CREATE TABLE `User` (
   `givenName` VARCHAR(255) NOT NULL COMMENT "Given name (first name)",
   `email` VARCHAR(255) NOT NULL UNIQUE COMMENT "Email address",
   `affiliation` VARCHAR(255) NOT NULL COMMENT "Affiliation, such as a university or an institute",
-  `belongsTo` VARCHAR(255) NOT NULL COMMENT "BelongsTo, an observatory the user is affaliated with e.g. SALT or SAAO",
-  `aliasUserId` INT(11) UNSIGNED NOT NULL COMMENT "AliasUserId, a unique identifire of the user from the affaliated observatory",
+  `belongsTo` VARCHAR(255) DEFAULT NULL COMMENT "BelongsTo, an observatory the user is affaliated with e.g. SALT or SAAO",
+  `aliasUserId` INT(11) UNSIGNED DEFAULT NULL COMMENT "AliasUserId, a unique identifire of the user from the affaliated observatory",
   PRIMARY KEY (`userId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
