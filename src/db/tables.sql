@@ -50,7 +50,7 @@ DROP TABLE IF EXISTS `DataRequestFile`;
 CREATE TABLE `DataRequestFile` (
   `dataRequestFileId` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT "Primary key",
   `dataRequestObservationId` INT(11) UNSIGNED NOT NULL  COMMENT "An Id for a table DataRequestObservation",
-  `fileId` BINARY(16) NOT NULL COMMENT "The unique identifier for the data file. This must be the same as the identifier assigned in the SSDA database for this data file.",
+  `dataFileUUID` BINARY(16) NOT NULL COMMENT "The unique identifier (UUID) for the data file. This must be the same as the UUID assigned in the SSDA database for this data file.",
   `name` VARCHAR(255) NOT NULL COMMENT "Data request file name",
   PRIMARY KEY (`dataRequestFileId`),
   KEY `fk_DataRequestFileDataRequestObservation_idx` (`dataRequestObservationId`),
