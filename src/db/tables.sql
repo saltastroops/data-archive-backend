@@ -120,6 +120,7 @@ CREATE TABLE `User` (
  `familyName` VARCHAR(255) NOT NULL COMMENT "Family name (surname)",
  `givenName` VARCHAR(255) NOT NULL COMMENT "Given name (first name)",
  `email` VARCHAR(255) NOT NULL UNIQUE COMMENT "Email address",
+ `affiliation` VARCHAR(255) NOT NULL COMMENT "Affiliation, such as a university or an institute",
  `authProviderId` INT(11) UNSIGNED NOT NULL COMMENT "Authentication provider",
  `authProviderUserId` VARCHAR(255) NOT NULL COMMENT "Unique identifier used by the authentication provider to identify the user",
  PRIMARY KEY (`userId`),
