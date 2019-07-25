@@ -88,37 +88,6 @@ CREATE TABLE `DataRequestStatus` (
 INSERT INTO `DataRequestStatus` (`dataRequestStatus`) VALUES ("SUCCESSFUL"), ("PENDING"), ("FAILED"), ("EXPIRED");
 
 --
--- An institution to whose accounts a user can be linked
---
-
-DROP TABLE IF EXISTS `Institution`;
-
-CREATE TABLE `Institution` (
-    `institutionId` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT "Primary key",
-    `institution` VARCHAR(255) NOT NULL COMMENT "Name of the institution",
-    PRIMARY KEY (`institutionId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-INSERT INTO `Institution` (`institution`) VALUES ("SAAO"), ("SALT");
-
---
--- Remote account which is for a user of this database, e.g. an account in the SALT Science Database.
---
-
-DROP TABLE IF EXISTS `RemoteUserAccount`;
-
-CREATE TABLE `RemoteUserAccount` (
-    `userId` INT(11) UNSIGNED NOT NULL COMMENT "User id for this database",
-    `remoteUserId` VARCHAR(255) NOT NULL COMMENT "User id for the remote account",
-    `remoteInstitutionId` INT(11) UNSIGNED NOT NULL COMMENT "Id of the remote institution",
-    PRIMARY KEY (`userId`, `remoteUserId`, `remoteInstitutionId`),
-    KEY `fk_RemoteUserAccountUser_idx` (`userId`),
-    KEY `fk_RemoteUserAccountRemoteInstitution_idx` (`remoteInstitutionId`),
-    CONSTRAINT `fk_RemoteUserAccountUser` FOREIGN KEY (`userId`) REFERENCES `User` (`userId`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-    CONSTRAINT `fk_RemoteUserAccountRemoteInstitution` FOREIGN KEY (`remoteInstitutionId`) REFERENCES `Institution` (`institutionId`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
---
 -- SSDAUserAuth
 --
 
