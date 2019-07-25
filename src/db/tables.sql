@@ -116,32 +116,48 @@ INSERT INTO `Role` (`roleId`, `role`) VALUES (1, "ADMIN");
 DROP TABLE IF EXISTS `User`;
 
 CREATE TABLE `User` (
-  `userId` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `familyName` VARCHAR(255) NOT NULL COMMENT "Family name (surname)",
-  `givenName` VARCHAR(255) NOT NULL COMMENT "Given name (first name)",
-  `email` VARCHAR(255) NOT NULL UNIQUE COMMENT "Email address",
-  `affiliation` VARCHAR(255) NOT NULL COMMENT "Affiliation, such as a university or an institute",
-  `belongsTo` VARCHAR(255) DEFAULT NULL COMMENT "BelongsTo, an observatory the user is affaliated with e.g. SALT or SAAO",
-  `aliasUserId` INT(11) UNSIGNED DEFAULT NULL COMMENT "AliasUserId, a unique identifire of the user from the affaliated observatory",
-  PRIMARY KEY (`userId`)
+ `userId` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+ `familyName` VARCHAR(255) NOT NULL COMMENT "Family name (surname)",
+ `givenName` VARCHAR(255) NOT NULL COMMENT "Given name (first name)",
+ `email` VARCHAR(255) NOT NULL UNIQUE COMMENT "Email address",
+ `authProviderId` INT(11) UNSIGNED NOT NULL COMMENT "Authentication provider",
+ `authProviderUserId` VARCHAR(255) NOT NULL COMMENT "Unique identifier used by the authentication provider to identify the user",
+ PRIMARY KEY (`userId`),
+ KEY `fk_UserAuthProvider_idx` (`authProviderId`),
+ CONSTRAINT `fk_UserAuthProvider` FOREIGN KEY (`authProviderId`) REFERENCES `AuthProvider` (`authProviderId`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 --
--- User admin
--- NB! I am not sure which field has to be the primary key, userId or username? They both will always be unique I think?
-DROP TABLE IF EXISTS `UserAdmin`;
+-- SSDAUserAuth
+--
+DROP TABLE IF EXISTS `SSDAUserAuth`;
 
-CREATE TABLE `UserAdmin` (
-  `userId` INT(11) UNSIGNED NOT NULL UNIQUE COMMENT "User admin id as it is in the User table",
-  `username` VARCHAR(255) NOT NULL UNIQUE COMMENT "Username, which must not contain upper case letters",
-  `password` VARCHAR(255) NOT NULL COMMENT "Password, which must have at least 7 characters",
-  `passwordResetToken` VARCHAR(255) UNIQUE COMMENT "Token to reset the user's password",
-  `passwordResetTokenExpiry` DATETIME COMMENT "Time when the password reset token will expire",
-  PRIMARY KEY (`userId`),
-  KEY `fk_UserAdminUser_idx` (`userId`),
-  CONSTRAINT `fk_UserAdminUser` FOREIGN KEY (`userId`) REFERENCES `User` (`userId`) ON DELETE NO ACTION ON UPDATE NO ACTION
+CREATE TABLE `SSDAUserAuth` (
+ `userId` INT(11) UNSIGNED NOT NULL UNIQUE COMMENT "User id, as used in the Userc table.",
+ `username` VARCHAR(255) NOT NULL UNIQUE COMMENT "Username, which must not contain upper case letters",
+ `password` VARCHAR(255) NOT NULL COMMENT "Password, which must have at least 7 characters",
+ `passwordResetToken` VARCHAR(255) UNIQUE COMMENT "Token to reset the user's password",
+ `passwordResetTokenExpiry` DATETIME COMMENT "Time when the password reset token will expire",
+ PRIMARY KEY (`userId`),
+ KEY `fk_SSDAUserAuthUser_idx` (`userId`),
+ CONSTRAINT `fk_SSDAUserAuthUser` FOREIGN KEY (`userId`) REFERENCES `User` (`userId`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- AuthProvider
+--
+DROP TABLE IF EXISTS `AuthProvider`;
+
+CREATE TABLE `AuthProvider` (
+ `authProviderId` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT "Primary key.",
+ `authProvider` VARCHAR(32) UNIQUE NOT NULL COMMENT "Name of the authentication provider.",
+ `description` VARCHAR(255) NOT NULL COMMENT "Description of the authentication provider.",
+ PRIMARY KEY (`authProviderId`)
+);
+
+INSERT INTO `AuthProvider` (`authProvider`, `description`) VALUES ("SSDA", "SAAO/SALT Data Archive"), ("SDB", "SALT Science Database");
+
 
 --
 -- User role. A user can have multiple roles.
