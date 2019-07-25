@@ -4,8 +4,8 @@ import { ssdaAdminPool } from "../db/pool";
 const createUser = async (args: any, hashedPassword: string) => {
   // Query inserting a new user with with the supplied information
   let sql = `
-    INSERT INTO User (affiliation, email, familyName, givenName) 
-    VALUES(?, ?, ?, ?)
+    INSERT INTO User (affiliation, email, familyName, givenName, authProviderId, authProviderUserId) 
+    VALUES(?, ?, ?, ?, ?, ?)
   `;
 
   // Add the new user to the database
@@ -13,14 +13,16 @@ const createUser = async (args: any, hashedPassword: string) => {
     args.affiliation,
     args.email,
     args.familyName,
-    args.givenName
+    args.givenName,
+    1,
+    "SSDA"
   ]);
 
   const { userId } = ((await ssdaAdminPool.query(
     `SELECT MAX(userId) AS userId FROM User`
   )) as any)[0];
 
-  sql = `INSERT INTO UserAdmin (userId, username, password) VALUES (?, ?, ?)`;
+  sql = `INSERT INTO SSDAUserAuth (userId, username, password) VALUES (?, ?, ?)`;
 
   // Add the new user to the database
   await ssdaAdminPool.query(sql, [userId, args.username, hashedPassword]);
@@ -58,8 +60,8 @@ const getUserById = async (userId: number) => {
   // Query for retrieving a user with the supplied id
   const sql = `
     SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username
-    FROM UserAdmin AS ua
-    JOIN User As u ON u.userId = ua.userId
+    FROM User AS u
+    JOIN SSDAUserAuth As ua ON ua.userId = u.userId
     WHERE u.userId = ?
   `;
 
@@ -76,9 +78,9 @@ const getUserById = async (userId: number) => {
 const getUserByUsername = async (username: string) => {
   // Query for retrieving a user with the supplied username
   const sql = `
-    SELECT ua.userId AS id, affiliation, email, familyName, givenName, password, username
-    FROM UserAdmin AS ua
-    JOIN User As u ON u.userId = ua.userId
+    SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username
+    FROM User AS u
+    JOIN SSDAUserAuth As ua ON ua.userId = u.userId
     WHERE ua.username = ?
   `;
 
@@ -95,9 +97,9 @@ const getUserByUsername = async (username: string) => {
 const getUserByEmail = async (email: string) => {
   // Query for retrieving a user with the supplied email
   const sql = `
-    SELECT ua.userId AS id, affiliation, email, familyName, givenName, password, username
-    FROM UserAdmin AS ua
-    JOIN User As u ON u.userId = ua.userId
+    SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username
+    FROM User AS u
+    JOIN SSDAUserAuth As ua ON ua.userId = u.userId
     WHERE u.email = ?
   `;
 
@@ -114,10 +116,10 @@ const getUserByEmail = async (email: string) => {
 const getUserByToken = async (passwordResetToken: string) => {
   // Query for retrieving a user with the supplied email
   const sql = `
-    SELECT ua.userId AS id, affiliation, email, familyName, givenName, 
+    SELECT u.userId AS id, affiliation, email, familyName, givenName, 
     password, username, passwordResetToken, passwordResetTokenExpiry
-    FROM UserAdmin AS ua
-    JOIN User As u ON u.userId = ua.userId
+    FROM User AS u
+    JOIN SSDAUserAuth As ua ON ua.userId = u.userId
     WHERE ua.passwordResetToken = ?
   `;
 
@@ -131,6 +133,7 @@ const getUserByToken = async (passwordResetToken: string) => {
   return user && { ...user, roles };
 };
 
+// TODO UPDATE only SSDAUserAuth may update their information
 const updateUser = async (userUpdateInfo: any, userId: number) => {
   // Query for updating user unformation.
   const sql = `
@@ -150,6 +153,7 @@ const updateUser = async (userUpdateInfo: any, userId: number) => {
   ]);
 };
 
+// TODO UPDATE only SSDAUserAuth may request taken to reset their password
 const setUserToken = async (
   passwordResetToken: string,
   passwordResetTokenExpiry: Date,
@@ -171,6 +175,7 @@ const setUserToken = async (
   return true;
 };
 
+// TODO UPDATE only SSDAUserAuth may change their passwords
 const changeUserPassword = async (
   newPassword: string,
   passwordResetToken: string
