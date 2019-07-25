@@ -8,8 +8,24 @@ USE `ssda-admin`;
 SET FOREIGN_KEY_CHECKS=0;
 
 --
+-- AuthProvider
+--
+
+DROP TABLE IF EXISTS `AuthProvider`;
+
+CREATE TABLE `AuthProvider` (
+                                `authProviderId` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT "Primary key.",
+                                `authProvider` VARCHAR(32) UNIQUE NOT NULL COMMENT "Name of the authentication provider.",
+                                `description` VARCHAR(255) NOT NULL COMMENT "Description of the authentication provider.",
+                                PRIMARY KEY (`authProviderId`)
+);
+
+INSERT INTO `AuthProvider` (`authProvider`, `description`) VALUES ("SSDA", "SAAO/SALT Data Archive"), ("SDB", "SALT Science Database");
+
+--
 -- Data request
 --
+
 DROP TABLE IF EXISTS `DataRequest`;
 
 CREATE TABLE `DataRequest` (
@@ -28,6 +44,7 @@ CREATE TABLE `DataRequest` (
 --
 -- File in a data request.
 --
+
 DROP TABLE IF EXISTS `DataRequestFile`;
 
 CREATE TABLE `DataRequestFile` (
@@ -43,6 +60,7 @@ CREATE TABLE `DataRequestFile` (
 --
 -- Data request observation
 --
+
 DROP TABLE IF EXISTS `DataRequestObservation`;
 
 CREATE TABLE `DataRequestObservation` (
@@ -58,6 +76,7 @@ CREATE TABLE `DataRequestObservation` (
 --
 -- Data request status values
 --
+
 DROP TABLE IF EXISTS `DataRequestStatus`;
 
 CREATE TABLE `DataRequestStatus` (
@@ -71,6 +90,7 @@ INSERT INTO `DataRequestStatus` (`dataRequestStatus`) VALUES ("SUCCESSFUL"), ("P
 --
 -- An institution to whose accounts a user can be linked
 --
+
 DROP TABLE IF EXISTS `Institution`;
 
 CREATE TABLE `Institution` (
@@ -84,6 +104,7 @@ INSERT INTO `Institution` (`institution`) VALUES ("SAAO"), ("SALT");
 --
 -- Remote account which is for a user of this database, e.g. an account in the SALT Science Database.
 --
+
 DROP TABLE IF EXISTS `RemoteUserAccount`;
 
 CREATE TABLE `RemoteUserAccount` (
@@ -98,8 +119,26 @@ CREATE TABLE `RemoteUserAccount` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
+-- SSDAUserAuth
+--
+
+DROP TABLE IF EXISTS `SSDAUserAuth`;
+
+CREATE TABLE `SSDAUserAuth` (
+                                `userId` INT(11) UNSIGNED NOT NULL UNIQUE COMMENT "User id, as used in the Userc table.",
+                                `username` VARCHAR(255) NOT NULL UNIQUE COMMENT "Username, which must not contain upper case letters",
+                                `password` VARCHAR(255) NOT NULL COMMENT "Password, which must have at least 7 characters",
+                                `passwordResetToken` VARCHAR(255) UNIQUE COMMENT "Token to reset the user's password",
+                                `passwordResetTokenExpiry` DATETIME COMMENT "Time when the password reset token will expire",
+                                PRIMARY KEY (`userId`),
+                                KEY `fk_SSDAUserAuthUser_idx` (`userId`),
+                                CONSTRAINT `fk_SSDAUserAuthUser` FOREIGN KEY (`userId`) REFERENCES `User` (`userId`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
 -- User roles
 --
+
 DROP TABLE IF EXISTS `Role`;
 
 CREATE TABLE `Role` (
@@ -113,6 +152,7 @@ INSERT INTO `Role` (`roleId`, `role`) VALUES (1, "ADMIN");
 --
 -- User
 --
+
 DROP TABLE IF EXISTS `User`;
 
 CREATE TABLE `User` (
@@ -130,40 +170,11 @@ CREATE TABLE `User` (
 
 
 --
--- SSDAUserAuth
---
-DROP TABLE IF EXISTS `SSDAUserAuth`;
-
-CREATE TABLE `SSDAUserAuth` (
- `userId` INT(11) UNSIGNED NOT NULL UNIQUE COMMENT "User id, as used in the Userc table.",
- `username` VARCHAR(255) NOT NULL UNIQUE COMMENT "Username, which must not contain upper case letters",
- `password` VARCHAR(255) NOT NULL COMMENT "Password, which must have at least 7 characters",
- `passwordResetToken` VARCHAR(255) UNIQUE COMMENT "Token to reset the user's password",
- `passwordResetTokenExpiry` DATETIME COMMENT "Time when the password reset token will expire",
- PRIMARY KEY (`userId`),
- KEY `fk_SSDAUserAuthUser_idx` (`userId`),
- CONSTRAINT `fk_SSDAUserAuthUser` FOREIGN KEY (`userId`) REFERENCES `User` (`userId`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
---
--- AuthProvider
---
-DROP TABLE IF EXISTS `AuthProvider`;
-
-CREATE TABLE `AuthProvider` (
- `authProviderId` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT "Primary key.",
- `authProvider` VARCHAR(32) UNIQUE NOT NULL COMMENT "Name of the authentication provider.",
- `description` VARCHAR(255) NOT NULL COMMENT "Description of the authentication provider.",
- PRIMARY KEY (`authProviderId`)
-);
-
-INSERT INTO `AuthProvider` (`authProvider`, `description`) VALUES ("SSDA", "SAAO/SALT Data Archive"), ("SDB", "SALT Science Database");
-
-
---
 -- User role. A user can have multiple roles.
 --
+
 DROP TABLE IF EXISTS `UserRole`;
+
 CREATE TABLE `UserRole` (
   `userId` INT(11) UNSIGNED NOT NULL COMMENT "User id`",
   `roleId` INT(11) UNSIGNED NOT NULL COMMENT "User role ide",
@@ -174,4 +185,5 @@ CREATE TABLE `UserRole` (
   CONSTRAINT `fk_UserRoleRole` FOREIGN KEY (`roleId`) REFERENCES `Role` (`roleId`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+-- Enable foreign keys again.
 SET FOREIGN_KEY_CHECKS=1;
