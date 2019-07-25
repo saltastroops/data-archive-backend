@@ -294,6 +294,10 @@ type DataFile {
 
   #  Data file name
   name: String!
+
+  # Data file size
+  size: Int!
+
 }
 
 # Details about a data request
