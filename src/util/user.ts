@@ -5,7 +5,7 @@ import { validate } from "isemail";
 
 type AuthProvider = "SDB" | "SSDA";
 
-interface UserCreateInput {
+export interface UserCreateInput {
   affiliation: string;
   authProvider: AuthProvider;
   authProviderUserId?: string;
@@ -92,33 +92,45 @@ export const createUser = async (args: UserCreateInput) => {
       INSERT INTO User (affiliation, email, familyName, givenName, authProviderId, authProviderUserId)
       VALUES (?, ?, ?, ?, ?, ?)
   `;
-  await ssdaAdminPool.query(userInsertSQL, [
-    affiliation,
-    lowerCaseEmail,
-    familyName,
-    givenName,
-    authProvider !== "SSDA" ? authProvider : null,
-    authProvider !== "SSDA" ? authProviderUserId : null
-  ]);
-
-  // If SSDA is used as the auth provider, we have to store the user credentials
-  if (authProvider === "SSDA") {
-    // As the email is unique we can identify the new user by their email
-    const userIdSQL = `SELECT userId FROM User WHERE email=?`;
-    const { userId } = ((await ssdaAdminPool.query(userIdSQL)) as any)[0];
-
-    // Hash the password before storing it in the database
-    const hashedPassword = await bcrypt.hash(args.password, 10);
-
-    // Store the user credentials
-    const authInsertSQL = `INSERT INTO SSDAUserAuth (userId, username, password) VALUES (?, ?, ?)`;
-
-    // Add the new user to the database
-    await ssdaAdminPool.query(userInsertSQL, [
-      userId,
-      args.username,
-      hashedPassword
+  const connection = await ssdaAdminPool.getConnection();
+  try {
+    await connection.beginTransaction();
+    await connection.query(userInsertSQL, [
+      affiliation,
+      lowerCaseEmail,
+      familyName,
+      givenName,
+      authProvider !== "SSDA" ? authProvider : null,
+      authProvider !== "SSDA" ? authProviderUserId : null
     ]);
+
+    // If SSDA is used as the auth provider, we have to store the user credentials
+    if (authProvider === "SSDA") {
+      // As the email is unique we can identify the new user by their email
+      const userIdSQL = `SELECT userId
+                         FROM User
+                         WHERE email = ?`;
+      const { userId } = ((await connection.query(userIdSQL, [
+        email
+      ])) as any)[0][0];
+
+      // Hash the password before storing it in the database
+      const hashedPassword = await bcrypt.hash(args.password, 10);
+
+      // Store the user credentials
+      const authInsertSQL = `INSERT INTO SSDAUserAuth (userId, username, password)
+                             VALUES (?, ?, ?)`;
+
+      // Add the new user to the database
+      await connection.query(authInsertSQL, [userId, username, hashedPassword]);
+    }
+
+    await connection.commit();
+  } catch (e) {
+    await connection.rollback();
+    throw e;
+  } finally {
+    connection.release();
   }
 };
 
