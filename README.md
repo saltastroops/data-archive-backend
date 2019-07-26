@@ -25,11 +25,11 @@ cd backend
 yarn install
 ```
 
-The server requires the following environment variables.
+The server requires the following environment variables. These must be defined in a file `.env` in the root directory. *This file must not be committed to the git repository.*
 
 Variable | Description | Example
 ---- | ---- | ----
-FRONTEND_URL | The URL of the frontend accessing this server | https://ssda.saao.ac.za
+FRONTEND_HOST | The host of the frontend accessing this server | https://ssda.saao.ac.za
 PRISMA_ENDPOINT | The URL of the Prisma server | https://ssdadb.saao.ac.za
 PRISMA_SECRET | The secret key for the Prisma server | topsecretkey
 SESSION_SECRET | The secret key for for signing the session ID cookie | anothertopsecretkey
