@@ -136,7 +136,7 @@ const Query = {
     `;
 
     // Querying the data previews
-    const rows = await ssdaPool.query(sql, [args.dataFileId]);
+    const rows = (await ssdaPool.query(sql, [args.dataFileId]))[0];
 
     const results: IDataPreview = {
       fitsHeader: "",

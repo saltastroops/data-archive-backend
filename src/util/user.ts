@@ -142,7 +142,7 @@ export const userRoles = async (userId: string | number) => {
   `;
 
   // Querying and returning the user roles
-  return ((await ssdaAdminPool.query(sql, [userId])) as any).map(
+  return ((await ssdaAdminPool.query(sql, [userId])) as any)[0].map(
     (role: any) => role.role
   );
 };
@@ -157,7 +157,7 @@ export const getUserById = async (userId: string | number) => {
   `;
 
   // Querying the user
-  const result: any = await ssdaAdminPool.query(sql, [userId]);
+  const result: any = (await ssdaAdminPool.query(sql, [userId]))[0];
 
   const user: any = result.length ? result[0] : null;
 
@@ -176,7 +176,7 @@ export const getUserByUsername = async (username: string) => {
   `;
 
   // Querying the user
-  const result: any = await ssdaAdminPool.query(sql, [username]);
+  const result: any = (await ssdaAdminPool.query(sql, [username]))[0];
 
   const user = result.length ? result[0] : null;
 
@@ -195,7 +195,7 @@ export const getUserByEmail = async (email: string) => {
   `;
 
   // Querying the user
-  const result: any = await ssdaAdminPool.query(sql, [email]);
+  const result: any = (await ssdaAdminPool.query(sql, [email]))[0];
 
   const user = result.length ? result[0] : null;
 
@@ -215,7 +215,7 @@ export const getUserByToken = async (passwordResetToken: string) => {
   `;
 
   // Querying the user
-  const result: any = await ssdaAdminPool.query(sql, [passwordResetToken]);
+  const result: any = (await ssdaAdminPool.query(sql, [passwordResetToken]))[0];
 
   const user = result.length ? result[0] : null;
 

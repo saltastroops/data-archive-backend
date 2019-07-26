@@ -48,9 +48,9 @@ export const queryDataFiles = async (
   const countSQL = `
       SELECT COUNT(*) as itemsTotal FROM ${sqlFrom} WHERE ${whereDetails.sql}
       `;
-  const countResults: any = await ssdaPool.query(countSQL, [
+  const countResults: any = (await ssdaPool.query(countSQL, [
     ...whereDetails.values
-  ]);
+  ]))[0];
   const itemsTotal = countResults[0].itemsTotal;
 
   // Second pass: Get the data file details
@@ -64,11 +64,11 @@ export const queryDataFiles = async (
       ORDER BY DataFile.startTime DESC
       LIMIT ? OFFSET ?
              `;
-  const itemResults: any = await ssdaPool.query(itemSQL, [
+  const itemResults: any = (await ssdaPool.query(itemSQL, [
     ...whereDetails.values,
     limit,
     startIndex
-  ]);
+  ]))[0];
 
   // Collect all the details
   const pageInfo = {
