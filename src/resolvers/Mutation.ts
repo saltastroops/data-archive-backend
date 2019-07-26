@@ -1,17 +1,14 @@
 import bcrypt from "bcrypt";
 import { validate } from "isemail";
-import {
-  Prisma,
-  UserCreateInput,
-  UserUpdateInput
-} from "../generated/prisma-client";
+import { Prisma, UserUpdateInput } from "../generated/prisma-client";
 import {
   createUser,
   getUserByEmail,
   getUserById,
   getUserByUsername,
   isAdmin,
-  updateUser
+  updateUser,
+  UserCreateInput
 } from "../util/user";
 import { requestPasswordReset, resetPassword } from "./resetPassword";
 
@@ -85,53 +82,13 @@ const Mutation = {
    * username:
    *     The username, which must not contain upper case letters.
    */
-  async signup(root: any, args: UserCreateInput, ctx: IContext) {
-    // Check if the submitted username is not empty
-    if (!args.username) {
-      throw new Error(`The username cannot be empty.`);
-    }
-
-    // Check if the submitted username contains upper case characters
-    if (args.username !== args.username.toLowerCase()) {
-      throw new Error(
-        `The username ${args.username} contains upper case characters.`
-      );
-    }
-
-    // Check if there already exists a user with the submitted username
-    const userWithGivenUsername = await getUserByUsername(args.username);
-
-    if (userWithGivenUsername) {
-      throw new Error(
-        `There already exists a user with the username ${args.username}.`
-      );
-    }
-
-    // Check if the submitted email address is valid
-    if (!validate(args.email, { minDomainAtoms: 2 })) {
-      throw new Error(`The email address "${args.email}" is invalid.`);
-    }
-
-    // Transform the email address to lower case.
-    args.email = args.email.toLowerCase();
-
-    // Check if there already exists a user with the submitted email address
-    const userWithGivenEmail = await getUserByEmail(args.email);
-
-    if (userWithGivenEmail) {
-      throw new Error(
-        `There already exists a user with the email address ${args.email}.`
-      );
-    }
-
-    // Check if the password is secure enough
-    checkPasswordStrength(args.password);
-
-    // Hash the password before storing it in the database
-    const hashedPassword = await bcrypt.hash(args.password, 10);
-
+  async signup(root: any, args: any, ctx: IContext) {
     // Create new user
-    await createUser(args, hashedPassword);
+    const userDetails: UserCreateInput = {
+      ...args,
+      authProvider: "SSDA"
+    };
+    await createUser(userDetails);
 
     // Querying the user
     const newuser: any = await getUserByUsername(args.username);
