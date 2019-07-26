@@ -38,7 +38,17 @@ const ssdaAdminconfig = {
   user: process.env.DATABASE_USER
 };
 
+// SDB configuration parameters
+const sdbConfig = {
+  database: process.env.SDB_DATABASE_NAME,
+  host: process.env.SDB_DATABASE_HOST,
+  password: process.env.SDB_DATABASE_PASSWORD,
+  user: process.env.SDB_DATABASE_USER
+};
+
+// Creating poos of database connections
+const sdbPool = poolConnection(sdbConfig);
 const ssdaPool = poolConnection(ssdaConfig);
 const ssdaAdminPool = poolConnection(ssdaAdminconfig);
 
-export { ssdaPool, ssdaAdminPool };
+export { sdbPool, ssdaPool, ssdaAdminPool };

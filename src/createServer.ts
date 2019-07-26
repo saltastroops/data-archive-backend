@@ -11,7 +11,8 @@ import { ssdaPool } from "./db/pool";
 import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
 import { dataRequestDataLoader } from "./util/dataRequests";
-import { getUserById, getUserByUsername } from "./util/user";
+import { getUserById, getUserByUsername, isAdmin, ownsDataFile, ownsDataRequest } from "./util/user";
+import {saltUserById, saltUserByUsernameAndPassword} from "./util/sdbUser";
 
 // Set up Sentry
 if (process.env.NODE_ENV === "production") {
@@ -19,6 +20,11 @@ if (process.env.NODE_ENV === "production") {
     dsn: process.env.SENTRY_DSN
   });
 }
+
+// Authentication providers
+export type AuthProvider =
+  | "SDB"    // SALT Science Database
+  | "SSDA"   // this data archive
 
 /**
  * Create the server.
@@ -38,15 +44,23 @@ const createServer = async () => {
   passport.use(
     // Authenticate against a username and password
     new passportLocal.Strategy(
-      { usernameField: "username", passwordField: "password" },
-      async (username, password, done) => {
-        const user = await getUserByUsername(username);
+      { usernameField: "username", passwordField: "password", passReqToCallback: true},
+      async (request, username, password, done, ) => {
 
-        // Check if the user exists and add it to the request
-        if (user && (await bcrypt.compare(password, user.password))) {
-          done(null, { ...user });
+        if (request.body.authProvider as AuthProvider === "SDB"){
+          const user = await saltUserByUsernameAndPassword(username, password) ;
+
+          done(null, user ? user : false)
         } else {
-          done(null, false);
+          // Only retrieving a user with the supplied username
+          const user = await prisma.user({username});
+
+          // Check if the user exists and add it to the request
+          if (user && (await bcrypt.compare(password, user.password))) {
+            done(null, user);
+          } else {
+            done(null, false);
+          }
         }
       }
     )
@@ -107,13 +121,23 @@ const createServer = async () => {
   // Serialize and deserialize for every request. Only the user id is stored
   // in the session.
 
-  passport.serializeUser((user: { id: number }, done) => {
-    done(null, user.id);
+  passport.serializeUser((user: any, done) => {
+    done(null, {userId: user.id, authProvider: user.authProvider});
   });
 
-  passport.deserializeUser(async (id: number, done) => {
-    const user = await getUserById(id);
-    done(null, user ? user : false);
+  passport.deserializeUser(async (user: any, done) => {
+    switch (user.authProvider as AuthProvider) {
+    case "SDB":
+      const saltUser = await saltUserById(user.userId);
+      done(null, saltUser ? saltUser : false);
+      break;
+    case "SSDA":
+      const ssdaUser = await prisma.user({ id: user.userId });
+      done(null, ssdaUser ? ssdaUser : false);
+      break;
+    default:
+      done(new Error(`Unsupported authentication provider: ${user.authProvider}`));
+    }
   });
 
   /**
@@ -179,6 +203,83 @@ const createServer = async () => {
     res.send({
       message: "You have been logged out.",
       success: true
+    });
+  });
+
+  /**
+   * Endpoint for downloading the FITS file.
+   *
+   * The URL includes the following parameters.
+   *
+   * :dataFileId
+   *     The id of the data file.
+   * :dataFilename
+   *     The data filename.
+   */
+  server.express.get("/data/:dataFileId/:dataFilename", async (req, res) => {
+    // Not found error
+    const notFound = {
+      message: "The requested FITS file does not exist.",
+      success: false
+    };
+
+    // Internal server error
+    const internalServerError = {
+      message:
+        "There has been an internal server error while retrieving the FITS file.",
+      success: false
+    };
+
+    // Proprietary error
+    const proprietary = {
+      message: "The file you are trying to download is proprietary.",
+      success: false
+    };
+
+    // Get all the params from the request
+    const { dataFileId, dataFilename } = req.params;
+
+    // Query for retrieving the FITS file
+    const sql = `
+        SELECT path, publicFrom
+        FROM DataFile AS df
+        JOIN Observation AS ob ON ob.observationId = df.observationId
+        WHERE df.dataFileId = ?
+      `;
+
+    const results: any = await pool.query(sql, [dataFileId]);
+    if (!results.length) {
+      return res.status(404).send(notFound);
+    }
+
+    const { path: filePath, publicFrom } = results[0];
+
+    // Check whether the data file is public or the user may access it
+    // because they own the data or are an administrator.
+    if (
+      publicFrom > Date.now() &&
+      !ownsDataFile(req.user, dataFileId) &&
+      !isAdmin(req.user)
+    ) {
+      return res.status(403).send(proprietary);
+    }
+
+    // Get the base path
+    const basePath = process.env.FITS_BASE_DIR || "";
+
+    // Form a full path for the FITS file location
+    const fullPath = path.join(basePath, filePath);
+
+    // Download the FITS header file
+    res.type("application/fits");
+    res.download(fullPath, dataFilename, err => {
+      if (err) {
+        if (!res.headersSent) {
+          res.status(500).send(internalServerError);
+        } else {
+          res.end();
+        }
+      }
     });
   });
 
@@ -358,14 +459,12 @@ async function downloadDataRequest({
     return res.status(404).send(notFound);
   }
 
+  // TODO UPDATE include dataRequest interface according to the mysql database
   // Check that the user may download content for the data request, either
   // because they own the request or because they are an administrator.
   const mayDownload =
-    (dataRequest as any).user.id === req.user.id ||
-    req.user.roles.find((role: string) => role === "ADMIN");
+    ownsDataRequest(dataRequest, req.user) || isAdmin(req.user);
 
-  // If the user does not own the data request to download,
-  // nor is an ADMIN, forbid the user from downloading
   if (!mayDownload) {
     return res.status(403).send({
       message: "You are not allowed to download the requested file.",

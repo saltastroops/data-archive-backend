@@ -1,7 +1,7 @@
 import moment = require("moment");
 import { ssdaAdminPool } from "../db/pool";
 
-const createUser = async (args: any, hashedPassword: string) => {
+export const createUser = async (args: any, hashedPassword: string) => {
   // Query inserting a new user with with the supplied information
   let sql = `
     INSERT INTO User (affiliation, email, familyName, givenName, authProviderId, authProviderUserId) 
@@ -28,12 +28,17 @@ const createUser = async (args: any, hashedPassword: string) => {
   await ssdaAdminPool.query(sql, [userId, args.username, hashedPassword]);
 };
 
+export interface IUser {
+  id: string; // In mysql this is a number
+  roles: string[];
+}
+
 /**
  * A function that checks if the user has an admin role.
  *
  * @param user user information
  */
-const isAdmin = (user: any) =>
+export const isAdmin = (user: any) =>
   user && user.roles.some((role: string) => role === "ADMIN");
 
 /**
@@ -41,7 +46,7 @@ const isAdmin = (user: any) =>
  *
  * @param userId
  */
-const userRoles = async (userId: number) => {
+export const userRoles = async (userId: number) => {
   // Query for retrieving user roles
   const sql = `
     SELECT role
@@ -56,7 +61,7 @@ const userRoles = async (userId: number) => {
   );
 };
 
-const getUserById = async (userId: number) => {
+export const getUserById = async (userId: number) => {
   // Query for retrieving a user with the supplied id
   const sql = `
     SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username
@@ -75,7 +80,7 @@ const getUserById = async (userId: number) => {
   return user && { ...user, roles };
 };
 
-const getUserByUsername = async (username: string) => {
+export const getUserByUsername = async (username: string) => {
   // Query for retrieving a user with the supplied username
   const sql = `
     SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username
@@ -94,7 +99,7 @@ const getUserByUsername = async (username: string) => {
   return user && { ...user, roles };
 };
 
-const getUserByEmail = async (email: string) => {
+export const getUserByEmail = async (email: string) => {
   // Query for retrieving a user with the supplied email
   const sql = `
     SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username
@@ -113,7 +118,7 @@ const getUserByEmail = async (email: string) => {
   return user && { ...user, roles };
 };
 
-const getUserByToken = async (passwordResetToken: string) => {
+export const getUserByToken = async (passwordResetToken: string) => {
   // Query for retrieving a user with the supplied email
   const sql = `
     SELECT u.userId AS id, affiliation, email, familyName, givenName, 
@@ -154,7 +159,7 @@ const updateUser = async (userUpdateInfo: any, userId: number) => {
 };
 
 // TODO UPDATE only SSDAUserAuth may request taken to reset their password
-const setUserToken = async (
+export const setUserToken = async (
   passwordResetToken: string,
   passwordResetTokenExpiry: Date,
   email: string
@@ -176,7 +181,7 @@ const setUserToken = async (
 };
 
 // TODO UPDATE only SSDAUserAuth may change their passwords
-const changeUserPassword = async (
+export const changeUserPassword = async (
   newPassword: string,
   passwordResetToken: string
 ) => {
@@ -197,15 +202,22 @@ const changeUserPassword = async (
   return true;
 };
 
-export {
-  changeUserPassword,
-  createUser,
-  isAdmin,
-  getUserByEmail,
-  getUserById,
-  getUserByToken,
-  getUserByUsername,
-  setUserToken,
-  updateUser,
-  userRoles
-};
+export const isAdmin = (user: IUser | undefined) =>
+  user && user.roles.some((role: string) => role === "ADMIN");
+
+/**
+ * A function that checks if the user owns the data file
+ *
+ * @param user  user information
+ * @param fileId data file id
+ */
+export const ownsDataFile = (user: IUser | undefined, fileId: string) => false;
+
+/**
+ * A function that checks if the user owns the data request
+ *
+ * @param dataReqeust the data reuest
+ * @param user user information
+ */
+export const ownsDataRequest = (dataReqeust: any, user: IUser) =>
+  dataReqeust.user.id === user.id;
