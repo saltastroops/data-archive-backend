@@ -48,7 +48,7 @@ export const queryDataFiles = async (
   const countSQL = `
       SELECT COUNT(*) as itemsTotal FROM ${sqlFrom} WHERE ${whereDetails.sql}
       `;
-  const countResults: any = await pool.query(countSQL, [
+  const countResults: any = await ssdaPool.query(countSQL, [
     ...whereDetails.values
   ]);
   const itemsTotal = countResults[0].itemsTotal;

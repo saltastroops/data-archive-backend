@@ -18,12 +18,12 @@ import { requestPasswordReset, resetPassword } from "./resetPassword";
 // Defining the context interface
 interface IContext {
   prisma: Prisma;
-  user: { id: number }; // TODO user interface
+  user: { id: string | number }; // TODO user interface
 }
 
 // Defining the update user interface
 interface IUserUpdateInput extends UserUpdateInput {
-  id?: number;
+  id?: string | number;
   newPassword?: string;
 }
 

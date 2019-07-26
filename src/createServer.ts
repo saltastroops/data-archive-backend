@@ -247,7 +247,7 @@ const createServer = async () => {
         WHERE df.dataFileId = ?
       `;
 
-    const results: any = await pool.query(sql, [dataFileId]);
+    const results: any = await ssdaPool.query(sql, [dataFileId]);
     if (!results.length) {
       return res.status(404).send(notFound);
     }

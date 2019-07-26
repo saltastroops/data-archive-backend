@@ -34,19 +34,11 @@ export interface IUser {
 }
 
 /**
- * A function that checks if the user has an admin role.
- *
- * @param user user information
- */
-export const isAdmin = (user: any) =>
-  user && user.roles.some((role: string) => role === "ADMIN");
-
-/**
  * A function for retrieving the user roles
  *
  * @param userId
  */
-export const userRoles = async (userId: number) => {
+export const userRoles = async (userId: string | number) => {
   // Query for retrieving user roles
   const sql = `
     SELECT role
@@ -61,7 +53,7 @@ export const userRoles = async (userId: number) => {
   );
 };
 
-export const getUserById = async (userId: number) => {
+export const getUserById = async (userId: string | number) => {
   // Query for retrieving a user with the supplied id
   const sql = `
     SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username
@@ -139,7 +131,7 @@ export const getUserByToken = async (passwordResetToken: string) => {
 };
 
 // TODO UPDATE only SSDAUserAuth may update their information
-const updateUser = async (userUpdateInfo: any, userId: number) => {
+export const updateUser = async (userUpdateInfo: any, userId: number) => {
   // Query for updating user unformation.
   const sql = `
     UPDATE User SET affiliation=?, email=?, familyName=?, givenName=?, password=?, username=?
@@ -202,6 +194,11 @@ export const changeUserPassword = async (
   return true;
 };
 
+/**
+ * A function that checks if the user has an admin role.
+ *
+ * @param user user information
+ */
 export const isAdmin = (user: IUser | undefined) =>
   user && user.roles.some((role: string) => role === "ADMIN");
 
