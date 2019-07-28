@@ -11,8 +11,9 @@ import { ssdaPool } from "./db/pool";
 import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
 import { dataRequestDataLoader } from "./util/dataRequests";
-import { getUserById, getUserByUsername, isAdmin, ownsDataFile, ownsDataRequest } from "./util/user";
+import { getUserById, getUserByUsername, isAdmin, ownsDataFile, ownsDataRequest, User } from "./util/user";
 import {saltUserById, saltUserByUsernameAndPassword} from "./util/sdbUser";
+import authProvider from "./util/authProvider";
 
 // Set up Sentry
 if (process.env.NODE_ENV === "production") {
@@ -20,11 +21,6 @@ if (process.env.NODE_ENV === "production") {
     dsn: process.env.SENTRY_DSN
   });
 }
-
-// Authentication providers
-export type AuthProvider =
-  | "SDB"    // SALT Science Database
-  | "SSDA"   // this data archive
 
 /**
  * Create the server.
@@ -46,22 +42,9 @@ const createServer = async () => {
     new passportLocal.Strategy(
       { usernameField: "username", passwordField: "password", passReqToCallback: true},
       async (request, username, password, done, ) => {
-
-        if (request.body.authProvider as AuthProvider === "SDB"){
-          const user = await saltUserByUsernameAndPassword(username, password) ;
-
-          done(null, user ? user : false)
-        } else {
-          // Only retrieving a user with the supplied username
-          const user = await prisma.user({username});
-
-          // Check if the user exists and add it to the request
-          if (user && (await bcrypt.compare(password, user.password))) {
-            done(null, user);
-          } else {
-            done(null, false);
-          }
-        }
+        const _authProvider = authProvider(request.body.authProvider);
+        const user = await _authProvider.authenticate(username, password);
+        done(null, user ? user : false)
       }
     )
   );
@@ -122,22 +105,12 @@ const createServer = async () => {
   // in the session.
 
   passport.serializeUser((user: any, done) => {
-    done(null, {userId: user.id, authProvider: user.authProvider});
+    done(null, {userId: user.id});
   });
 
   passport.deserializeUser(async (user: any, done) => {
-    switch (user.authProvider as AuthProvider) {
-    case "SDB":
-      const saltUser = await saltUserById(user.userId);
-      done(null, saltUser ? saltUser : false);
-      break;
-    case "SSDA":
-      const ssdaUser = await prisma.user({ id: user.userId });
-      done(null, ssdaUser ? ssdaUser : false);
-      break;
-    default:
-      done(new Error(`Unsupported authentication provider: ${user.authProvider}`));
-    }
+    const ssdaUser = await getUserById(user.userId);
+    done(null, ssdaUser ? ssdaUser : false);
   });
 
   /**

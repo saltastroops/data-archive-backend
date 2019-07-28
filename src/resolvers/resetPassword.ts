@@ -6,18 +6,23 @@ import { transporter } from "../util";
 import {
   changeUserPassword,
   getUserByEmail,
+  getUserById,
   getUserByToken,
   setUserToken
 } from "../util/user";
+import { AuthProviderName } from "../util/authProvider";
 
-const requestPasswordReset = async (email: string) => {
+const requestPasswordReset = async (
+  email: string,
+  authProvider: AuthProviderName
+) => {
   // There must be an email address
   if (!email) {
     throw new Error("An email address must be provided.");
   }
 
   // Find the user with the given email address
-  const user = await getUserByEmail(email);
+  const user = await getUserByEmail(email, authProvider);
   if (!user) {
     throw new Error(`There exists no user with the email address ${email}.`);
   }
@@ -101,7 +106,7 @@ const resetPassword = async (token: string, password: string) => {
     throw new Error("The password could not be updated.");
   }
 
-  return getUserByEmail(user.email);
+  return getUserById(user.id);
 };
 
 export { requestPasswordReset, resetPassword };

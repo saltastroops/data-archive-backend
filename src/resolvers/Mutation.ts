@@ -11,11 +11,12 @@ import {
   UserCreateInput
 } from "../util/user";
 import { requestPasswordReset, resetPassword } from "./resetPassword";
+import { AuthProviderName } from "../util/authProvider";
 
 // Defining the context interface
 interface IContext {
   prisma: Prisma;
-  user: { id: string | number }; // TODO user interface
+  user: { id: string | number; authProvider: AuthProviderName }; // TODO user interface
 }
 
 // Defining the update user interface
@@ -46,7 +47,7 @@ const Mutation = {
     root: any,
     { email }: { email: string },
     ctx: IContext
-  ) => requestPasswordReset(email),
+  ) => requestPasswordReset(email, ctx.user.authProvider),
 
   /**
    * Reset a user's password.
@@ -127,6 +128,9 @@ const Mutation = {
 
     // Get the currently logged user
     const currentUser = await getUserById(ctx.user.id);
+    if (!currentUser) {
+      throw new Error("There exists no user for the id stored in the context.");
+    }
 
     // Check if the password matches that of the currently logged in user
     if (
@@ -151,6 +155,9 @@ const Mutation = {
 
     // Get the current details of the updated user.
     const userToUpdate = await getUserById(updatedUserId);
+    if (!userToUpdate) {
+      throw new Error("There exists no user with the given id.");
+    }
     const userUpdateInfo = userToUpdate;
 
     if (!userToUpdate) {
@@ -191,7 +198,10 @@ const Mutation = {
         args.email = args.email.toLowerCase();
 
         // Check if there already exists a user with the submitted email address
-        const userWithGivenEmail = await getUserByEmail(args.email);
+        const userWithGivenEmail = await getUserByEmail(
+          args.email,
+          ctx.user.authProvider
+        );
 
         if (userWithGivenEmail) {
           throw new Error(

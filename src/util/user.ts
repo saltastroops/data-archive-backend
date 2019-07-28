@@ -2,12 +2,30 @@ import moment = require("moment");
 import { ssdaAdminPool } from "../db/pool";
 import bcrypt from "bcrypt";
 import { validate } from "isemail";
+import { v4 as uuid } from "uuid";
+import { AuthProviderName } from "./authProvider";
 
-type AuthProvider = "SDB" | "SSDA";
+export interface AuthProviderUser {
+  affiliation: string;
+  authProvider: AuthProviderName;
+  authProviderUserId: string;
+  email: string;
+  familyName: string;
+  givenName: string;
+  password: string;
+  username: string;
+}
+
+export type User = AuthProviderUser & {
+  id: string;
+  passwordResetToken: string;
+  passwordResetTokenExpiry: Date;
+  roles: Set<Role>;
+};
 
 export interface UserCreateInput {
   affiliation: string;
-  authProvider: AuthProvider;
+  authProvider: AuthProviderName;
   authProviderUserId?: string;
   email: string;
   familyName: string;
@@ -15,6 +33,8 @@ export interface UserCreateInput {
   password?: string;
   username?: string;
 }
+
+type Role = "ADMIN";
 
 /**
  * Create a new user with the given details.
@@ -44,10 +64,15 @@ export const createUser = async (args: UserCreateInput) => {
   const lowerCaseEmail = args.email.toLowerCase();
 
   // Check if there already exists a user with the submitted email address
-  const userWithGivenEmail = await getUserByEmail(args.email);
+  const userWithGivenEmail = await getUserByEmail(
+    args.email,
+    args.authProvider
+  );
   if (userWithGivenEmail) {
     throw new Error(
-      `There already exists a user with the email address ${args.email}.`
+      `There already exists a user with the email address ${
+        args.email
+      } for this authentication provider.`
     );
   }
 
@@ -87,6 +112,18 @@ export const createUser = async (args: UserCreateInput) => {
     throw new Error("The user id for the authentication provider is missing.");
   }
 
+  // Get the id of the auth provider
+  const authProviderIdSQL = `
+      SELECT authProviderId FROM AuthProvider WHERE authProvider=?
+      `;
+  const result: any = await ssdaAdminPool.query(authProviderIdSQL, [
+    authProvider
+  ]);
+  if (result[0].length === 0) {
+    throw new Error(`Unknown authentication provider: ${authProvider}`);
+  }
+  const authProviderId = result[0][0].authProviderId;
+
   // Insert the user with the given details into the database
   const userInsertSQL = `
       INSERT INTO User (affiliation, email, familyName, givenName, authProviderId, authProviderUserId)
@@ -100,8 +137,8 @@ export const createUser = async (args: UserCreateInput) => {
       lowerCaseEmail,
       familyName,
       givenName,
-      authProvider !== "SSDA" ? authProvider : null,
-      authProvider !== "SSDA" ? authProviderUserId : null
+      authProviderId,
+      authProvider !== "SSDA" ? authProviderUserId : uuid()
     ]);
 
     // If SSDA is used as the auth provider, we have to store the user credentials
@@ -134,17 +171,17 @@ export const createUser = async (args: UserCreateInput) => {
   }
 };
 
-export interface IUser {
-  id: string; // In mysql this is a number
-  roles: string[];
-}
-
 /**
  * A function for retrieving the user roles
- *
- * @param userId
  */
-export const userRoles = async (userId: string | number) => {
+export const userRoles = async (
+  user: User | null | undefined
+): Promise<Set<Role>> => {
+  // Gracefuylly handle the case of a missing user id
+  if (!user) {
+    return new Set<Role>();
+  }
+
   // Query for retrieving user roles
   const sql = `
     SELECT role
@@ -154,90 +191,136 @@ export const userRoles = async (userId: string | number) => {
   `;
 
   // Querying and returning the user roles
-  return ((await ssdaAdminPool.query(sql, [userId])) as any)[0].map(
-    (role: any) => role.role
+  const roles = ((await ssdaAdminPool.query(sql, [user.id])) as any)[0].map(
+    (row: any) => row.role
   );
+
+  return new Set<Role>(roles);
 };
 
-export const getUserById = async (userId: string | number) => {
+export const getUserById = async (
+  userId: string | number
+): Promise<User | null> => {
   // Query for retrieving a user with the supplied id
   const sql = `
-    SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username
+    SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username, authProviderId, authProviderUserId
     FROM User AS u
-    JOIN SSDAUserAuth As ua ON ua.userId = u.userId
+    LEFT JOIN SSDAUserAuth As ua ON ua.userId = u.userId
     WHERE u.userId = ?
   `;
 
   // Querying the user
-  const result: any = (await ssdaAdminPool.query(sql, [userId]))[0];
+  const result: any = await ssdaAdminPool.query(sql, [userId]);
 
-  const user: any = result.length ? result[0] : null;
-
-  const roles = user && (await userRoles(user.id));
-
-  return user && { ...user, roles };
+  return userFromResult(result);
 };
 
-export const getUserByUsername = async (username: string) => {
+export const getUserByUsername = async (
+  username: string
+): Promise<User | null> => {
   // Query for retrieving a user with the supplied username
   const sql = `
-    SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username
+    SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username, authProviderId, authProviderUserId
     FROM User AS u
-    JOIN SSDAUserAuth As ua ON ua.userId = u.userId
+    LEFT JOIN SSDAUserAuth As ua ON ua.userId = u.userId
     WHERE ua.username = ?
   `;
 
   // Querying the user
-  const result: any = (await ssdaAdminPool.query(sql, [username]))[0];
+  const result: any = await ssdaAdminPool.query(sql, [username]);
 
-  const user = result.length ? result[0] : null;
-
-  const roles = user && (await userRoles(user.id));
-
-  return user && { ...user, roles };
+  return userFromResult(result);
 };
 
-export const getUserByEmail = async (email: string) => {
+export const getUserByEmail = async (
+  email: string,
+  authProvider: AuthProviderName
+): Promise<User | null> => {
   // Query for retrieving a user with the supplied email
   const sql = `
-    SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username
+    SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username, authProviderId, authProviderUserId
     FROM User AS u
-    JOIN SSDAUserAuth As ua ON ua.userId = u.userId
-    WHERE u.email = ?
+    LEFT JOIN SSDAUserAuth AS ua ON ua.userId = u.userId
+    JOIN AuthProvider AS ap USING (authProviderId)
+    WHERE u.email = ? AND ap.authProvider = ?
   `;
 
   // Querying the user
-  const result: any = (await ssdaAdminPool.query(sql, [email]))[0];
+  const result: any = await ssdaAdminPool.query(sql, [email, authProvider]);
 
-  const user = result.length ? result[0] : null;
-
-  const roles = user && (await userRoles(user.id));
-
-  return user && { ...user, roles };
+  return userFromResult(result);
 };
 
-export const getUserByToken = async (passwordResetToken: string) => {
+export const getUserByAuthProviderDetails = async (
+  authProviderName: AuthProviderName,
+  authProviderUserId: string
+): Promise<User | null> => {
   // Query for retrieving a user with the supplied email
   const sql = `
     SELECT u.userId AS id, affiliation, email, familyName, givenName, 
-    password, username, passwordResetToken, passwordResetTokenExpiry
+    password, username, passwordResetToken, passwordResetTokenExpiry, authProviderId, authProviderUserId
     FROM User AS u
-    JOIN SSDAUserAuth As ua ON ua.userId = u.userId
+    LEFT JOIN SSDAUserAuth As ua ON ua.userId = u.userId
+    JOIN AuthProvider AS ap USING (authProviderId)
+    WHERE ap.authProvider = ? AND u.authProviderUserId = ?
+  `;
+
+  // Querying the user
+  const result: any = await ssdaAdminPool.query(sql, [
+    authProviderName,
+    authProviderUserId
+  ]);
+
+  return userFromResult(result);
+};
+
+export const getUserByToken = async (
+  passwordResetToken: string
+): Promise<User | null> => {
+  // Query for retrieving a user with the supplied email
+  const sql = `
+    SELECT u.userId AS id, affiliation, email, familyName, givenName, 
+    password, username, passwordResetToken, passwordResetTokenExpiry, authProviderId, authProviderUserId
+    FROM User AS u
+    LEFT JOIN SSDAUserAuth As ua ON ua.userId = u.userId
     WHERE ua.passwordResetToken = ?
   `;
 
   // Querying the user
-  const result: any = (await ssdaAdminPool.query(sql, [passwordResetToken]))[0];
+  const result: any = await ssdaAdminPool.query(sql, [passwordResetToken]);
 
-  const user = result.length ? result[0] : null;
+  return userFromResult(result);
+};
 
-  const roles = user && (await userRoles(user.id));
+const userFromResult = async (result: any): Promise<User | null> => {
+  if (result[0].length === 0) {
+    return null;
+  }
+  const user: any = result[0][0];
 
-  return user && { ...user, roles };
+  const roles = await userRoles(user);
+
+  return {
+    affiliation: user.affiliation,
+    authProvider: user.authProvider,
+    authProviderUserId: user.authProviderUserId,
+    email: user.email,
+    familyName: user.familyName,
+    givenName: user.givenName,
+    id: user.id,
+    password: user.password || "",
+    passwordResetToken: user.passwordResetToken,
+    passwordResetTokenExpiry: user.passwordResetTokenExpiry,
+    roles,
+    username: user.username || ""
+  };
 };
 
 // TODO UPDATE only SSDAUserAuth may update their information
-export const updateUser = async (userUpdateInfo: any, userId: number) => {
+export const updateUser = async (
+  userUpdateInfo: any,
+  userId: string | number
+) => {
   // Query for updating user unformation.
   const sql = `
     UPDATE User SET affiliation=?, email=?, familyName=?, givenName=?, password=?, username=?
@@ -305,8 +388,8 @@ export const changeUserPassword = async (
  *
  * @param user user information
  */
-export const isAdmin = (user: IUser | undefined) =>
-  user && user.roles.some((role: string) => role === "ADMIN");
+export const isAdmin = (user: User | undefined) =>
+  user && user.roles.has("ADMIN");
 
 /**
  * A function that checks if the user owns the data file
@@ -314,7 +397,7 @@ export const isAdmin = (user: IUser | undefined) =>
  * @param user  user information
  * @param fileId data file id
  */
-export const ownsDataFile = (user: IUser | undefined, fileId: string) => false;
+export const ownsDataFile = (user: User | undefined, fileId: string) => false;
 
 /**
  * A function that checks if the user owns the data request
@@ -322,7 +405,7 @@ export const ownsDataFile = (user: IUser | undefined, fileId: string) => false;
  * @param dataReqeust the data reuest
  * @param user user information
  */
-export const ownsDataRequest = (dataReqeust: any, user: IUser) =>
+export const ownsDataRequest = (dataReqeust: any, user: User) =>
   dataReqeust.user.id === user.id;
 
 // Check whether a password is sufficiently strong.

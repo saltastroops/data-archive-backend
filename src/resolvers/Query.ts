@@ -7,13 +7,13 @@ import { getUserById, getUserByToken } from "../util/user";
 import { saltUserById } from "../util/sdbUser";
 import { isAdmin } from "../util/user";
 import { queryDataFiles } from "./serchResults";
-import { AuthProvider } from "../createServer";
+import { AuthProviderName } from "../util/authProvider";
 
 // Defining the context interface
 interface IContext {
   loaders: { dataRequestLoader: any };
   prisma: Prisma;
-  user: { id: string; authProvider: AuthProvider }; // TODO user interface
+  user: { id: string; authProvider: AuthProviderName }; // TODO user interface
 }
 
 // Defining the data preview interface
@@ -32,11 +32,7 @@ const Query = {
       return null;
     }
 
-    if (ctx.user.authProvider === "SDB") {
-      return await saltUserById(ctx.user.id);
-    } else {
-      return await getUserById(ctx.user.id);
-    }
+    return await getUserById(ctx.user.id);
   },
 
   async dataFiles(
