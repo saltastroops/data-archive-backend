@@ -86,7 +86,7 @@ export const createDataRequest = async (dataFiles: [number], user: any) => {
   zipDataRequest(dataFiles, newDataRequestId);
 
   return {
-    message: "Done again1",
+    message: "The data request was successfully requested",
     status: true
   };
 };
