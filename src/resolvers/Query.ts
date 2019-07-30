@@ -2,7 +2,6 @@ import fs from "fs";
 import moment from "moment";
 import * as Path from "path";
 import { ssdaPool } from "../db/pool";
-import { Prisma } from "../generated/prisma-client";
 import { getUserById, getUserByToken } from "../util/user";
 import { saltUserById } from "../util/sdbUser";
 import { isAdmin } from "../util/user";
@@ -12,7 +11,6 @@ import { AuthProviderName } from "../util/authProvider";
 // Defining the context interface
 interface IContext {
   loaders: { dataRequestLoader: any };
-  prisma: Prisma;
   user: { id: string; authProvider: AuthProviderName }; // TODO user interface
 }
 
@@ -63,33 +61,9 @@ const Query = {
     // console.log(dataLoaderResults);
 
     return dataLoaderResults;
-
-    const limit = args.limit ? Math.min(args.limit, 200) : 200;
-
-    return ctx.prisma.dataRequests({
-      first: limit,
-      orderBy: "madeAt_DESC",
-      skip: args.startIndex
-    }).$fragment(`{
-      id
-      madeAt
-      uri
-      parts {
-        id
-        status
-        uri
-        dataFiles {
-          id
-        }
-      }
-    }`);
   },
 
-  async passwordResetTokenStatus(
-    root: any,
-    { token }: any,
-    { prisma }: IContext
-  ) {
+  async passwordResetTokenStatus(root: any, { token }: any) {
     const user = await getUserByToken(token);
     if (!user) {
       return { status: false, message: "The token is unknown." };
