@@ -16,10 +16,15 @@ const successfullyZipDataRequest = async (dataRequestId: number) => {
     `
     UPDATE DataRequest 
     SET 
-      dataRequestStatusId=?
+      dataRequestStatusId=?,
+      uri=?
     WHERE dataRequestId=?
     `,
-    [successStatusId, dataRequestId]
+    [
+      successStatusId,
+      `${process.env.DATA_REQUEST_BASE_DIR}/${dataRequestId.toString()}.zip`,
+      dataRequestId
+    ]
   );
 
   // TODO send email to user when done.
@@ -48,7 +53,7 @@ const failToZipDataRequest = async (dataRequestId: number) => {
     `${process.env.DATA_REQUEST_BASE_DIR}/${dataRequestId.toString()}.zip`,
     err => {
       if (err) {
-        throw err;
+        // do nothing if file not created
       }
     }
   );

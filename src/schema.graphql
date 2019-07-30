@@ -232,9 +232,8 @@ type Status {
   message: String
 }
 
-"""
-Data preview.
-"""
+# Data preview.
+
 type DataPreview {
   """
   URIs for the data preview images.

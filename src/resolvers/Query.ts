@@ -74,9 +74,9 @@ const Query = {
       id
       madeAt
       uri
-      parts {
+      status
+      observations {
         id
-        status
         uri
         dataFiles {
           id
