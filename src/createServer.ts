@@ -221,17 +221,17 @@ const createServer = async () => {
       `;
 
     const results: any = await ssdaPool.query(sql, [dataFileId]);
-    if (!results.length) {
+    if (!results[0].length) {
       return res.status(404).send(notFound);
     }
 
-    const { path: filePath, publicFrom } = results[0];
+    const { path: filePath, publicFrom } = results[0][0];
 
     // Check whether the data file is public or the user may access it
     // because they own the data or are an administrator.
     if (
       publicFrom > Date.now() &&
-      !ownsDataFile(req.user, dataFileId) &&
+      !(await ownsDataFile(req.user, dataFileId)) &&
       !isAdmin(req.user)
     ) {
       return res.status(403).send(proprietary);

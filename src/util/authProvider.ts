@@ -50,7 +50,7 @@ abstract class AuthProvider {
 
     // If this is not the SSDA, we need to ensure that there exists a user in
     // the user table
-    const authProviderName = this.name();
+    const authProviderName = this.name;
     if (authProviderName !== "SSDA") {
       const ssdaUser = await getUserByAuthProviderDetails(
         user.authProvider,
@@ -102,7 +102,19 @@ abstract class AuthProvider {
    * ------
    * The name of this authentication provider.
    */
-  abstract name(): AuthProviderName;
+  abstract get name(): AuthProviderName;
+
+  /**
+   * The institution using this authentication provider.
+   *
+   * This must be consistent with the column Institution.institutionName in the
+   * SSDA database.
+   *
+   * Return
+   * ------
+   * The institution using this authentication provider.
+   */
+  abstract get institution(): string;
 }
 
 class SSDAAuthProvider extends AuthProvider {
@@ -144,7 +156,21 @@ class SSDAAuthProvider extends AuthProvider {
    * ------
    * The name of this authentication provider.
    */
-  name(): AuthProviderName {
+  get name(): AuthProviderName {
+    return "SSDA";
+  }
+
+  /**
+   * The institution using this authentication provider.
+   *
+   * This must be consistent with the column Institution.institutionName in the
+   * SSDA database.
+   *
+   * Return
+   * ------
+   * The institution using this authentication provider.
+   */
+  get institution(): string {
     return "SSDA";
   }
 }
@@ -203,7 +229,21 @@ SELECT * FROM PiptUser JOIN Investigator USING (Investigator_Id) JOIN Institute 
    * ------
    * The name of this authentication provider.
    */
-  name(): AuthProviderName {
+  get name(): AuthProviderName {
     return "SDB";
+  }
+
+  /**
+   * The institution using this authentication provider.
+   *
+   * This must be consistent with the column Institution.institutionName in the
+   * SSDA database.
+   *
+   * Return
+   * ------
+   * The institution using this authentication provider.
+   */
+  get institution(): string {
+    return "SALT";
   }
 }
