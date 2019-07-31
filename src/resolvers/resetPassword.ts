@@ -2,19 +2,27 @@ import bcrypt from "bcrypt";
 import { randomBytes } from "crypto";
 import moment from "moment";
 import { promisify } from "util";
-import { prisma } from "../generated/prisma-client";
 import { transporter } from "../util";
+import { AuthProviderName } from "../util/authProvider";
+import {
+  changeUserPassword,
+  getUserByEmail,
+  getUserById,
+  getUserByToken,
+  setUserToken
+} from "../util/user";
 
-const requestPasswordReset = async (email: string) => {
+const requestPasswordReset = async (
+  email: string,
+  authProvider: AuthProviderName
+) => {
   // There must be an email address
   if (!email) {
     throw new Error("An email address must be provided.");
   }
 
   // Find the user with the given email address
-  const user = await prisma.user({
-    email
-  });
+  const user = await getUserByEmail(email, authProvider);
   if (!user) {
     throw new Error(`There exists no user with the email address ${email}.`);
   }
@@ -29,13 +37,11 @@ const requestPasswordReset = async (email: string) => {
     .toDate();
 
   // Update the user in prisma with the token and its expiry date
-  const updatedUser = await prisma.updateUser({
-    data: {
-      passwordResetToken,
-      passwordResetTokenExpiry
-    },
-    where: { email }
-  });
+  const updatedUser = await setUserToken(
+    passwordResetToken,
+    passwordResetTokenExpiry,
+    email
+  );
 
   // Handle unsuccessful updates.
   if (!updatedUser) {
@@ -82,7 +88,7 @@ const resetPassword = async (token: string, password: string) => {
   }
 
   // Get the user with the token
-  const user = await prisma.user({ passwordResetToken: token });
+  const user = await getUserByToken(token);
   if (!user) {
     throw new Error(`There exists no user for the token.`);
   }
@@ -95,20 +101,12 @@ const resetPassword = async (token: string, password: string) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   // Update the user with the new password and delete the token
-  const updatedUser = await prisma.updateUser({
-    data: {
-      password: hashedPassword,
-      passwordResetToken: "",
-      passwordResetTokenExpiry: moment(Date.now()).toDate()
-    },
-    where: {
-      passwordResetToken: token
-    }
-  });
+  const updatedUser = await changeUserPassword(hashedPassword, token);
   if (!updatedUser) {
     throw new Error("The password could not be updated.");
   }
-  return user;
+
+  return getUserById(user.id);
 };
 
 export { requestPasswordReset, resetPassword };

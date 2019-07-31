@@ -1,5 +1,4 @@
 import * as Sentry from "@sentry/node";
-import bcrypt from "bcrypt";
 import bodyParser from "body-parser";
 import { Request, Response } from "express";
 import session from "express-session";
@@ -7,11 +6,17 @@ import { GraphQLServer } from "graphql-yoga";
 import passport from "passport";
 import passportLocal from "passport-local";
 import * as path from "path";
-import pool from "./db/pool";
+import { ssdaPool } from "./db/pool";
 import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
-import {saltUserById, saltUserByUsernameAndPassword} from "./util/sdbUser";
-import { isAdmin, ownsDataFile, ownsDataRequest } from "./util/user";
+import authProvider from "./util/authProvider";
+import { dataRequestDataLoader } from "./util/dataRequests";
+import {
+  getUserById,
+  isAdmin,
+  mayViewDataFile,
+  ownsDataRequest
+} from "./util/user";
 
 // Set up Sentry
 if (process.env.NODE_ENV === "production") {
@@ -19,11 +24,6 @@ if (process.env.NODE_ENV === "production") {
     dsn: process.env.SENTRY_DSN
   });
 }
-
-// Authentication providers
-export type AuthProvider =
-  | "SDB"    // SALT Science Database
-  | "SSDA"   // this data archive
 
 /**
  * Create the server.
@@ -43,24 +43,15 @@ const createServer = async () => {
   passport.use(
     // Authenticate against a username and password
     new passportLocal.Strategy(
-      { usernameField: "username", passwordField: "password", passReqToCallback: true},
-      async (request, username, password, done, ) => {
-
-        if (request.body.authProvider as AuthProvider === "SDB"){
-          const user = await saltUserByUsernameAndPassword(username, password) ;
-
-          done(null, user ? user : false)
-        } else {
-          // Only retrieving a user with the supplied username
-          const user = await prisma.user({username});
-
-          // Check if the user exists and add it to the request
-          if (user && (await bcrypt.compare(password, user.password))) {
-            done(null, user);
-          } else {
-            done(null, false);
-          }
-        }
+      {
+        passReqToCallback: true,
+        passwordField: "password",
+        usernameField: "username"
+      },
+      async (request, username, password, done) => {
+        const _authProvider = authProvider(request.body.authProvider);
+        const user = await _authProvider.authenticate(username, password);
+        done(null, user ? user : false);
       }
     )
   );
@@ -68,6 +59,9 @@ const createServer = async () => {
   // Create the server
   const server = new GraphQLServer({
     context: (req: any) => ({
+      loaders: {
+        dataRequestLoader: dataRequestDataLoader()
+      },
       prisma,
       user: req.request.user
     }),
@@ -78,7 +72,7 @@ const createServer = async () => {
   // Enable CORS
   server.express.use((req, res, next) => {
     res.header("Access-Control-Allow-Credentials", "true");
-    res.header("Access-Control-Allow-Origin", process.env.FRONTEND_URL);
+    res.header("Access-Control-Allow-Origin", process.env.FRONTEND_HOST);
     res.header(
       "Access-Control-Allow-Headers",
       "Origin, X-Requested-With, Content-Type, Accept"
@@ -118,22 +112,12 @@ const createServer = async () => {
   // in the session.
 
   passport.serializeUser((user: any, done) => {
-    done(null, {userId: user.id, authProvider: user.authProvider});
+    done(null, { userId: user.id });
   });
 
   passport.deserializeUser(async (user: any, done) => {
-    switch (user.authProvider as AuthProvider) {
-    case "SDB":
-      const saltUser = await saltUserById(user.userId);
-      done(null, saltUser ? saltUser : false);
-      break;
-    case "SSDA":
-      const ssdaUser = await prisma.user({ id: user.userId });
-      done(null, ssdaUser ? ssdaUser : false);
-      break;
-    default:
-      done(new Error(`Unsupported authentication provider: ${user.authProvider}`));
-    }
+    const ssdaUser = await getUserById(user.userId);
+    done(null, ssdaUser ? ssdaUser : false);
   });
 
   /**
@@ -243,20 +227,16 @@ const createServer = async () => {
         WHERE df.dataFileId = ?
       `;
 
-    const results: any = await pool.query(sql, [dataFileId]);
-    if (!results.length) {
+    const results: any = await ssdaPool.query(sql, [dataFileId]);
+    if (!results[0].length) {
       return res.status(404).send(notFound);
     }
 
-    const { path: filePath, publicFrom } = results[0];
+    const { path: filePath, publicFrom } = results[0][0];
 
     // Check whether the data file is public or the user may access it
     // because they own the data or are an administrator.
-    if (
-      publicFrom > Date.now() &&
-      !ownsDataFile(req.user, dataFileId) &&
-      !isAdmin(req.user)
-    ) {
+    if (!(await mayViewDataFile(req.user, dataFileId))) {
       return res.status(403).send(proprietary);
     }
 
@@ -316,7 +296,7 @@ const createServer = async () => {
       WHERE dp.dataFileId = ? AND dp.dataPreviewFileName = ?
     `;
       // Querying the data preview image path
-      const results: any = await pool.query(sql, [
+      const results: any = await ssdaPool.query(sql, [
         dataFileId,
         dataPreviewFileName
       ]);

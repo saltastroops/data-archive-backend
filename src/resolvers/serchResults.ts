@@ -1,9 +1,10 @@
-import pool from "../db/pool";
+import { ssdaPool } from "../db/pool";
 import {
   createFromExpression,
   parseWhereCondition
 } from "../util/observationsQuery";
 import { dataModel } from "../util/tables";
+import { ownsOutOfDataFiles, User } from "../util/user";
 
 /**
  *
@@ -18,6 +19,8 @@ import { dataModel } from "../util/tables";
  * @param limit:
  *      Maximum number of search results to return. This corresponds to the
  *      LIMIT of the MySQL query.
+ * @param user:
+ *      The currently logged in user.
  * @returns results:
  *      A query results arranged for the GraphQL to interpret
  */
@@ -26,7 +29,8 @@ export const queryDataFiles = async (
   columns: [string],
   where: string,
   startIndex: number,
-  limit: number
+  limit: number,
+  user: User | undefined
 ) => {
   // Object containing where sql columns and mapping values
   const whereDetails = parseWhereCondition(where);
@@ -48,9 +52,9 @@ export const queryDataFiles = async (
   const countSQL = `
       SELECT COUNT(*) as itemsTotal FROM ${sqlFrom} WHERE ${whereDetails.sql}
       `;
-  const countResults: any = await pool.query(countSQL, [
+  const countResults: any = (await ssdaPool.query(countSQL, [
     ...whereDetails.values
-  ]);
+  ]))[0];
   const itemsTotal = countResults[0].itemsTotal;
 
   // Second pass: Get the data file details
@@ -64,11 +68,15 @@ export const queryDataFiles = async (
       ORDER BY DataFile.startTime DESC
       LIMIT ? OFFSET ?
              `;
-  const itemResults: any = await pool.query(itemSQL, [
+  const itemResults: any = (await ssdaPool.query(itemSQL, [
     ...whereDetails.values,
     limit,
     startIndex
-  ]);
+  ]))[0];
+
+  // Which of the files are owned by the user?
+  const ids = itemResults.map((row: any) => row["DataFile.dataFileId"]);
+  const userOwnedFileIds = await ownsOutOfDataFiles(user, ids);
 
   // Collect all the details
   const pageInfo = {
@@ -84,7 +92,7 @@ export const queryDataFiles = async (
         value: entry[1]
       }))
     ],
-    ownedByUser: true
+    ownedByUser: userOwnedFileIds.has(row["DataFile.dataFileId"].toString())
   }));
 
   return {

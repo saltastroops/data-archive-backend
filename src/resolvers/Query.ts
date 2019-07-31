@@ -1,17 +1,14 @@
 import fs from "fs";
 import moment from "moment";
 import * as Path from "path";
-import pool from "../db/pool";
-import { Prisma } from "../generated/prisma-client";
-import { saltUserById } from "../util/sdbUser";
-import { isAdmin } from "../util/user";
+import { ssdaPool } from "../db/pool";
+import { getUserById, getUserByToken, User } from "../util/user";
 import { queryDataFiles } from "./serchResults";
-import { AuthProvider } from "../createServer";
 
 // Defining the context interface
 interface IContext {
-  prisma: Prisma;
-  user: { id: string; authProvider: AuthProvider }; // TODO user interface
+  loaders: { dataRequestLoader: any };
+  user: User; // TODO user interface
 }
 
 // Defining the data preview interface
@@ -29,15 +26,8 @@ const Query = {
     if (!ctx.user) {
       return null;
     }
-    let user;
-    if (ctx.user.authProvider === "SDB") {
-      user = await saltUserById(ctx.user.id);
-    } else {
-      user = await ctx.prisma.user({
-        id: ctx.user.id
-      });
-    }
-    return user ? user : null;
+
+    return getUserById(ctx.user.id);
   },
 
   async dataFiles(
@@ -45,7 +35,13 @@ const Query = {
     { columns, limit, startIndex, where }: any,
     ctx: IContext
   ) {
-    const results = await queryDataFiles(columns, where, startIndex, limit);
+    const results = await queryDataFiles(
+      columns,
+      where,
+      startIndex,
+      limit,
+      ctx.user
+    );
     return results;
   },
 
@@ -60,39 +56,16 @@ const Query = {
       throw new Error("You must be logged in");
     }
 
-    const limit = args.limit ? Math.min(args.limit, 200) : 200;
+    const { loaders } = ctx;
+    const { dataRequestLoader } = loaders;
 
-    return ctx.prisma.dataRequests({
-      first: limit,
-      orderBy: "madeAt_DESC",
-      skip: args.startIndex
-    }).$fragment(`{
-      id
-      madeAt
-      uri
-      parts {
-        id
-        status
-        uri
-        dataFiles {
-          id
-          name
-          observation {
-            name
-          }
-        }
-      }
-    }`);
+    const dataLoaderResults = await dataRequestLoader.load(ctx.user.id);
+
+    return dataLoaderResults;
   },
 
-  async passwordResetTokenStatus(
-    root: any,
-    { token }: any,
-    { prisma }: IContext
-  ) {
-    const user = await prisma.user({
-      passwordResetToken: token
-    });
+  async passwordResetTokenStatus(root: any, { token }: any) {
+    const user = await getUserByToken(token);
     if (!user) {
       return { status: false, message: "The token is unknown." };
     }
@@ -134,7 +107,7 @@ const Query = {
     `;
 
     // Querying the data previews
-    const rows = await pool.query(sql, [args.dataFileId]);
+    const rows = (await ssdaPool.query(sql, [args.dataFileId]))[0];
 
     const results: IDataPreview = {
       fitsHeader: "",

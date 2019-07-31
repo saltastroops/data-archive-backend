@@ -25,17 +25,29 @@ cd backend
 yarn install
 ```
 
-The server requires the following environment variables.
+The server requires the following environment variables. These must be defined in a file `.env` in the root directory. *This file must not be committed to the git repository.*
 
 Variable | Description | Example
 ---- | ---- | ----
-FRONTEND_URL | The URL of the frontend accessing this server | https://ssda.saao.ac.za
+FRONTEND_HOST | The host of the frontend accessing this server | https://ssda.saao.ac.za
 PRISMA_ENDPOINT | The URL of the Prisma server | https://ssdadb.saao.ac.za
 PRISMA_SECRET | The secret key for the Prisma server | topsecretkey
 SESSION_SECRET | The secret key for for signing the session ID cookie | anothertopsecretkey
 APP_SECRET | The secret key for this server | anothertopsecretkey
 PORT | Port on which the server should be listening | 443
 SENTRY_DSN | The Sentry DSN (Data Source Name) | https://d6251ee8232d4au0b57cbhy38c059af6@sentry.io/237524
+SSDA_ADMIN_DATABASE_NAME | An ssda admin database name | ssda-admin
+SSDA_DATABASE_NAME | An ssda database name | ssda
+DATABASE_HOST | The database host | http://localhost
+DATABASE_PASSWORD | The database host password | password
+DATABASE_USER | The host user name | username
+PREVIEW_BASE_DIR | The preview base diractory | base/directory/to/previews
+FITS_BASE_DIR | The FITS file base directory | base/directory/to/fits
+MAIL_HOST | The mail server address | smtp.mail.host
+MAIL_USER | The mail server username | mail-username
+MAIL_PASSWORD | The mail server user password | mail-password
+MAIL_PORT | The mail server port | 2525
+MAIL_SSL | Securing the mail server SMTP | true/false
 
 The [Sentry](https://sentry.io) DSN (Data Source Name) can be obtained from the client keys tab in your Sentry project's settings.
 
