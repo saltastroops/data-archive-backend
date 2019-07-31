@@ -4,6 +4,7 @@ import {
   parseWhereCondition
 } from "../util/observationsQuery";
 import { dataModel } from "../util/tables";
+import { ownsOutOfDataFiles, User } from "../util/user";
 
 /**
  *
@@ -18,6 +19,8 @@ import { dataModel } from "../util/tables";
  * @param limit:
  *      Maximum number of search results to return. This corresponds to the
  *      LIMIT of the MySQL query.
+ * @param user:
+ *      The currently logged in user.
  * @returns results:
  *      A query results arranged for the GraphQL to interpret
  */
@@ -26,7 +29,8 @@ export const queryDataFiles = async (
   columns: [string],
   where: string,
   startIndex: number,
-  limit: number
+  limit: number,
+  user: User | undefined
 ) => {
   // Object containing where sql columns and mapping values
   const whereDetails = parseWhereCondition(where);
@@ -70,6 +74,10 @@ export const queryDataFiles = async (
     startIndex
   ]))[0];
 
+  // Which of the files are owned by the user?
+  const ids = itemResults.map((row: any) => row["DataFile.dataFileId"]);
+  const userOwnedFileIds = await ownsOutOfDataFiles(user, ids);
+
   // Collect all the details
   const pageInfo = {
     itemsPerPage: limit,
@@ -84,7 +92,7 @@ export const queryDataFiles = async (
         value: entry[1]
       }))
     ],
-    ownedByUser: true
+    ownedByUser: userOwnedFileIds.has(row["DataFile.dataFileId"].toString())
   }));
 
   return {

@@ -396,20 +396,71 @@ export const isAdmin = (user: User | undefined) =>
   user && user.roles.has("ADMIN");
 
 /**
- * A function that checks if the user owns a data file.
+ * Check whether a user may view a data file.
  *
  * @param user  user information
  * @param fileId data file id
  */
-export const ownsDataFile = async (
+export const mayViewDataFile = async (
   user: User | undefined,
   fileId: string
 ): Promise<boolean> => {
-  return (await ownsDataFiles(user, [fileId])).includes(fileId);
+  return mayViewAllOfDataFiles(user, [fileId]);
 };
 
 /**
- * A function that checks if the user owns a list of data files.
+ * Check whether the user may view a list of data files.
+ *
+ * Parameters
+ * ----------
+ * fileIds: Array<string>
+ *     List of file ids to check
+ *
+ * Return
+ * ------
+ * Whether the user may view all the files in the list.
+ */
+export const mayViewAllOfDataFiles = async (
+  user: User | undefined,
+  fileIds: string[]
+) => {
+  // Admins may view everything
+  if (isAdmin(user)) {
+    return true;
+  }
+
+  // Remove duplicate ids
+  const ids = Array.from(new Set(fileIds));
+
+  // Get all the release dates
+  const sql = `
+    SELECT dataFileId, publicFrom
+           FROM DataFile JOIN Observation USING (observationId)
+    WHERE dataFileId IN (?)
+  `;
+  const results: any = await ssdaPool.query(sql, [ids]);
+
+  // Collect the release dates
+  const releaseDates = new Map<string, number>();
+  results[0].forEach((row: any) =>
+    releaseDates.set(row.dataFileId, row.publicFrom)
+  );
+
+  // Filter out the files that are public
+  const now = Date.now();
+  const proprietaryIds = ids.filter(
+    id => !(releaseDates.has(id) && (releaseDates.get(id) as number) <= now)
+  );
+
+  // Check which of the remaining files the user owns
+  const ownedIds = await ownsOutOfDataFiles(user, proprietaryIds);
+
+  // Are all the remaining files owned by the user?
+  return proprietaryIds.every(id => ownedIds.has(id));
+};
+
+/**
+ * A function that checks which files a user owns out of a list of data files.
  *
  * The function returns an array of those given files that are owned by the
  * user.
@@ -417,13 +468,18 @@ export const ownsDataFile = async (
  * @param user  user information
  * @param fileIds data file ids
  */
-export const ownsDataFiles = async (
+export const ownsOutOfDataFiles = async (
   user: User | undefined,
   fileIds: string[]
-): Promise<string[]> => {
+): Promise<Set<string>> => {
   // Anonymous users don't own anything
   if (!user) {
-    return [];
+    return new Set();
+  }
+
+  // Empty lists would lead to malformed SQL
+  if (!fileIds.length) {
+    return new Set();
   }
 
   // Remove duplicate file ids
@@ -447,7 +503,9 @@ WHERE ProposalInvestigator.institutionUserId=?
     institution,
     ids
   ]);
-  return results[0].map((row: any) => row.dataFileId.toString());
+  const ownedIds = results[0].map((row: any) => row.dataFileId.toString());
+
+  return new Set(ownedIds);
 };
 
 /**

@@ -2,7 +2,7 @@ import fs from "fs";
 import moment from "moment";
 import * as Path from "path";
 import { ssdaPool } from "../db/pool";
-import { getUserById, getUserByToken } from "../util/user";
+import { getUserById, getUserByToken, User } from "../util/user";
 import { saltUserById } from "../util/sdbUser";
 import { isAdmin } from "../util/user";
 import { queryDataFiles } from "./serchResults";
@@ -11,7 +11,7 @@ import { AuthProviderName } from "../util/authProvider";
 // Defining the context interface
 interface IContext {
   loaders: { dataRequestLoader: any };
-  user: { id: string; authProvider: AuthProviderName }; // TODO user interface
+  user: User; // TODO user interface
 }
 
 // Defining the data preview interface
@@ -38,7 +38,13 @@ const Query = {
     { columns, limit, startIndex, where }: any,
     ctx: IContext
   ) {
-    const results = await queryDataFiles(columns, where, startIndex, limit);
+    const results = await queryDataFiles(
+      columns,
+      where,
+      startIndex,
+      limit,
+      ctx.user
+    );
     return results;
   },
 
@@ -57,8 +63,6 @@ const Query = {
     const { dataRequestLoader } = loaders;
 
     const dataLoaderResults = await dataRequestLoader.load(ctx.user.id);
-
-    // console.log(dataLoaderResults);
 
     return dataLoaderResults;
   },

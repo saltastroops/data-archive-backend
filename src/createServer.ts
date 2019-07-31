@@ -11,7 +11,14 @@ import { ssdaPool } from "./db/pool";
 import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
 import { dataRequestDataLoader } from "./util/dataRequests";
-import { getUserById, getUserByUsername, isAdmin, ownsDataFile, ownsDataRequest, User } from "./util/user";
+import {
+  getUserById,
+  getUserByUsername,
+  isAdmin,
+  mayViewDataFile,
+  ownsDataRequest,
+  User
+} from "./util/user";
 import {saltUserById, saltUserByUsernameAndPassword} from "./util/sdbUser";
 import authProvider from "./util/authProvider";
 
@@ -229,11 +236,7 @@ const createServer = async () => {
 
     // Check whether the data file is public or the user may access it
     // because they own the data or are an administrator.
-    if (
-      publicFrom > Date.now() &&
-      !(await ownsDataFile(req.user, dataFileId)) &&
-      !isAdmin(req.user)
-    ) {
+    if (!(await mayViewDataFile(req.user, dataFileId))) {
       return res.status(403).send(proprietary);
     }
 
