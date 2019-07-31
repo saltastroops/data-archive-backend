@@ -36,6 +36,16 @@ SESSION_SECRET | The secret key for for signing the session ID cookie | anothert
 APP_SECRET | The secret key for this server | anothertopsecretkey
 PORT | Port on which the server should be listening | 443
 SENTRY_DSN | The Sentry DSN (Data Source Name) | https://d6251ee8232d4au0b57cbhy38c059af6@sentry.io/237524
+SSDA_ADMIN_DATABASE_NAME | An ssda admin database name | ssda-admin
+SSDA_DATABASE_NAME | An ssda database name | ssda
+DATABASE_HOST | The database host | http://localhost
+DATABASE_PASSWORD | The database host password | password
+DATABASE_USER | The host user name | username
+PREVIEW_BASE_DIR | The preview base diractory | base/directory/to/previews
+FITS_BASE_DIR | The FITS file base directory | base/directory/to/fits
+MAIL_HOST | The mail host address | smtp.mail.host
+MAIL_USER | The mail username | mail-username
+MAIL_PASSWORD | The mail user password | mail-password
 
 The [Sentry](https://sentry.io) DSN (Data Source Name) can be obtained from the client keys tab in your Sentry project's settings.
 
