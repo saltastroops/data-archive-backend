@@ -8,8 +8,8 @@ import {
   getUserById,
   getUserByUsername,
   isAdmin,
-  updateUser,
-  UserCreateInput
+  IUserCreateInput,
+  updateUser
 } from "../util/user";
 import { createDataRequest } from "./dataRequest";
 import { requestPasswordReset, resetPassword } from "./resetPassword";
@@ -48,7 +48,7 @@ const Mutation = {
     root: any,
     { email }: { email: string },
     ctx: IContext
-  ) => requestPasswordReset(email, ctx.user.authProvider),
+  ) => requestPasswordReset(email, "SSDA"),
 
   /**
    * Reset a user's password.
@@ -86,7 +86,7 @@ const Mutation = {
    */
   async signup(root: any, args: any, ctx: IContext) {
     // Create new user
-    const userDetails: UserCreateInput = {
+    const userDetails: IUserCreateInput = {
       ...args,
       authProvider: "SSDA"
     };

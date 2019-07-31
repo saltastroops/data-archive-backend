@@ -2,18 +2,13 @@ import fs from "fs";
 import moment from "moment";
 import * as Path from "path";
 import { ssdaPool } from "../db/pool";
-import { Prisma } from "../generated/prisma-client";
-import { getUserById, getUserByToken } from "../util/user";
-import { saltUserById } from "../util/sdbUser";
-import { isAdmin } from "../util/user";
+import { getUserById, getUserByToken, User } from "../util/user";
 import { queryDataFiles } from "./serchResults";
-import { AuthProviderName } from "../util/authProvider";
 
 // Defining the context interface
 interface IContext {
   loaders: { dataRequestLoader: any };
-  prisma: Prisma;
-  user: { id: string; authProvider: AuthProviderName }; // TODO user interface
+  user: User; // TODO user interface
 }
 
 // Defining the data preview interface
@@ -32,7 +27,7 @@ const Query = {
       return null;
     }
 
-    return await getUserById(ctx.user.id);
+    return getUserById(ctx.user.id);
   },
 
   async dataFiles(
@@ -40,7 +35,13 @@ const Query = {
     { columns, limit, startIndex, where }: any,
     ctx: IContext
   ) {
-    const results = await queryDataFiles(columns, where, startIndex, limit);
+    const results = await queryDataFiles(
+      columns,
+      where,
+      startIndex,
+      limit,
+      ctx.user
+    );
     return results;
   },
 
@@ -60,36 +61,10 @@ const Query = {
 
     const dataLoaderResults = await dataRequestLoader.load(ctx.user.id);
 
-    // console.log(dataLoaderResults);
-
     return dataLoaderResults;
-
-    const limit = args.limit ? Math.min(args.limit, 200) : 200;
-
-    return ctx.prisma.dataRequests({
-      first: limit,
-      orderBy: "madeAt_DESC",
-      skip: args.startIndex
-    }).$fragment(`{
-      id
-      madeAt
-      uri
-      status
-      observations {
-        id
-        uri
-        dataFiles {
-          id
-        }
-      }
-    }`);
   },
 
-  async passwordResetTokenStatus(
-    root: any,
-    { token }: any,
-    { prisma }: IContext
-  ) {
+  async passwordResetTokenStatus(root: any, { token }: any) {
     const user = await getUserByToken(token);
     if (!user) {
       return { status: false, message: "The token is unknown." };

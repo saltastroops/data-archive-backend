@@ -295,7 +295,6 @@ type DataFile {
 
   # Data file size
   size: Int!
-
 }
 
 # Details about a data request

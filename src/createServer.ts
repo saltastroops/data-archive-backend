@@ -1,5 +1,4 @@
 import * as Sentry from "@sentry/node";
-import bcrypt from "bcrypt";
 import bodyParser from "body-parser";
 import { Request, Response } from "express";
 import session from "express-session";
@@ -10,10 +9,14 @@ import * as path from "path";
 import { ssdaPool } from "./db/pool";
 import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
-import { dataRequestDataLoader } from "./util/dataRequests";
-import { getUserById, getUserByUsername, isAdmin, ownsDataFile, ownsDataRequest, User } from "./util/user";
-import {saltUserById, saltUserByUsernameAndPassword} from "./util/sdbUser";
 import authProvider from "./util/authProvider";
+import { dataRequestDataLoader } from "./util/dataRequests";
+import {
+  getUserById,
+  isAdmin,
+  mayViewDataFile,
+  ownsDataRequest
+} from "./util/user";
 
 // Set up Sentry
 if (process.env.NODE_ENV === "production") {
@@ -40,11 +43,15 @@ const createServer = async () => {
   passport.use(
     // Authenticate against a username and password
     new passportLocal.Strategy(
-      { usernameField: "username", passwordField: "password", passReqToCallback: true},
-      async (request, username, password, done, ) => {
+      {
+        passReqToCallback: true,
+        passwordField: "password",
+        usernameField: "username"
+      },
+      async (request, username, password, done) => {
         const _authProvider = authProvider(request.body.authProvider);
         const user = await _authProvider.authenticate(username, password);
-        done(null, user ? user : false)
+        done(null, user ? user : false);
       }
     )
   );
@@ -105,7 +112,7 @@ const createServer = async () => {
   // in the session.
 
   passport.serializeUser((user: any, done) => {
-    done(null, {userId: user.id});
+    done(null, { userId: user.id });
   });
 
   passport.deserializeUser(async (user: any, done) => {
@@ -221,19 +228,15 @@ const createServer = async () => {
       `;
 
     const results: any = await ssdaPool.query(sql, [dataFileId]);
-    if (!results.length) {
+    if (!results[0].length) {
       return res.status(404).send(notFound);
     }
 
-    const { path: filePath, publicFrom } = results[0];
+    const { path: filePath, publicFrom } = results[0][0];
 
     // Check whether the data file is public or the user may access it
     // because they own the data or are an administrator.
-    if (
-      publicFrom > Date.now() &&
-      !ownsDataFile(req.user, dataFileId) &&
-      !isAdmin(req.user)
-    ) {
+    if (!(await mayViewDataFile(req.user, dataFileId))) {
       return res.status(403).send(proprietary);
     }
 

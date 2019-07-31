@@ -109,7 +109,7 @@ INSERT INTO `Role` (`roleId`, `role`) VALUES (1, "ADMIN");
 DROP TABLE IF EXISTS `SSDAUserAuth`;
 
 CREATE TABLE `SSDAUserAuth` (
-    `userId` INT(11) UNSIGNED NOT NULL UNIQUE COMMENT "User id, as used in the Userc table.",
+    `userId` INT(11) UNSIGNED NOT NULL UNIQUE COMMENT "User id, as used in the User table.",
     `username` VARCHAR(255) NOT NULL UNIQUE COMMENT "Username, which must not contain upper case letters",
     `password` VARCHAR(255) NOT NULL COMMENT "Password, which must have at least 7 characters",
     `passwordResetToken` VARCHAR(255) UNIQUE COMMENT "Token to reset the user's password",

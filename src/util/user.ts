@@ -1,11 +1,11 @@
-import moment = require("moment");
-import { ssdaAdminPool } from "../db/pool";
 import bcrypt from "bcrypt";
 import { validate } from "isemail";
+import moment = require("moment");
 import { v4 as uuid } from "uuid";
-import { AuthProviderName } from "./authProvider";
+import { ssdaAdminPool, ssdaPool } from "../db/pool";
+import authProvider, { AuthProviderName } from "./authProvider";
 
-export interface AuthProviderUser {
+export interface IAuthProviderUser {
   affiliation: string;
   authProvider: AuthProviderName;
   authProviderUserId: string;
@@ -16,14 +16,14 @@ export interface AuthProviderUser {
   username: string;
 }
 
-export type User = AuthProviderUser & {
+export type User = IAuthProviderUser & {
   id: string;
   passwordResetToken: string;
   passwordResetTokenExpiry: Date;
   roles: Set<Role>;
 };
 
-export interface UserCreateInput {
+export interface IUserCreateInput {
   affiliation: string;
   authProvider: AuthProviderName;
   authProviderUserId?: string;
@@ -32,6 +32,16 @@ export interface UserCreateInput {
   givenName: string;
   password?: string;
   username?: string;
+}
+
+export interface IUserUpdateInput {
+  affiliation: string;
+  email: string;
+  familyName: string;
+  givenName: string;
+  id: string;
+  password: string;
+  username: string;
 }
 
 type Role = "ADMIN";
@@ -43,7 +53,7 @@ type Role = "ADMIN";
  *
  * An error is raised if a user with the given email address exists already.
  */
-export const createUser = async (args: UserCreateInput) => {
+export const createUser = async (args: IUserCreateInput) => {
   const {
     affiliation,
     authProvider,
@@ -203,8 +213,9 @@ export const getUserById = async (
 ): Promise<User | null> => {
   // Query for retrieving a user with the supplied id
   const sql = `
-    SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username, authProviderId, authProviderUserId
+    SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username, authProvider, authProviderUserId
     FROM User AS u
+    JOIN AuthProvider AS ap ON u.authProviderId = ap.authProviderId
     LEFT JOIN SSDAUserAuth As ua ON ua.userId = u.userId
     WHERE u.userId = ?
   `;
@@ -220,8 +231,9 @@ export const getUserByUsername = async (
 ): Promise<User | null> => {
   // Query for retrieving a user with the supplied username
   const sql = `
-    SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username, authProviderId, authProviderUserId
+    SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username, authProvider, authProviderUserId
     FROM User AS u
+    JOIN AuthProvider AS ap ON u.authProviderId = ap.authProviderId
     LEFT JOIN SSDAUserAuth As ua ON ua.userId = u.userId
     WHERE ua.username = ?
   `;
@@ -238,7 +250,8 @@ export const getUserByEmail = async (
 ): Promise<User | null> => {
   // Query for retrieving a user with the supplied email
   const sql = `
-    SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username, authProviderId, authProviderUserId
+    SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username, authProvider, authProviderUserId
+    JOIN AuthProvider AS ap ON u.authProviderId = ap.authProviderId
     FROM User AS u
     LEFT JOIN SSDAUserAuth AS ua ON ua.userId = u.userId
     JOIN AuthProvider AS ap USING (authProviderId)
@@ -258,10 +271,10 @@ export const getUserByAuthProviderDetails = async (
   // Query for retrieving a user with the supplied email
   const sql = `
     SELECT u.userId AS id, affiliation, email, familyName, givenName, 
-    password, username, passwordResetToken, passwordResetTokenExpiry, authProviderId, authProviderUserId
+    password, username, passwordResetToken, passwordResetTokenExpiry, authProvider, authProviderUserId
     FROM User AS u
+    JOIN AuthProvider AS ap ON u.authProviderId = ap.authProviderId
     LEFT JOIN SSDAUserAuth As ua ON ua.userId = u.userId
-    JOIN AuthProvider AS ap USING (authProviderId)
     WHERE ap.authProvider = ? AND u.authProviderUserId = ?
   `;
 
@@ -280,8 +293,9 @@ export const getUserByToken = async (
   // Query for retrieving a user with the supplied email
   const sql = `
     SELECT u.userId AS id, affiliation, email, familyName, givenName, 
-    password, username, passwordResetToken, passwordResetTokenExpiry, authProviderId, authProviderUserId
+    password, username, passwordResetToken, passwordResetTokenExpiry, authProvider, authProviderUserId
     FROM User AS u
+    JOIN AuthProvider AS ap ON u.authProviderId = ap.authProviderId
     LEFT JOIN SSDAUserAuth As ua ON ua.userId = u.userId
     WHERE ua.passwordResetToken = ?
   `;
@@ -316,19 +330,25 @@ const userFromResult = async (result: any): Promise<User | null> => {
   };
 };
 
-// TODO UPDATE only SSDAUserAuth may update their information
+/**
+ * A function to update the user information
+ *
+ * @param userUpdateInfo user information to update
+ * @param userId user id to update
+ */
 export const updateUser = async (
-  userUpdateInfo: any,
+  userUpdateInfo: IUserUpdateInput,
   userId: string | number
 ) => {
   // Query for updating user unformation.
-  const sql = `
-    UPDATE User SET affiliation=?, email=?, familyName=?, givenName=?, password=?, username=?
-    WHERE userId=?
+  const userUpdateSQL = `
+    UPDATE User u INNER JOIN SSDAUserAuth ua ON (u.userId = ua.userId)
+    SET u.affiliation=?, u.email=?, u.familyName=?, u.givenName=?, ua.password=?, ua.username=?
+    WHERE u.userId=?
   `;
 
   // Update the user details
-  await ssdaAdminPool.query(sql, [
+  await ssdaAdminPool.query(userUpdateSQL, [
     userUpdateInfo.affiliation,
     userUpdateInfo.email,
     userUpdateInfo.familyName,
@@ -339,20 +359,27 @@ export const updateUser = async (
   ]);
 };
 
-// TODO UPDATE only SSDAUserAuth may request taken to reset their password
+/**
+ * A function to request the reset password
+ *
+ * @param passwordResetToken a password reset token
+ * @param passwordResetTokenExpiry an expiry date time of the password reset token
+ * @param email the email of the user requesting the reset password
+ */
 export const setUserToken = async (
   passwordResetToken: string,
   passwordResetTokenExpiry: Date,
   email: string
 ) => {
   // Query for setting user password reset token.
-  const sql = `
-    UPDATE User SET passwordResetToken=?, passwordResetTokenExpiry=?
+  const setUserTokenSQL = `
+    UPDATE SSDAUserAuth ua INNER JOIN User u ON (u.userId = ua.userId)
+    SET passwordResetToken=?, passwordResetTokenExpiry=?
     WHERE email=?
   `;
 
   // Update the user details
-  await ssdaAdminPool.query(sql, [
+  await ssdaAdminPool.query(setUserTokenSQL, [
     passwordResetToken,
     passwordResetTokenExpiry,
     email
@@ -361,14 +388,19 @@ export const setUserToken = async (
   return true;
 };
 
-// TODO UPDATE only SSDAUserAuth may change their passwords
+/**
+ * A function to reset the user password
+ *
+ * @param newPassword the new user password
+ * @param passwordResetToken a reset password token
+ */
 export const changeUserPassword = async (
   newPassword: string,
   passwordResetToken: string
 ) => {
   // Query for setting user password reset token.
   const sql = `
-    UPDATE User SET password=?, passwordResetToken=?, passwordResetTokenExpiry=?
+    UPDATE SSDAUserAuth SET password=?, passwordResetToken=?, passwordResetTokenExpiry=?
     WHERE passwordResetToken=?
   `;
 
@@ -392,12 +424,117 @@ export const isAdmin = (user: User | undefined) =>
   user && user.roles.has("ADMIN");
 
 /**
- * A function that checks if the user owns the data file
+ * Check whether a user may view a data file.
  *
  * @param user  user information
  * @param fileId data file id
  */
-export const ownsDataFile = (user: User | undefined, fileId: string) => false;
+export const mayViewDataFile = async (
+  user: User | undefined,
+  fileId: string
+): Promise<boolean> => {
+  return mayViewAllOfDataFiles(user, [fileId]);
+};
+
+/**
+ * Check whether the user may view a list of data files.
+ *
+ * Parameters
+ * ----------
+ * fileIds: Array<string>
+ *     List of file ids to check
+ *
+ * Return
+ * ------
+ * Whether the user may view all the files in the list.
+ */
+export const mayViewAllOfDataFiles = async (
+  user: User | undefined,
+  fileIds: string[]
+) => {
+  // Admins may view everything
+  if (isAdmin(user)) {
+    return true;
+  }
+
+  // Remove duplicate ids
+  const ids = Array.from(new Set(fileIds));
+
+  // Get all the release dates
+  const sql = `
+    SELECT dataFileId, publicFrom
+           FROM DataFile JOIN Observation USING (observationId)
+    WHERE dataFileId IN (?)
+  `;
+  const results: any = await ssdaPool.query(sql, [ids]);
+
+  // Collect the release dates
+  const releaseDates = new Map<string, number>();
+  results[0].forEach((row: any) =>
+    releaseDates.set(row.dataFileId, row.publicFrom)
+  );
+
+  // Filter out the files that are public
+  const now = Date.now();
+  const proprietaryIds = ids.filter(
+    id => !(releaseDates.has(id) && (releaseDates.get(id) as number) <= now)
+  );
+
+  // Check which of the remaining files the user owns
+  const ownedIds = await ownsOutOfDataFiles(user, proprietaryIds);
+
+  // Are all the remaining files owned by the user?
+  return proprietaryIds.every(id => ownedIds.has(id));
+};
+
+/**
+ * A function that checks which files a user owns out of a list of data files.
+ *
+ * The function returns an array of those given files that are owned by the
+ * user.
+ *
+ * @param user  user information
+ * @param fileIds data file ids
+ */
+export const ownsOutOfDataFiles = async (
+  user: User | undefined,
+  fileIds: string[]
+): Promise<Set<string>> => {
+  // Anonymous users don't own anything
+  if (!user) {
+    return new Set();
+  }
+
+  // Empty lists would lead to malformed SQL
+  if (!fileIds.length) {
+    return new Set();
+  }
+
+  // Remove duplicate file ids
+  const ids = Array.from(new Set(fileIds));
+
+  // Get the list of files owned by the user
+  const institution = authProvider(user.authProvider).institution;
+  const sql = `
+SELECT dataFileId
+    FROM DataFile
+    JOIN Observation ON (DataFile.observationId=Observation.observationId)
+    JOIN Proposal ON (Observation.proposalId=Proposal.proposalId)
+    JOIN ProposalInvestigator ON (Proposal.proposalId=ProposalInvestigator.proposalId)
+    JOIN Institution ON (Proposal.institutionId=Institution.institutionId)
+WHERE ProposalInvestigator.institutionUserId=?
+      AND Institution.institutionName=?
+      AND DataFile.dataFileId IN (?)`;
+
+  const results: any = await ssdaPool.query(sql, [
+    user.authProviderUserId,
+    institution,
+    ids
+  ]);
+  const ownedIds = results[0].map((row: any) => row.dataFileId.toString());
+
+  return new Set(ownedIds);
+};
 
 /**
  * A function that checks if the user owns the data request

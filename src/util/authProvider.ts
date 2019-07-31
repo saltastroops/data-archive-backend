@@ -1,13 +1,12 @@
+import bcrypt from "bcrypt";
+import { sdbPool } from "../db/pool";
 import {
   createUser,
   getUserByAuthProviderDetails,
   getUserByUsername,
-  User,
-  userRoles,
-  AuthProviderUser
+  IAuthProviderUser,
+  User
 } from "./user";
-import bcrypt from "bcrypt";
-import { sdbPool } from "../db/pool";
 
 export type AuthProviderName = "SDB" | "SSDA";
 
@@ -50,7 +49,7 @@ abstract class AuthProvider {
 
     // If this is not the SSDA, we need to ensure that there exists a user in
     // the user table
-    const authProviderName = this.name();
+    const authProviderName = this.name;
     if (authProviderName !== "SSDA") {
       const ssdaUser = await getUserByAuthProviderDetails(
         user.authProvider,
@@ -63,9 +62,9 @@ abstract class AuthProvider {
 
     // Return the user
     if (authProviderName === "SSDA") {
-      return await getUserByUsername(username);
+      return getUserByUsername(username);
     } else {
-      return await getUserByAuthProviderDetails(
+      return getUserByAuthProviderDetails(
         user.authProvider,
         user.authProviderUserId
       );
@@ -93,7 +92,7 @@ abstract class AuthProvider {
   abstract async _findAndAuthenticateUser(
     username: string,
     password: string
-  ): Promise<AuthProviderUser | null>;
+  ): Promise<IAuthProviderUser | null>;
 
   /**
    * The name of this authentication provider.
@@ -102,7 +101,19 @@ abstract class AuthProvider {
    * ------
    * The name of this authentication provider.
    */
-  abstract name(): AuthProviderName;
+  abstract get name(): AuthProviderName;
+
+  /**
+   * The institution using this authentication provider.
+   *
+   * This must be consistent with the column Institution.institutionName in the
+   * SSDA database.
+   *
+   * Return
+   * ------
+   * The institution using this authentication provider.
+   */
+  abstract get institution(): string;
 }
 
 class SSDAAuthProvider extends AuthProvider {
@@ -127,7 +138,7 @@ class SSDAAuthProvider extends AuthProvider {
   async _findAndAuthenticateUser(
     username: string,
     password: string
-  ): Promise<AuthProviderUser | null> {
+  ): Promise<IAuthProviderUser | null> {
     const user = await getUserByUsername(username);
 
     if (user && (await bcrypt.compare(password, user.password))) {
@@ -144,7 +155,21 @@ class SSDAAuthProvider extends AuthProvider {
    * ------
    * The name of this authentication provider.
    */
-  name(): AuthProviderName {
+  get name(): AuthProviderName {
+    return "SSDA";
+  }
+
+  /**
+   * The institution using this authentication provider.
+   *
+   * This must be consistent with the column Institution.institutionName in the
+   * SSDA database.
+   *
+   * Return
+   * ------
+   * The institution using this authentication provider.
+   */
+  get institution(): string {
     return "SSDA";
   }
 }
@@ -171,7 +196,7 @@ class SDBAuthProvider extends AuthProvider {
   async _findAndAuthenticateUser(
     username: string,
     password: string
-  ): Promise<AuthProviderUser | null> {
+  ): Promise<IAuthProviderUser | null> {
     const result: any = await sdbPool.query(
       `
 SELECT * FROM PiptUser JOIN Investigator USING (Investigator_Id) JOIN Institute USING (Institute_Id) JOIN InstituteName USING (InstituteName_Id) WHERE Username=? AND Password=MD5(?);
@@ -203,7 +228,21 @@ SELECT * FROM PiptUser JOIN Investigator USING (Investigator_Id) JOIN Institute 
    * ------
    * The name of this authentication provider.
    */
-  name(): AuthProviderName {
+  get name(): AuthProviderName {
     return "SDB";
+  }
+
+  /**
+   * The institution using this authentication provider.
+   *
+   * This must be consistent with the column Institution.institutionName in the
+   * SSDA database.
+   *
+   * Return
+   * ------
+   * The institution using this authentication provider.
+   */
+  get institution(): string {
+    return "SALT";
   }
 }
