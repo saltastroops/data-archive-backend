@@ -3,6 +3,7 @@ import { randomBytes } from "crypto";
 import moment from "moment";
 import { promisify } from "util";
 import { transporter } from "../util";
+import { AuthProviderName } from "../util/authProvider";
 import {
   changeUserPassword,
   getUserByEmail,
@@ -10,7 +11,6 @@ import {
   getUserByToken,
   setUserToken
 } from "../util/user";
-import { AuthProviderName } from "../util/authProvider";
 
 const requestPasswordReset = async (
   email: string,

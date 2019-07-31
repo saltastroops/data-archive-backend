@@ -1,11 +1,11 @@
-import moment = require("moment");
-import { ssdaAdminPool } from "../db/pool";
 import bcrypt from "bcrypt";
 import { validate } from "isemail";
+import moment = require("moment");
 import { v4 as uuid } from "uuid";
+import { ssdaAdminPool } from "../db/pool";
 import { AuthProviderName } from "./authProvider";
 
-export interface AuthProviderUser {
+export interface IAuthProviderUser {
   affiliation: string;
   authProvider: AuthProviderName;
   authProviderUserId: string;
@@ -16,14 +16,14 @@ export interface AuthProviderUser {
   username: string;
 }
 
-export type User = AuthProviderUser & {
+export type User = IAuthProviderUser & {
   id: string;
   passwordResetToken: string;
   passwordResetTokenExpiry: Date;
   roles: Set<Role>;
 };
 
-export interface UserCreateInput {
+export interface IUserCreateInput {
   affiliation: string;
   authProvider: AuthProviderName;
   authProviderUserId?: string;
@@ -43,7 +43,7 @@ type Role = "ADMIN";
  *
  * An error is raised if a user with the given email address exists already.
  */
-export const createUser = async (args: UserCreateInput) => {
+export const createUser = async (args: IUserCreateInput) => {
   const {
     affiliation,
     authProvider,

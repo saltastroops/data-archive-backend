@@ -38,10 +38,13 @@ const dataRequestsByUserIds = async (userIds: any) => {
   `;
   // Retrieving user data requests
   const dataRequests: any = await ssdaAdminPool.query(sql, [userIds]);
+  if (!dataRequests[0].length) {
+    return [[]];
+  }
   // A placeholder variable for data requests containing data request observations
   const dataRequestWithObservations: any = [];
   // For each data reuest load it data request observations
-  for (const dataRequest of dataRequests) {
+  for (const dataRequest of dataRequests[0]) {
     const observations: any = await dataRequestObservationDataLoader().load(
       dataRequest.id
     );
@@ -67,9 +70,7 @@ const dataRequestsByUserIds = async (userIds: any) => {
   }, dataRequestWithObservations);
 
   // Map data request to a belonging user
-  const grouped = Object.keys(groupedById).length
-    ? map((userId: any) => groupedById[userId], userIds)
-    : [[]];
+  const grouped = map((userId: any) => groupedById[userId], userIds);
 
   // return grouped user data requests
   return grouped;
@@ -91,15 +92,20 @@ const dataRequestObservationByDataRequestIds = async (dataRequestIds: any) => {
   const dataRequestObservations: any = await ssdaAdminPool.query(sql, [
     dataRequestIds
   ]);
+  if (!dataRequestObservations[0].length) {
+    return [[]];
+  }
+
   // Group data request observations by data request id
   const groupedById = groupBy(
     (dataRequestObservation: any) => dataRequestObservation.dataRequestId,
-    dataRequestObservations
+    dataRequestObservations[0]
   );
   // Map data request observation to a belonging data request
-  const grouped = Object.keys(groupedById).length
-    ? map((dataRequestId: any) => groupedById[dataRequestId], dataRequestIds)
-    : [[]];
+  const grouped = map(
+    (dataRequestId: any) => groupedById[dataRequestId],
+    dataRequestIds
+  );
 
   // return grouped data requests observations
   return grouped;
@@ -115,7 +121,7 @@ const dataRequestFilesByDataRequestObservationIds = async (
 ) => {
   // A select query for data request observation files
   let sql = `
-    SELECT dataRequestFileId AS id, dataRequestObservationId, fileId, name
+    SELECT dataRequestFileId AS id, dataRequestObservationId, dataFileUUID, name
     FROM DataRequestFile AS drf
     WHERE drf.dataRequestObservationId IN(?)
   `;
@@ -123,22 +129,29 @@ const dataRequestFilesByDataRequestObservationIds = async (
   const dataRequestFiles: any = await ssdaAdminPool.query(sql, [
     dataRequestObservationIds
   ]);
+  if (!dataRequestFiles[0].length) {
+    return [[]];
+  }
 
   // A placeholder variable to load more data file details
   const dataRequestFilesWithDetails: any = [];
 
   // For each data request file, get more data file information and add them
-  for (const dataRequestFile of dataRequestFiles) {
+  for (const dataRequestFile of dataRequestFiles[0]) {
     // A select query for data file
     sql = `
       SELECT *
       FROM DataFile AS df
-      WHERE df.dataFileId = ?
+      WHERE df.dataFileUUID = ?
     `;
     // A data file
-    const dataFile: any = await ssdaPool.query(sql, dataRequestFile.id);
+    const dataFile: any = await ssdaPool.query(
+      sql,
+      dataRequestFile.dataFileUUID
+    );
+
     // Loading more data file details
-    dataRequestFilesWithDetails.push({ ...dataRequestFile, ...dataFile[0] });
+    dataRequestFilesWithDetails.push({ ...dataRequestFile, ...dataFile[0][0] });
   }
   // Group data request observation files by data request observation id
   const groupedById = groupBy(
@@ -146,13 +159,10 @@ const dataRequestFilesByDataRequestObservationIds = async (
     dataRequestFilesWithDetails
   );
   // Map data request observation files to a belonging data request observation
-  const grouped = Object.keys(groupedById).length
-    ? map(
-        (dataRequestObservationId: any) =>
-          groupedById[dataRequestObservationId],
-        dataRequestObservationIds
-      )
-    : [[]];
+  const grouped = map(
+    (dataRequestObservationId: any) => groupedById[dataRequestObservationId],
+    dataRequestObservationIds
+  );
 
   // return grouped data requests observation files
   return grouped;

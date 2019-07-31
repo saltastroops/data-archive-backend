@@ -1,17 +1,17 @@
 import bcrypt from "bcrypt";
 import { validate } from "isemail";
 import { Prisma, UserUpdateInput } from "../generated/prisma-client";
+import { AuthProviderName } from "../util/authProvider";
 import {
   createUser,
   getUserByEmail,
   getUserById,
   getUserByUsername,
   isAdmin,
-  updateUser,
-  UserCreateInput
+  IUserCreateInput,
+  updateUser
 } from "../util/user";
 import { requestPasswordReset, resetPassword } from "./resetPassword";
-import { AuthProviderName } from "../util/authProvider";
 
 // Defining the context interface
 interface IContext {
@@ -85,7 +85,7 @@ const Mutation = {
    */
   async signup(root: any, args: any, ctx: IContext) {
     // Create new user
-    const userDetails: UserCreateInput = {
+    const userDetails: IUserCreateInput = {
       ...args,
       authProvider: "SSDA"
     };

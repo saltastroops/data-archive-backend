@@ -1,13 +1,12 @@
+import bcrypt from "bcrypt";
+import { sdbPool } from "../db/pool";
 import {
   createUser,
   getUserByAuthProviderDetails,
   getUserByUsername,
-  User,
-  userRoles,
-  AuthProviderUser
+  IAuthProviderUser,
+  User
 } from "./user";
-import bcrypt from "bcrypt";
-import { sdbPool } from "../db/pool";
 
 export type AuthProviderName = "SDB" | "SSDA";
 
@@ -63,9 +62,9 @@ abstract class AuthProvider {
 
     // Return the user
     if (authProviderName === "SSDA") {
-      return await getUserByUsername(username);
+      return getUserByUsername(username);
     } else {
-      return await getUserByAuthProviderDetails(
+      return getUserByAuthProviderDetails(
         user.authProvider,
         user.authProviderUserId
       );
@@ -93,7 +92,7 @@ abstract class AuthProvider {
   abstract async _findAndAuthenticateUser(
     username: string,
     password: string
-  ): Promise<AuthProviderUser | null>;
+  ): Promise<IAuthProviderUser | null>;
 
   /**
    * The name of this authentication provider.
@@ -127,7 +126,7 @@ class SSDAAuthProvider extends AuthProvider {
   async _findAndAuthenticateUser(
     username: string,
     password: string
-  ): Promise<AuthProviderUser | null> {
+  ): Promise<IAuthProviderUser | null> {
     const user = await getUserByUsername(username);
 
     if (user && (await bcrypt.compare(password, user.password))) {
@@ -171,7 +170,7 @@ class SDBAuthProvider extends AuthProvider {
   async _findAndAuthenticateUser(
     username: string,
     password: string
-  ): Promise<AuthProviderUser | null> {
+  ): Promise<IAuthProviderUser | null> {
     const result: any = await sdbPool.query(
       `
 SELECT * FROM PiptUser JOIN Investigator USING (Investigator_Id) JOIN Institute USING (Institute_Id) JOIN InstituteName USING (InstituteName_Id) WHERE Username=? AND Password=MD5(?);
