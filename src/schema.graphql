@@ -179,11 +179,14 @@ type Mutation {
     """
     email: String!
   ): User!
+
+  # Create a data request
+  createDataRequest(
+      dataFiles: [Int!]!
+    ): Status!
 }
 
-"""
-A data archive user.
-"""
+# A data archive user.
 type User {
   """
   User id.
@@ -222,20 +225,15 @@ type User {
 }
 
 type Status {
-  """
-  Success status.
-  """
+  # Success status.
   status: Boolean!
 
-  """
-  Message is ever the status has one.
-  """
+  # Message is ever the status has one.
   message: String
 }
 
-"""
-Data preview.
-"""
+# Data preview.
+
 type DataPreview {
   """
   URIs for the data preview images.
@@ -305,10 +303,12 @@ type DataRequest {
   id: ID!
   # User who owns the data request
   user: User!
+  # file location fro download
+  uri: String
   # The date a data request was made
   madeAt: DateTime!
   # The data request observations
-  parts: [DataRequestObservation!]!
+  observations: [DataRequestObservation!]!
   # The status of the data request
   status: DataRequestStatus!
 }
@@ -317,6 +317,8 @@ type DataRequest {
 type DataRequestObservation {
   # Id of the data data request observation
   id: ID!
+  # Observation name
+  name: String
   # The data request observation files
   dataFiles: [DataFile!]!
 }

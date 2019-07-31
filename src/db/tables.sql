@@ -33,6 +33,7 @@ CREATE TABLE `DataRequest` (
     `dataRequestStatusId` INT(11) UNSIGNED NOT NULL COMMENT "Data requrest status id",
     `madeAt` DATETIME NOT NULL COMMENT "Time when the request was made",
     `userId` INT(11) UNSIGNED NOT NULL COMMENT "User id",
+    `uri` VARCHAR (255) DEFAULT NULL COMMENT "Download uri",
     PRIMARY KEY (`dataRequestId`),
     KEY `fk_DataRequestUser_idx` (`userId`),
     KEY `fk_DataRequestStatus_idx` (`dataRequestStatusId`),

@@ -11,6 +11,7 @@ import {
   IUserCreateInput,
   updateUser
 } from "../util/user";
+import { createDataRequest } from "./dataRequest";
 import { requestPasswordReset, resetPassword } from "./resetPassword";
 
 // Defining the context interface
@@ -241,7 +242,23 @@ const Mutation = {
     await updateUser(userUpdateInfo, userToUpdate.id);
 
     return getUserById(userToUpdate.id);
-  }
+  },
+
+  /**
+   * Reset a user's password.
+   *
+   * The following arguments must be supplied.
+   *
+   * password:
+   *     The new password.
+   * token:
+   *     The unique token identifying the user.
+   */
+  createDataRequest: (
+    root: any,
+    { dataFiles }: { dataFiles: [number] },
+    { user }: IContext
+  ) => createDataRequest(dataFiles, user)
 };
 
 export { Mutation };
