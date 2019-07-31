@@ -47,7 +47,7 @@ const Mutation = {
     root: any,
     { email }: { email: string },
     ctx: IContext
-  ) => requestPasswordReset(email, ctx.user.authProvider),
+  ) => requestPasswordReset(email, "SSDA"),
 
   /**
    * Reset a user's password.

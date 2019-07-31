@@ -10,8 +10,10 @@ interface IUser {
   id: string;
 }
 
-const port: number = process.env.MAIL_PORT ? Number(process.env.MAIL_PORT) : 456
-const secure: boolean = process.env.MAIL_SSL === "true" ? true : false
+const port: number = process.env.MAIL_PORT
+  ? Number(process.env.MAIL_PORT)
+  : 456;
+const secure: boolean = process.env.MAIL_SSL === "true" ? true : false;
 
 const transporter = nodemailer.createTransport({
   auth: {

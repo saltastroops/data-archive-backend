@@ -1,5 +1,4 @@
 import * as Sentry from "@sentry/node";
-import bcrypt from "bcrypt";
 import bodyParser from "body-parser";
 import { Request, Response } from "express";
 import session from "express-session";
@@ -10,17 +9,14 @@ import * as path from "path";
 import { ssdaPool } from "./db/pool";
 import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
+import authProvider from "./util/authProvider";
 import { dataRequestDataLoader } from "./util/dataRequests";
 import {
   getUserById,
-  getUserByUsername,
   isAdmin,
   mayViewDataFile,
-  ownsDataRequest,
-  User
+  ownsDataRequest
 } from "./util/user";
-import {saltUserById, saltUserByUsernameAndPassword} from "./util/sdbUser";
-import authProvider from "./util/authProvider";
 
 // Set up Sentry
 if (process.env.NODE_ENV === "production") {
@@ -47,11 +43,15 @@ const createServer = async () => {
   passport.use(
     // Authenticate against a username and password
     new passportLocal.Strategy(
-      { usernameField: "username", passwordField: "password", passReqToCallback: true},
-      async (request, username, password, done, ) => {
+      {
+        passReqToCallback: true,
+        passwordField: "password",
+        usernameField: "username"
+      },
+      async (request, username, password, done) => {
         const _authProvider = authProvider(request.body.authProvider);
         const user = await _authProvider.authenticate(username, password);
-        done(null, user ? user : false)
+        done(null, user ? user : false);
       }
     )
   );
@@ -112,7 +112,7 @@ const createServer = async () => {
   // in the session.
 
   passport.serializeUser((user: any, done) => {
-    done(null, {userId: user.id});
+    done(null, { userId: user.id });
   });
 
   passport.deserializeUser(async (user: any, done) => {

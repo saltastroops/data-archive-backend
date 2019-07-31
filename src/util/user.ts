@@ -1,11 +1,11 @@
-import moment = require("moment");
-import { ssdaAdminPool, ssdaPool } from "../db/pool";
 import bcrypt from "bcrypt";
 import { validate } from "isemail";
+import moment = require("moment");
 import { v4 as uuid } from "uuid";
+import { ssdaAdminPool, ssdaPool } from "../db/pool";
 import authProvider, { AuthProviderName } from "./authProvider";
 
-export interface AuthProviderUser {
+export interface IAuthProviderUser {
   affiliation: string;
   authProvider: AuthProviderName;
   authProviderUserId: string;
@@ -16,14 +16,14 @@ export interface AuthProviderUser {
   username: string;
 }
 
-export type User = AuthProviderUser & {
+export type User = IAuthProviderUser & {
   id: string;
   passwordResetToken: string;
   passwordResetTokenExpiry: Date;
   roles: Set<Role>;
 };
 
-export interface UserCreateInput {
+export interface IUserCreateInput {
   affiliation: string;
   authProvider: AuthProviderName;
   authProviderUserId?: string;
@@ -32,6 +32,16 @@ export interface UserCreateInput {
   givenName: string;
   password?: string;
   username?: string;
+}
+
+export interface IUserUpdateInput {
+  affiliation: string;
+  email: string;
+  familyName: string;
+  givenName: string;
+  id: string;
+  password: string;
+  username: string;
 }
 
 type Role = "ADMIN";
@@ -43,7 +53,7 @@ type Role = "ADMIN";
  *
  * An error is raised if a user with the given email address exists already.
  */
-export const createUser = async (args: UserCreateInput) => {
+export const createUser = async (args: IUserCreateInput) => {
   const {
     affiliation,
     authProvider,
@@ -320,19 +330,25 @@ const userFromResult = async (result: any): Promise<User | null> => {
   };
 };
 
-// TODO UPDATE only SSDAUserAuth may update their information
+/**
+ * A function to update the user information
+ *
+ * @param userUpdateInfo user information to update
+ * @param userId user id to update
+ */
 export const updateUser = async (
-  userUpdateInfo: any,
+  userUpdateInfo: IUserUpdateInput,
   userId: string | number
 ) => {
   // Query for updating user unformation.
-  const sql = `
-    UPDATE User SET affiliation=?, email=?, familyName=?, givenName=?, password=?, username=?
-    WHERE userId=?
+  const userUpdateSQL = `
+    UPDATE User u INNER JOIN SSDAUserAuth ua ON (u.userId = ua.userId)
+    SET u.affiliation=?, u.email=?, u.familyName=?, u.givenName=?, ua.password=?, ua.username=?
+    WHERE u.userId=?
   `;
 
   // Update the user details
-  await ssdaAdminPool.query(sql, [
+  await ssdaAdminPool.query(userUpdateSQL, [
     userUpdateInfo.affiliation,
     userUpdateInfo.email,
     userUpdateInfo.familyName,
@@ -343,20 +359,27 @@ export const updateUser = async (
   ]);
 };
 
-// TODO UPDATE only SSDAUserAuth may request taken to reset their password
+/**
+ * A function to request the reset password
+ *
+ * @param passwordResetToken a password reset token
+ * @param passwordResetTokenExpiry an expiry date time of the password reset token
+ * @param email the email of the user requesting the reset password
+ */
 export const setUserToken = async (
   passwordResetToken: string,
   passwordResetTokenExpiry: Date,
   email: string
 ) => {
   // Query for setting user password reset token.
-  const sql = `
-    UPDATE User SET passwordResetToken=?, passwordResetTokenExpiry=?
+  const setUserTokenSQL = `
+    UPDATE SSDAUserAuth ua INNER JOIN User u ON (u.userId = ua.userId)
+    SET passwordResetToken=?, passwordResetTokenExpiry=?
     WHERE email=?
   `;
 
   // Update the user details
-  await ssdaAdminPool.query(sql, [
+  await ssdaAdminPool.query(setUserTokenSQL, [
     passwordResetToken,
     passwordResetTokenExpiry,
     email
@@ -365,14 +388,19 @@ export const setUserToken = async (
   return true;
 };
 
-// TODO UPDATE only SSDAUserAuth may change their passwords
+/**
+ * A function to reset the user password
+ *
+ * @param newPassword the new user password
+ * @param passwordResetToken a reset password token
+ */
 export const changeUserPassword = async (
   newPassword: string,
   passwordResetToken: string
 ) => {
   // Query for setting user password reset token.
   const sql = `
-    UPDATE User SET password=?, passwordResetToken=?, passwordResetTokenExpiry=?
+    UPDATE SSDAUserAuth SET password=?, passwordResetToken=?, passwordResetTokenExpiry=?
     WHERE passwordResetToken=?
   `;
 

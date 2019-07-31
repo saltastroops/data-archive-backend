@@ -3,10 +3,7 @@ import moment from "moment";
 import * as Path from "path";
 import { ssdaPool } from "../db/pool";
 import { getUserById, getUserByToken, User } from "../util/user";
-import { saltUserById } from "../util/sdbUser";
-import { isAdmin } from "../util/user";
 import { queryDataFiles } from "./serchResults";
-import { AuthProviderName } from "../util/authProvider";
 
 // Defining the context interface
 interface IContext {
@@ -30,7 +27,7 @@ const Query = {
       return null;
     }
 
-    return await getUserById(ctx.user.id);
+    return getUserById(ctx.user.id);
   },
 
   async dataFiles(
