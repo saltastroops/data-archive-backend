@@ -471,7 +471,7 @@ export const mayViewAllOfDataFiles = async (
   // Collect the release dates
   const releaseDates = new Map<string, number>();
   results[0].forEach((row: any) =>
-    releaseDates.set(row.dataFileId, row.publicFrom)
+    releaseDates.set(row.dataFileId.toString(), row.publicFrom)
   );
 
   // Filter out the files that are public
