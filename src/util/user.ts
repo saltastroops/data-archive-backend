@@ -251,7 +251,6 @@ export const getUserByEmail = async (
   // Query for retrieving a user with the supplied email
   const sql = `
     SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username, authProvider, authProviderUserId
-    JOIN AuthProvider AS ap ON u.authProviderId = ap.authProviderId
     FROM User AS u
     LEFT JOIN SSDAUserAuth AS ua ON ua.userId = u.userId
     JOIN AuthProvider AS ap USING (authProviderId)
