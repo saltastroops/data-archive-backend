@@ -64,6 +64,7 @@ If you have not requested to reset your password there is no need for any action
 Kind regards,<br><br>
 The SAAO/SALT Data Archive Team`;
     await transporter.sendMail({
+      from: process.env.MAIL_USER,
       html,
       subject: "Reset your password for the SAAO/SALT Data Archive",
       to: user.email

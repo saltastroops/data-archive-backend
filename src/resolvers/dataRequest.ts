@@ -1,5 +1,6 @@
 import { ssdaAdminPool, ssdaPool } from "../db/pool";
 import { zipDataRequest } from "../util/zipDataRequest";
+import { mayViewAllOfDataFiles } from "../util/user";
 
 async function asyncForEach(array: any, callback: any) {
   for (let index = 0; index < array.length; index++) {
@@ -25,13 +26,18 @@ export const createDataRequest = async (dataFiles: [number], user: any) => {
   if (!user) {
     throw new Error("You must be logged in to create data request");
   }
-  // TODO check if data files belong to the user or can download all the files
 
-  // Get data files info
+  const dataFileIdStrings = dataFiles.map(id => id.toString());
+  const mayRequest = await mayViewAllOfDataFiles(user, dataFileIdStrings);
+  if (!mayRequest) {
+    throw new Error("You are not allowed to request some of the files");
+  }
   let strDataFilesIds = "";
   dataFiles.forEach(id => {
     strDataFilesIds += id.toString() + ",";
   });
+
+  // Get data files info
 
   const groupedDataFiles = groupByObservation(
     ((await ssdaPool.query(
