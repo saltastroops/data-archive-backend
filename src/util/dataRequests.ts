@@ -60,7 +60,7 @@ const dataRequestsByUserIds = async (userIds: any) => {
 
     dataRequestWithObservations.push({
       ...dataRequest,
-      parts: observationsWithFiles
+      observations: observationsWithFiles
     });
   }
 
