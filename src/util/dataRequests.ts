@@ -31,7 +31,7 @@ const dataRequestFileDataLoader = () => {
 const dataRequestsByUserIds = async (userIds: any) => {
   // A select query for the user data request
   const sql = `
-    SELECT dataRequestId AS id, dataRequestStatus AS status, madeAt, userId
+    SELECT dataRequestId AS id, dataRequestStatus AS status, madeAt, userId, uri
     FROM DataRequest AS dr
     JOIN DataRequestStatus AS drs ON drs.dataRequestStatusId = dr.dataRequestStatusId
     WHERE dr.userId IN(?)

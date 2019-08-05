@@ -6,7 +6,7 @@ import { GraphQLServer } from "graphql-yoga";
 import passport from "passport";
 import passportLocal from "passport-local";
 import * as path from "path";
-import { ssdaPool } from "./db/pool";
+import { ssdaAdminPool, ssdaPool } from "./db/pool";
 import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
 import authProvider from "./util/authProvider";
@@ -417,21 +417,15 @@ async function downloadDataRequest({
     success: false
   };
 
-  // TODO UPDATE INCLUDE MORE INFORMATION IN THE FRAGMENT AS REQUIRED
-  const dataRequest = await prisma.dataRequest({ id: dataRequestId })
-    .$fragment(`{
-    id
-    uri
-    parts{
-      id
-      uri
-    }
-    user{
-      id
-    }
-  }`);
-
-  if (!dataRequest) {
+  // A select query for the user data request
+  const sql = `
+    SELECT userId, uri
+    FROM DataRequest AS dr
+    WHERE dr.dataRequestId = ? AND dr.userId = ?
+  `;
+  // Retrieving user data request for download
+  const dataRequest: any = await ssdaAdminPool.query(sql, [dataRequestId, req.user.id]);
+  if (!dataRequest[0].length) {
     return res.status(404).send(notFound);
   }
 
@@ -439,7 +433,7 @@ async function downloadDataRequest({
   // Check that the user may download content for the data request, either
   // because they own the request or because they are an administrator.
   const mayDownload =
-    ownsDataRequest(dataRequest, req.user) || isAdmin(req.user);
+    ownsDataRequest(dataRequest[0], req.user) || isAdmin(req.user);
 
   if (!mayDownload) {
     return res.status(403).send({
@@ -459,7 +453,7 @@ async function downloadDataRequest({
     }
     uri = dataRequestPart.uri;
   } else {
-    uri = (dataRequest as any).uri;
+    uri = dataRequest[0][0].uri;
   }
 
   // Download the data request file

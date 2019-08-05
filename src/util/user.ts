@@ -542,7 +542,7 @@ WHERE ProposalInvestigator.institutionUserId=?
  * @param user user information
  */
 export const ownsDataRequest = (dataReqeust: any, user: User) =>
-  dataReqeust.user.id === user.id;
+  dataReqeust.userId === user.id;
 
 // Check whether a password is sufficiently strong.
 function checkPasswordStrength(password: string) {
