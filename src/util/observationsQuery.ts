@@ -310,7 +310,7 @@ export function parseWhereCondition(where: string): WhereConditionContent {
   const w = JSON.parse(where);
 
   if (!Object.keys(w).length) {
-    return new WhereConditionContent("1=1", [], new Set());
+    return new WhereConditionContent("1=-1", [], new Set());
   }
 
   return convertToSQL(w);
