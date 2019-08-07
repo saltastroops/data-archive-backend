@@ -424,7 +424,10 @@ async function downloadDataRequest({
     WHERE dr.dataRequestId = ? AND dr.userId = ?
   `;
   // Retrieving user data request for download
-  const dataRequest: any = await ssdaAdminPool.query(sql, [dataRequestId, req.user.id]);
+  const dataRequest: any = await ssdaAdminPool.query(sql, [
+    dataRequestId,
+    req.user.id
+  ]);
   if (!dataRequest[0].length) {
     return res.status(404).send(notFound);
   }
