@@ -10,7 +10,7 @@
     "start": "pm2 start src/index.ts --node-args='-r dotenv/config'",
     "deploy": "export DEBUG=\"prisma\"; cd src/; prisma deploy --env-file ../.env",
     "dev": " export DEBUG=\"nodemon\"; nodemon -e ts,graphql -x ts-node -r dotenv/config src/index.ts",
-    "test": "PRISMA_ENDPOINT=https://fakeaddress jest --detectOpenHandles",
+    "test": "PRISMA_ENDPOINT=https://fakeaddress NODE_ENV=test jest --detectOpenHandles",
     "test:coverage": "PRISMA_ENDPOINT=https://fakeaddress jest --coverage",
     "test:watch": "PRISMA_ENDPOINT=https://fakeaddress jest --watch",
     "format": "prettier --write '{*.json,src/**/*.{js,ts,tsx,json,graphql}}'",
