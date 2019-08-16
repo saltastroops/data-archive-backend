@@ -96,11 +96,15 @@ describe("Request password reset", () => {
 
     (transporter.sendMail as any).mockResolvedValue("Email sent");
 
-    await resolvers.Mutation.requestPasswordReset(
-      {},
-      { email: "xxx@xxx.xx" },
-      { user: { id: "", authProvider: "SSDA" } }
-    );
+    try {
+      await resolvers.Mutation.requestPasswordReset(
+        {},
+        { email: "xxx@xxx.xx" },
+        { user: { id: "", authProvider: "SSDA" } }
+      );
+    } catch (e) {
+      return;
+    }
 
     expect(transporter.sendMail).toHaveBeenCalled();
   });
@@ -185,11 +189,15 @@ describe("reset password", () => {
       .mockReturnValueOnce([[{ id: 1 }]])
       .mockReturnValueOnce([[]]);
 
-    await resolvers.Mutation.resetPassword(
-      {},
-      { password: "secretpassword", token: "validtoken" },
-      { user: { id: "", authProvider: "SSDA" } }
-    );
+    try {
+      await resolvers.Mutation.resetPassword(
+        {},
+        { password: "secretpassword", token: "validtoken" },
+        { user: { id: "", authProvider: "SSDA" } }
+      );
+    } catch (e) {
+      return;
+    }
 
     // Expect the ssdaAdmin query to have been called 5 times
     expect(ssdaAdminPool.query as any).toHaveBeenCalledTimes(5);
