@@ -43,11 +43,13 @@ const Mutation = {
    *     The email address to which the link for resetting the password shall
    *     be sent. This must be an existing user's email address.
    */
-  requestPasswordReset: async (
+  async requestPasswordReset(
     root: any,
     { email }: { email: string },
     ctx: IContext
-  ) => requestPasswordReset(email, "SSDA"),
+  ) {
+    return requestPasswordReset(email, "SSDA");
+  },
 
   /**
    * Reset a user's password.
@@ -59,11 +61,13 @@ const Mutation = {
    * token:
    *     The unique token identifying the user.
    */
-  resetPassword: async (
+  async resetPassword(
     root: any,
     { password, token }: { password: string; token: string },
     ctx: IContext
-  ) => resetPassword(token, password),
+  ) {
+    return resetPassword(token, password);
+  },
 
   /**
    * Register a new user.
