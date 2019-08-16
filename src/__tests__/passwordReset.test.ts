@@ -73,7 +73,7 @@ describe("Request password reset", () => {
       .mockReturnValueOnce([[{ email: "xxx@xxx.xx", username: "xxx" }]])
       .mockReturnValueOnce([[]]);
 
-    (transporter.sendMail as any).mockRejectedValue("Email error");
+    // (transporter.sendMail as any).mockReturnValueOnce("Email error");
     try {
       await resolvers.Mutation.requestPasswordReset(
         {},
@@ -94,7 +94,7 @@ describe("Request password reset", () => {
       .mockReturnValueOnce([[{ email: "xxx@xxx.xx", username: "xxx" }]])
       .mockReturnValueOnce([[]]);
 
-    (transporter.sendMail as any).mockResolvedValue("Email sent");
+    // (transporter.sendMail as any).mockReturnValueOnce("Email sent");
 
     try {
       await resolvers.Mutation.requestPasswordReset(
