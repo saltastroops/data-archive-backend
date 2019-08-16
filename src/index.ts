@@ -5,7 +5,7 @@ const launchServer = async () => {
   const server = createServer();
 
   if (process.env.NODE_ENV) {
-    return
+    return;
   }
 
   // Start the server with CORS enabled
