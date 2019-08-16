@@ -1,3 +1,6 @@
+// tslint:disable-next-line:no-submodule-imports
+import iconv from "mysql2/node_modules/iconv-lite";
+iconv.encodingExists("cesu8");
 import { DatabaseModel } from "../../util/DatabaseModel";
 
 describe("DatabaseModel", () => {
