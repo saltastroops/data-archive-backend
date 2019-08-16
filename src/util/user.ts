@@ -18,8 +18,8 @@ export interface IAuthProviderUser {
 
 export type User = IAuthProviderUser & {
   id: string;
-  passwordResetToken: string;
-  passwordResetTokenExpiry: Date;
+  passwordResetToken?: string;
+  passwordResetTokenExpiry?: Date;
   roles: Set<Role>;
 };
 
@@ -35,13 +35,13 @@ export interface IUserCreateInput {
 }
 
 export interface IUserUpdateInput {
-  affiliation: string;
-  email: string;
-  familyName: string;
-  givenName: string;
-  id: string;
+  affiliation?: string;
+  email?: string;
+  familyName?: string;
+  givenName?: string;
+  id?: string | number;
   password: string;
-  username: string;
+  username?: string;
 }
 
 type Role = "ADMIN";
@@ -56,6 +56,7 @@ type Role = "ADMIN";
 export const createUser = async (args: IUserCreateInput) => {
   const {
     affiliation,
+    // tslint:disable-next-line:no-shadowed-variable
     authProvider,
     authProviderUserId,
     email,
@@ -109,7 +110,6 @@ export const createUser = async (args: IUserCreateInput) => {
 
     // Check if there already exists a user with the submitted username
     const userWithGivenUsername = await getUserByUsername(args.username);
-
     if (userWithGivenUsername) {
       throw new Error(
         `There already exists a user with the username ${args.username}.`
@@ -124,7 +124,7 @@ export const createUser = async (args: IUserCreateInput) => {
 
   // Get the id of the auth provider
   const authProviderIdSQL = `
-      SELECT authProviderId FROM AuthProvider WHERE authProvider=?
+      SELECT authProviderId FROM AuthProvider WHERE authProvider = ?
       `;
   const result: any = await ssdaAdminPool.query(authProviderIdSQL, [
     authProvider
@@ -167,11 +167,9 @@ export const createUser = async (args: IUserCreateInput) => {
       // Store the user credentials
       const authInsertSQL = `INSERT INTO SSDAUserAuth (userId, username, password)
                              VALUES (?, ?, ?)`;
-
       // Add the new user to the database
       await connection.query(authInsertSQL, [userId, username, hashedPassword]);
     }
-
     await connection.commit();
   } catch (e) {
     await connection.rollback();
@@ -246,6 +244,7 @@ export const getUserByUsername = async (
 
 export const getUserByEmail = async (
   email: string,
+  // tslint:disable-next-line:no-shadowed-variable
   authProvider: AuthProviderName
 ): Promise<User | null> => {
   // Query for retrieving a user with the supplied email

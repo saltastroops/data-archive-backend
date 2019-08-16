@@ -16,8 +16,7 @@ import { requestPasswordReset, resetPassword } from "./resetPassword";
 
 // Defining the context interface
 interface IContext {
-  prisma: Prisma;
-  user: { id: string | number; authProvider: AuthProviderName }; // TODO user interface
+  user: { id: string | number; authProvider: AuthProviderName };
 }
 
 // Defining the update user interface
@@ -84,7 +83,7 @@ const Mutation = {
    * username:
    *     The username, which must not contain upper case letters.
    */
-  async signup(root: any, args: any, ctx: IContext) {
+  async signup(root: any, args: any, ctx: any) {
     // Create new user
     const userDetails: IUserCreateInput = {
       ...args,
@@ -157,13 +156,10 @@ const Mutation = {
     // Get the current details of the updated user.
     const userToUpdate = await getUserById(updatedUserId);
     if (!userToUpdate) {
-      throw new Error("There exists no user with the given id.");
-    }
-    const userUpdateInfo = userToUpdate;
-
-    if (!userToUpdate) {
       throw new Error(`There exists no user with the ID ${updatedUserId}.`);
     }
+
+    const userUpdateInfo = userToUpdate;
 
     // If the username is to change
     if (args.username) {

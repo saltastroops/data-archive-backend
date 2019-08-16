@@ -1,20 +1,38 @@
-import { isAdmin, IUser } from "../../util/user";
-
-// TODO UPDATE conforming to the IUser interface
-const createUser = ({ id, roles }: IUser) => ({
-  id,
-  roles
-});
+import { Role } from "../../generated/prisma-client";
+import { isAdmin } from "../../util/user";
 
 describe("User is admin", () => {
   it("should return true if the user has the admin role", () => {
-    const adminUser = createUser({ id: "", roles: ["ADMIN"] });
-    expect(isAdmin(adminUser)).toBeTruthy();
+    const adminUser = isAdmin({
+      affiliation: "string",
+      authProvider: "SSDA",
+      authProviderUserId: "string",
+      email: "string",
+      familyName: "string",
+      givenName: "string",
+      id: "",
+      password: "string",
+      roles: new Set<Role>(["ADMIN"]),
+      username: "string"
+    });
+
+    expect(adminUser).toBeTruthy();
   });
 
   it("should return false if the user has only roles other than admin", () => {
-    const normalUser = createUser({ id: "", roles: ["USER"] });
-    expect(isAdmin(normalUser)).toBeFalsy();
+    const normalUser = isAdmin({
+      affiliation: "string",
+      authProvider: "SSDA",
+      authProviderUserId: "string",
+      email: "string",
+      familyName: "string",
+      givenName: "string",
+      id: "",
+      password: "string",
+      roles: new Set<Role>([]),
+      username: "string"
+    });
+    expect(normalUser).toBeFalsy();
   });
 
   it("should return false if the user has no roles", () => {

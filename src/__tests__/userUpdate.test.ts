@@ -1,105 +1,100 @@
-jest.mock("../generated/prisma-client");
+jest.mock("../db/pool.ts");
+jest.mock("uuid");
+jest.mock("bcrypt");
 
 import bcrypt from "bcrypt";
-import {
-  prisma,
-  UserUpdateInput,
-  UserWhereInput
-} from "../generated/prisma-client";
+import { ssdaAdminPool } from "../db/pool";
 import { resolvers } from "../resolvers";
+import { IUserUpdateInput } from "../util/user";
 
 // Defining update user interface
-interface IUserUpdateInput extends UserUpdateInput {
-  id?: string;
+interface IUserUpdateInputArgs extends IUserUpdateInput {
   newPassword?: string;
 }
 
-beforeEach(() => {
-  // Mocking the updateUser mutation
-  (prisma.updateUser as any).mockImplementation(
-    (args: { data: UserUpdateInput; where: UserWhereInput }) =>
-      Promise.resolve({
-        affiliation: args.data.affiliation,
-        email: args.data.email,
-        familyName: args.data.familyName,
-        givenName: args.data.givenName,
-        password: args.data.password,
-        username: args.data.username
-      })
-  );
-});
-
 afterEach(() => {
   // Cleaning up
-  (prisma.user as any).mockReset();
-  (prisma.users as any).mockReset();
-  (prisma.updateUser as any).mockReset();
+  (ssdaAdminPool.query as any).mockReset();
+  (ssdaAdminPool.getConnection as any).mockReset();
 });
 
 describe("User update", () => {
   describe("Update user information of the currently logged in user", () => {
     it("should update the user with valid information having a different unique username and email address", async () => {
+      (ssdaAdminPool.query as any)
+        .mockReturnValueOnce([[{ id: 1 }]])
+        .mockReturnValueOnce([[]])
+        .mockReturnValueOnce([[{ id: 1 }]])
+        .mockReturnValueOnce([[]])
+        .mockReturnValueOnce([[]])
+        .mockReturnValueOnce([[]])
+        .mockReturnValueOnce([[{ id: 1 }]])
+        .mockReturnValueOnce([[]]);
+
+      (bcrypt.compare as any).mockReturnValueOnce(true);
+      (bcrypt.hash as any).mockReturnValueOnce("new-hashed-password");
+
       // Updating user with valid information having a different unique username and email address.
-      const args: IUserUpdateInput = {
+      const args: IUserUpdateInputArgs = {
         affiliation: "New affiliation",
         email: "newunique@gmail.com",
         familyName: "New family name",
         givenName: "New given name",
         newPassword: "New password",
-        password: "test",
+        password: "oldpassword",
         username: "newuniqueusername"
       };
 
-      // Mock the users query.
-      // An empty list is returned as we assume that the given email address and
-      // username are not in use already.
-      (prisma.users as any).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
-
-      // Mocking the user query.
-      // User to update
-      (prisma.user as any).mockImplementation(async () => ({
-        affiliation: "Test Affiliation",
-        email: "test@gmail.com",
-        familyName: "Test",
-        givenName: "Test",
-        id: "1",
-        password: await bcrypt.hash("test", 10),
-        username: "test"
-      }));
-
       // Update the user
       await resolvers.Mutation.updateUser({}, args, {
-        prisma,
-        user: { id: "1" }
+        user: { id: "1", authProvider: "SSDA" }
       });
 
-      // Expect updateUser to have been called
-      expect(prisma.updateUser).toHaveBeenCalled();
+      // Expect ssdaAdminPool query to have been called 4 times
+      expect(ssdaAdminPool.query).toHaveBeenCalledTimes(8);
 
-      // updateUser should have been called with the submitted arguments, but
-      // the password should have been hashed. So for comparison purposes we
-      // need the arguments without the password.
-      const argumentsWithoutPassword = { ...args };
-      delete argumentsWithoutPassword.password;
-      delete argumentsWithoutPassword.newPassword;
+      // Expect the first, sixth and last ssdaAdminPool query to
+      // have been called with the correct sql query and the suplied params
+      expect((ssdaAdminPool.query as any).mock.calls[0][0]).toContain(
+        "WHERE u.userId = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[0][1]).toEqual(["1"]);
 
-      const storedDataWithoutPassword = {
-        ...(prisma.updateUser as any).mock.calls[0][0].data
-      };
-      delete storedDataWithoutPassword.password;
+      expect((ssdaAdminPool.query as any).mock.calls[6][0]).toContain(
+        "UPDATE User u"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[6][1]).toEqual([
+        "New affiliation",
+        "newunique@gmail.com",
+        "New family name",
+        "New given name",
+        "new-hashed-password",
+        "newuniqueusername",
+        1
+      ]);
 
-      // Expect the updated user information to have been stored in the database.
-      expect(storedDataWithoutPassword).toEqual(argumentsWithoutPassword);
-
-      // Expect the updated user password stored in the database to have been hashed.
-      expect(
-        (prisma.updateUser as any).mock.calls[0][0].data.password
-      ).not.toBe(args.password);
+      expect((ssdaAdminPool.query as any).mock.calls[7][0]).toContain(
+        "WHERE u.userId = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[7][1]).toEqual([1]);
     });
 
     it("should update the user with valid information having the same unique username and email address", async () => {
+      (ssdaAdminPool.query as any)
+        .mockReturnValueOnce([[{ id: 1 }]])
+        .mockReturnValueOnce([[]])
+        .mockReturnValueOnce([[{ id: 1 }]])
+        .mockReturnValueOnce([[]])
+        .mockReturnValueOnce([[]])
+        .mockReturnValueOnce([[]])
+        .mockReturnValueOnce([[{ id: 1 }]])
+        .mockReturnValueOnce([[]]);
+
+      (bcrypt.compare as any).mockReturnValueOnce(true);
+      (bcrypt.hash as any).mockReturnValueOnce("new-hashed-password");
+
       // Update user information.
-      const args: IUserUpdateInput = {
+      const args: IUserUpdateInputArgs = {
         affiliation: "New affiliation",
         email: "test@gmail.com",
         familyName: "New family name",
@@ -109,75 +104,57 @@ describe("User update", () => {
         username: "test"
       };
 
-      // Mock the users query.
-      (prisma.users as any).mockResolvedValueOnce([
-        {
-          email: "test@gmail.com",
-          id: "1",
-          username: "test"
-        }
-      ]);
-
-      // Mocking the user query.
-      // User to update
-      (prisma.user as any).mockImplementation(async () => ({
-        affiliation: "Test Affiliation",
-        email: "test@gmail.com",
-        familyName: "Test",
-        givenName: "Test",
-        id: "1",
-        password: await bcrypt.hash("test", 10),
-        username: "test"
-      }));
-
       // Update the user
       await resolvers.Mutation.updateUser({}, args, {
-        prisma,
-        user: { id: "1" }
+        user: { id: "1", authProvider: "SSDA" }
       });
 
-      // Expect updateUser to have been called
-      expect(prisma.updateUser).toHaveBeenCalled();
+      // Expect ssdaAdminPool query to have been called 4 times
+      expect(ssdaAdminPool.query).toHaveBeenCalledTimes(8);
 
-      // updateUser should have been called with the submitted arguments, but
-      // the password should have been hashed. So for comparison purposes we
-      // need the arguments without the password.
-      const argumentsWithoutPassword = { ...args };
-      delete argumentsWithoutPassword.password;
-      delete argumentsWithoutPassword.newPassword;
+      // Expect the first, sixth and last ssdaAdminPool query to
+      // have been called with the correct sql query and the suplied params
+      expect((ssdaAdminPool.query as any).mock.calls[0][0]).toContain(
+        "WHERE u.userId = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[0][1]).toEqual(["1"]);
 
-      const storedDataWithoutPassword = {
-        ...(prisma.updateUser as any).mock.calls[0][0].data
-      };
-      delete storedDataWithoutPassword.password;
+      expect((ssdaAdminPool.query as any).mock.calls[6][0]).toContain(
+        "UPDATE User u"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[6][1]).toEqual([
+        "New affiliation",
+        "test@gmail.com",
+        "New family name",
+        "New given name",
+        "new-hashed-password",
+        "test",
+        1
+      ]);
 
-      // Expect the updated user information to have been stored in the database.
-      expect(storedDataWithoutPassword).toEqual(argumentsWithoutPassword);
-
-      // Expect the updated user password stored in the database to have been hashed.
-      expect(
-        (prisma.updateUser as any).mock.calls[0][0].data.password
-      ).not.toBe(args.password);
+      expect((ssdaAdminPool.query as any).mock.calls[7][0]).toContain(
+        "WHERE u.userId = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[7][1]).toEqual([1]);
     });
 
     it("should raise an error if the current password is wrong", async () => {
+      (ssdaAdminPool.query as any)
+        .mockReturnValueOnce([[{ id: 1 }]])
+        .mockReturnValueOnce([[]]);
+
+      (bcrypt.compare as any).mockReturnValueOnce(false);
+
       // Updating user with an invalid password.
-      const args: IUserUpdateInput = {
+      const args: IUserUpdateInputArgs = {
         password: "wrongpassword"
       };
-
-      // Mock the user query for the currently logged in user
-      (prisma.user as any).mockImplementation(async () => ({
-        id: "1",
-        password: await bcrypt.hash("test", 10)
-      }));
 
       // Expect the user update to fail with the appropriate error
       let message = null;
       try {
         await resolvers.Mutation.updateUser({}, args, {
-          prisma,
-          user: { id: "1" }
+          user: { id: "1", authProvider: "SSDA" }
         });
       } catch (e) {
         message = e.message;
@@ -186,33 +163,27 @@ describe("User update", () => {
     });
 
     it("should raise an error if the email address is used by another user", async () => {
+      (ssdaAdminPool.query as any)
+        .mockReturnValueOnce([[{ id: 1 }]])
+        .mockReturnValueOnce([[]])
+        .mockReturnValueOnce([[{ id: 1 }]])
+        .mockReturnValueOnce([[]])
+        .mockReturnValueOnce([[{ email: "existing@email.address", id: 2 }]])
+        .mockReturnValueOnce([[]]);
+
+      (bcrypt.compare as any).mockReturnValueOnce(true);
+
       // Updating user with an email that is in use already
       const args: IUserUpdateInput = {
         email: "existing@email.address",
         password: "test"
       };
 
-      // Mock the users query
-      (prisma.users as any).mockResolvedValueOnce([
-        {
-          email: "existing@email.address",
-          id: "2"
-        }
-      ]);
-
-      // Mocking the user query for the currently logged in user
-      (prisma.user as any).mockImplementation(async () => ({
-        email: "test@gmail.com",
-        id: "1",
-        password: await bcrypt.hash("test", 10)
-      }));
-
       // Expect the user update to fail with the appropriate error
       let message = null;
       try {
         await resolvers.Mutation.updateUser({}, args, {
-          prisma,
-          user: { id: "1" }
+          user: { id: "1", authProvider: "SSDA" }
         });
       } catch (e) {
         message = e.message;
@@ -222,34 +193,26 @@ describe("User update", () => {
     });
 
     it("should raise an error if the username is used by another user", async () => {
+      (ssdaAdminPool.query as any)
+        .mockReturnValueOnce([[{ id: 1 }]])
+        .mockReturnValueOnce([[]])
+        .mockReturnValueOnce([[{ id: 1 }]])
+        .mockReturnValueOnce([[]])
+        .mockReturnValueOnce([[{ username: "existingusername", id: 2 }]])
+        .mockReturnValueOnce([[]]);
+
+      (bcrypt.compare as any).mockReturnValueOnce(true);
       // Updating user with a username that is in use already
-      const args: IUserUpdateInput = {
+      const args: IUserUpdateInputArgs = {
         password: "test",
         username: "existingusername"
       };
-
-      // Mock the users query. A list with one user is returned, who has the
-      // email address which is requested as the new email address.
-      (prisma.users as any).mockResolvedValueOnce([
-        {
-          id: "2",
-          username: "existingusername"
-        }
-      ]);
-
-      // Mock the user query for the currently logged in user
-      (prisma.user as any).mockImplementation(async () => ({
-        id: "1",
-        password: await bcrypt.hash("test", 10),
-        username: "test"
-      }));
 
       // Expect the user update to fail with the appropriate error
       let message = null;
       try {
         await resolvers.Mutation.updateUser({}, args, {
-          prisma,
-          user: { id: "1" }
+          user: { id: "1", authProvider: "SSDA" }
         });
       } catch (e) {
         message = e.message;
@@ -261,96 +224,83 @@ describe("User update", () => {
 
   describe("Update user information of a user other than the currently logged in user", () => {
     it("should update the user information of a user other than the logged in user", async () => {
+      (ssdaAdminPool.query as any)
+        .mockReturnValueOnce([[{ id: 1 }]])
+        .mockReturnValueOnce([[{ role: "ADMIN" }]])
+        .mockReturnValueOnce([[{ id: 2 }]])
+        .mockReturnValueOnce([[]])
+        .mockReturnValueOnce([[]])
+        .mockReturnValueOnce([[]])
+        .mockReturnValueOnce([[{ id: 1 }]])
+        .mockReturnValueOnce([[]]);
+
+      (bcrypt.compare as any).mockReturnValueOnce(true);
+      (bcrypt.hash as any).mockReturnValueOnce("new-hashed-password");
+
       // Updating user with valid information.
-      const args: IUserUpdateInput = {
+      const args: IUserUpdateInputArgs = {
         affiliation: "New affiliation",
         email: "new@unique.email",
         familyName: "New family name",
         givenName: "New given name",
-        id: "2",
+        id: 2,
         newPassword: "New password",
         password: "test",
         username: "new unique username"
       };
 
-      // Mock the users query.
-      // An empty list is returned as we assume that the given email address and
-      // username are not in use already.
-      (prisma.users as any).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
-
-      // Mock the user query for the he currently logged in user
-      (prisma.user as any).mockImplementation(async () => ({
-        affiliation: "Test Affiliation",
-        email: "test@gmail.com",
-        familyName: "Test",
-        givenName: "Test",
-        id: "1",
-        password: await bcrypt.hash("test", 10),
-        roles: ["ADMIN"],
-        username: "test"
-      }));
-
       // Update the user
       await resolvers.Mutation.updateUser({}, args, {
-        prisma,
-        user: { id: "1" }
+        user: { id: 1, authProvider: "SSDA" }
       });
 
-      // Expect updateUser to have been called
-      expect(prisma.updateUser).toHaveBeenCalled();
+      // Expect ssdaAdminPool query to have been called 4 times
+      expect(ssdaAdminPool.query).toHaveBeenCalledTimes(8);
 
-      // updateUser should have been called with the submitted arguments, but
-      // the password should have been hashed.
-      // When updating the user information, an id of that user remains unchanged.
-      // So for comparison purposes we need the arguments without the password and
-      // the id.
-      const argumentsWithoutPasswordAndId = { ...args };
-      delete argumentsWithoutPasswordAndId.password;
-      delete argumentsWithoutPasswordAndId.newPassword;
-      delete argumentsWithoutPasswordAndId.id;
+      // Expect the first, sixth and last ssdaAdminPool query to
+      // have been called with the correct sql query and the suplied params
+      expect((ssdaAdminPool.query as any).mock.calls[0][0]).toContain(
+        "WHERE u.userId = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[0][1]).toEqual([1]);
 
-      const storedDataWithoutPassword = {
-        ...(prisma.updateUser as any).mock.calls[0][0].data
-      };
-      delete storedDataWithoutPassword.password;
+      expect((ssdaAdminPool.query as any).mock.calls[6][0]).toContain(
+        "UPDATE User u"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[6][1]).toEqual([
+        "New affiliation",
+        "new@unique.email",
+        "New family name",
+        "New given name",
+        "new-hashed-password",
+        "new unique username",
+        2
+      ]);
 
-      // Expect the updated user information to have been stored in the database.
-      expect(storedDataWithoutPassword).toEqual(argumentsWithoutPasswordAndId);
-
-      // Expect the updated user password stored in the database to have been
-      // hashed.
-      expect(
-        (prisma.updateUser as any).mock.calls[0][0].data.password
-      ).not.toBe(args.password);
+      expect((ssdaAdminPool.query as any).mock.calls[7][0]).toContain(
+        "WHERE u.userId = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[7][1]).toEqual([2]);
     });
 
     it("should throw an error if the user does not exist", async () => {
+      (ssdaAdminPool.query as any)
+        .mockReturnValueOnce([[{ id: 1 }]])
+        .mockReturnValueOnce([[{ role: "ADMIN" }]])
+        .mockReturnValueOnce([[]]);
+
+      (bcrypt.compare as any).mockReturnValueOnce(true);
       // Updating a user that does not exist
-      const args: IUserUpdateInput = {
-        id: "2",
+      const args: IUserUpdateInputArgs = {
+        id: 2,
         password: "test"
       };
-
-      // Mock the user query for the currently logged in user
-      (prisma.user as any)
-        .mockResolvedValueOnce({
-          affiliation: "Test Affiliation",
-          email: "test@gmail.com",
-          familyName: "Test",
-          givenName: "Test",
-          id: "1",
-          password: await bcrypt.hash("test", 10),
-          roles: ["ADMIN"],
-          username: "test"
-        })
-        .mockResolvedValueOnce(null);
 
       // Expect the user update to fail with the appropriate error
       let message = null;
       try {
         await resolvers.Mutation.updateUser({}, args, {
-          prisma,
-          user: { id: "1" }
+          user: { id: 1, authProvider: "SSDA" }
         });
       } catch (e) {
         message = e.message;

@@ -1,138 +1,107 @@
-import moment from "moment";
-jest.mock("../generated/prisma-client");
+// tslint:disable-next-line:no-submodule-imports
+import iconv from "mysql2/node_modules/iconv-lite";
+iconv.encodingExists("cesu8");
+
+jest.mock("../db/pool.ts");
 jest.mock("../util");
-import { prisma } from "../generated/prisma-client";
+
+import moment from "moment";
+import { ssdaAdminPool } from "../db/pool";
 import { resolvers } from "../resolvers";
-import { IContext, transporter } from "../util";
+import { transporter } from "../util";
 
 afterEach(() => {
   // Cleaning up
-  (prisma.user as any).mockReset();
-  (prisma.updateUser as any).mockReset();
+  (ssdaAdminPool.query as any).mockReset();
+  (ssdaAdminPool.getConnection as any).mockReset();
   (transporter.sendMail as any).mockReset();
 });
 
-/**
- * expect(true).toBeFalsy();
- * Is a failing test to insure that the try fails and catch is executed
- */
-
 describe("Request password reset", () => {
   it("should fail if no email is provided", async () => {
-    // no email provided
-    (prisma.user as any).mockResolvedValue(undefined);
     try {
-      await resolvers.Mutation.requestPasswordReset({}, {} as any, {} as any);
-      expect(true).toBeFalsy();
+      await resolvers.Mutation.requestPasswordReset(
+        {},
+        { email: "" },
+        { user: { id: "", authProvider: "SSDA" } }
+      );
     } catch (e) {
       expect(e.message).toContain("email address must be provided");
     }
-
-    expect(prisma.updateUser).not.toHaveBeenCalled();
-    expect(transporter.sendMail).not.toHaveBeenCalled();
-    expect(1).toEqual(1);
   });
 
   it("should fail if email provided is not known", async () => {
     // user with email is not found
-    (prisma.user as any).mockResolvedValue(undefined);
+    (ssdaAdminPool.query as any).mockReturnValueOnce([[]]);
+
     try {
       await resolvers.Mutation.requestPasswordReset(
         {},
         { email: "unknown@xxx.xx" },
-        {} as any
+        { user: { id: "", authProvider: "SSDA" } }
       );
-      expect(true).toBeFalsy();
     } catch (e) {
       expect(e.message).toContain(
         "no user with the email address unknown@xxx.xx"
       );
     }
-
-    expect(prisma.updateUser).not.toHaveBeenCalled();
-    expect(transporter.sendMail).not.toHaveBeenCalled();
   });
 
   it("should fail if adding the token and token expiry to Prisma fails", async () => {
-    // user with email is not found
-    (prisma.user as any).mockResolvedValue({
-      email: "xxx@xxx.xx",
-      username: "xxx"
-    });
-    (prisma.updateUser as any).mockResolvedValue(null);
+    (ssdaAdminPool.query as any)
+      .mockReturnValueOnce([[{ email: "xxx@xxx.xx", username: "xxx" }]])
+      .mockReturnValueOnce([[]])
+      .mockReturnValueOnce([[]]);
+
     try {
       await resolvers.Mutation.requestPasswordReset(
         {},
         { email: "xxx@xxx.xx" },
-        {} as any
+        { user: { id: "", authProvider: "SSDA" } }
       );
-      expect(true).toBeFalsy();
     } catch (e) {
       expect(e.message).toContain(
         "Oops, something went wrong while generating a token"
       );
     }
-
-    expect(prisma.user).toHaveBeenCalled();
-    expect(prisma.updateUser).toHaveBeenCalled();
-    expect(transporter.sendMail).not.toHaveBeenCalled();
   });
 
   it("should fail if no email could be sent to the user", async () => {
-    (prisma.user as any).mockResolvedValue({
-      email: "xxx@xxx.xx",
-      username: "xxx"
-    });
-    (prisma.updateUser as any).mockResolvedValue({
-      email: "xxx@xxx.xx",
-      username: "xxx"
-    });
+    (ssdaAdminPool.query as any)
+      .mockReturnValueOnce([[{ email: "xxx@xxx.xx", username: "xxx" }]])
+      .mockReturnValueOnce([[]])
+      .mockReturnValueOnce([[{ email: "xxx@xxx.xx", username: "xxx" }]])
+      .mockReturnValueOnce([[]]);
+
     (transporter.sendMail as any).mockRejectedValue("Email error");
     try {
       await resolvers.Mutation.requestPasswordReset(
         {},
         { email: "xxx@xxx.xx" },
-        {} as any
+        { user: { id: "", authProvider: "SSDA" } }
       );
-      expect(true).toBeFalsy();
     } catch (e) {
       expect(e.message).toContain(
         "The email with the password reset link could not be sent."
       );
     }
-
-    // All the various bits and pieces of the password reset method were called;
-    // the error was raised by the transport function.
-    expect(prisma.user).toHaveBeenCalled();
-    expect(prisma.updateUser).toHaveBeenCalled();
-    expect(transporter.sendMail).toHaveBeenCalled();
   });
 
   it("should send an email if the token could be generated and stored", async () => {
-    /**
-     * An email address is provided,
-     * the reset token and token expiry are updated successfully,
-     * an email is sent successfully
-     */
-    // user with email is not found
-    (prisma.user as any).mockResolvedValue({
-      email: "xxx@xxx.xx",
-      username: "xxx"
-    });
-    (prisma.updateUser as any).mockResolvedValue({
-      email: "xxx@xxx.xx",
-      username: "xxx"
-    });
+    (ssdaAdminPool.query as any)
+      .mockReturnValueOnce([[{ email: "xxx@xxx.xx", username: "xxx" }]])
+      .mockReturnValueOnce([[]])
+      .mockReturnValueOnce([[{ email: "xxx@xxx.xx", username: "xxx" }]])
+      .mockReturnValueOnce([[]]);
+
     (transporter.sendMail as any).mockResolvedValue("Email sent");
 
     await resolvers.Mutation.requestPasswordReset(
       {},
       { email: "xxx@xxx.xx" },
-      {} as any
+      { user: { id: "", authProvider: "SSDA" } }
     );
 
-    expect(prisma.user).toHaveBeenCalled();
-    expect(prisma.updateUser).toHaveBeenCalled();
     expect(transporter.sendMail).toHaveBeenCalled();
   });
 });
@@ -143,9 +112,8 @@ describe("reset password", () => {
       await resolvers.Mutation.resetPassword(
         {},
         { password: "secret", token: "abc" },
-        {} as any
+        { user: { id: "", authProvider: "SSDA" } }
       );
-      expect(true).toBeFalsy();
     } catch (e) {
       expect(e.message).toEqual(
         "The password must be at least 7 characters long."
@@ -155,14 +123,14 @@ describe("reset password", () => {
 
   it("should fail if the token is invalid", async () => {
     // no user found for given token
-    (prisma.user as any).mockResolvedValue(null);
+    (ssdaAdminPool.query as any).mockReturnValueOnce([[]]);
+
     try {
       await resolvers.Mutation.resetPassword(
         {},
         { password: "secretpassword", token: "badToken" },
-        {} as any
+        { user: { id: "", authProvider: "SSDA" } }
       );
-      expect(true).toBeFalsy();
     } catch (e) {
       expect(e.message).toContain("no user for the token");
     }
@@ -170,63 +138,60 @@ describe("reset password", () => {
 
   it("should fail if the token has expired", async () => {
     // given token is expired
-    (prisma.user as any).mockResolvedValue({
-      passwordResetTokenExpiry: moment(Date.now()).subtract(1, "second")
-    });
+    (ssdaAdminPool.query as any)
+      .mockReturnValueOnce([
+        [{ passwordResetTokenExpiry: moment(Date.now()).subtract(1, "second") }]
+      ])
+      .mockReturnValueOnce([[]]);
+
     try {
       await resolvers.Mutation.resetPassword(
         {},
         { password: "secretpassword", token: "expiredtoken" },
-        {} as any
+        { user: { id: "", authProvider: "SSDA" } }
       );
-      expect(true).toBeFalsy();
     } catch (e) {
       expect(e.message).toContain("expired.");
     }
   });
 
   it("should fail if it is unable to update to prisma with new password", async () => {
-    (prisma.user as any).mockResolvedValue({
-      passwordResetTokenExpiry: moment(Date.now()).add(1, "hour")
-    });
-    // user cannot be updated
-    (prisma.updateUser as any).mockResolvedValue(null);
+    (ssdaAdminPool.query as any)
+      .mockReturnValueOnce([
+        [{ passwordResetTokenExpiry: moment(Date.now()).add(1, "hour") }]
+      ])
+      .mockReturnValueOnce([[{ token: "validtoken" }]])
+      .mockReturnValueOnce([[]])
+      .mockReturnValueOnce([[]]);
 
     try {
       await resolvers.Mutation.resetPassword(
         {},
         { password: "secretpassword", token: "validtoken" },
-        {} as any
+        { user: { id: "", authProvider: "SSDA" } }
       );
-      expect(true).toBeFalsy();
     } catch (e) {
       expect(e.message).toContain("could not be updated");
     }
   });
 
   it("should pass only when", async () => {
-    /**
-     * Token and password are provided.
-     * password is greater than 6 chars.
-     * token is not expired.
-     * and prisma update the users password.
-     */
-
-    (prisma.user as any).mockResolvedValue({
-      passwordResetTokenExpiry: moment(Date.now()).add(1, "hour")
-    });
-    // user password fail to update
-    (prisma.updateUser as any).mockResolvedValue({
-      email: "xxx@xxx.xx",
-      username: "xxx"
-    });
+    (ssdaAdminPool.query as any)
+      .mockReturnValueOnce([
+        [{ passwordResetTokenExpiry: moment(Date.now()).add(1, "hour") }]
+      ])
+      .mockReturnValueOnce([[{ token: "validtoken" }]])
+      .mockReturnValueOnce([[]])
+      .mockReturnValueOnce([[{ id: 1 }]])
+      .mockReturnValueOnce([[]]);
 
     await resolvers.Mutation.resetPassword(
       {},
-      { password: "secretpassword", token: "badToken" },
-      {} as any
+      { password: "secretpassword", token: "validtoken" },
+      { user: { id: "", authProvider: "SSDA" } }
     );
-    expect(prisma.user).toHaveBeenCalled();
-    expect(prisma.updateUser).toHaveBeenCalled();
+
+    // Expect the ssdaAdmin query to have been called 5 times
+    expect(ssdaAdminPool.query as any).toHaveBeenCalledTimes(5);
   });
 });

@@ -1,35 +1,19 @@
-jest.mock("../generated/prisma-client");
+jest.mock("../db/pool.ts");
+jest.mock("uuid");
+jest.mock("bcrypt");
 
-import { prisma, UserCreateInput } from "../generated/prisma-client";
+import bcrypt from "bcrypt";
+import { v4 as uuid } from "uuid";
+import { ssdaAdminPool } from "../db/pool";
 import { resolvers } from "../resolvers";
 
-beforeAll(() => {
-  // Mocking the createUser mutation
-  (prisma.createUser as any).mockImplementation((data: UserCreateInput) =>
-    Promise.resolve({
-      affiliation: data.affiliation,
-      email: data.email,
-      familyName: data.familyName,
-      givenName: data.familyName,
-      id: `${data.username}10111`,
-      password: data.password,
-      username: data.username
-    })
-  );
-});
-
-afterAll(() => {
+afterEach(() => {
   // Cleaning up
-  (prisma.users as any).mockReset();
-  (prisma.createUser as any).mockReset();
+  (ssdaAdminPool.query as any).mockReset();
+  (ssdaAdminPool.getConnection as any).mockReset();
 });
 
 describe("User registration", () => {
-  afterEach(() => {
-    // Cleaning up
-    (prisma.users as any).mockReset();
-  });
-
   it("should register the user successfully", async () => {
     // User signing up with valid information.
     const args = {
@@ -41,54 +25,116 @@ describe("User registration", () => {
       username: "test1"
     };
 
-    // Mock the users query. For the first two calls an empty array is returned
-    // (the user does not exist yet), for the third call an array with the new
-    // user is returned.
-    (prisma.users as any)
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([
-        {
-          affiliation: "Test Affiliation",
-          email: "test@gmail.com",
-          familyName: "Test",
-          givenName: "Test",
-          id: "1",
-          password: "hashedpassword",
-          roles: [],
-          username: "test"
-        }
+    (uuid as any).mockReturnValue("test1-uuid");
+
+    (bcrypt.hash as any).mockReturnValue("hashed-password");
+
+    (ssdaAdminPool.query as any)
+      .mockReturnValueOnce([[]])
+      .mockReturnValueOnce([[]])
+      .mockReturnValueOnce([[{ authProviderId: 1 }]])
+      .mockReturnValueOnce([[]])
+      .mockReturnValueOnce([
+        [
+          {
+            affiliation: "Test1 Affiliation",
+            authProvider: "SSDA",
+            authProviderUserId: 1,
+            email: "test1@gmail.com",
+            familyName: "Test1",
+            givenName: "Test1",
+            id: 1,
+            password: "testpassword",
+            roles: [],
+            username: "test1"
+          }
+        ]
       ]);
 
-    // Register the user
-    await resolvers.Mutation.signup({}, args, {
-      prisma,
-      user: { id: "" }
+    const connection = (ssdaAdminPool.getConnection as any).mockReturnValue({
+      beginTransaction: jest.fn().mockReturnValueOnce("begin transaction"),
+      commit: jest.fn().mockReturnValueOnce("commit"),
+      query: jest
+        .fn()
+        .mockImplementationOnce(() => "Inser user details to the User table")
+        .mockImplementationOnce(() => [[{ userId: 1 }]])
+        .mockImplementationOnce(
+          () => "Insert user to auth to the SSDA auth database"
+        ),
+      release: jest.fn().mockReturnValueOnce("release connection"),
+      rollback: jest.fn().mockReturnValueOnce("rool back")
     });
 
-    // Expect createUser to have been called
-    expect(prisma.createUser).toHaveBeenCalled();
+    try {
+      // Register the user
+      await resolvers.Mutation.signup({}, args, {});
 
-    // createUser should have been called with the submitted arguments, but
-    // the password should have been hashed. So for comparison purposes we
-    // need the arguments without the password.
-    const argumentsWithoutPassword = { ...args };
-    delete argumentsWithoutPassword.password;
+      // Expect ssdaAdminPool query to have been called 4 times
+      expect(ssdaAdminPool.query).toHaveBeenCalledTimes(4);
 
-    const storedDataWithoutPassword = {
-      ...(prisma.createUser as any).mock.calls[0][0]
-    };
-    delete storedDataWithoutPassword.password;
+      // Expect the first, second, third and fourth ssdaAdminPool query to
+      // have been called with the correct sql query and the suplied params
+      expect((ssdaAdminPool.query as any).mock.calls[0][0]).toContain(
+        "WHERE u.email = ? AND ap.authProvider = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[0][1]).toEqual([
+        "test1@gmail.com",
+        "SSDA"
+      ]);
 
-    // Expect the submitted user information to have been stored in the
-    // database.
-    expect(storedDataWithoutPassword).toEqual(argumentsWithoutPassword);
+      expect((ssdaAdminPool.query as any).mock.calls[1][0]).toContain(
+        "WHERE ua.username = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[1][1]).toEqual(["test1"]);
 
-    // Expect the submitted user password stored in the database to have been
-    // hashed.
-    expect((prisma.createUser as any).mock.calls[0][0].password).not.toBe(
-      args.password
-    );
+      expect((ssdaAdminPool.query as any).mock.calls[2][0]).toContain(
+        "WHERE authProvider = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[2][1]).toEqual(["SSDA"]);
+
+      expect((ssdaAdminPool.query as any).mock.calls[3][0]).toContain(
+        "WHERE ua.username = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[3][1]).toEqual(["test1"]);
+
+      // Expect the ssdaAdmin getConnection to have been called
+      expect(connection).toHaveBeenCalled();
+
+      // Expect the ssdaAdmin beginTransaction to have been called
+      expect(connection().beginTransaction).toHaveBeenCalled();
+
+      // Expect the ssdaAdmin getConnection query to have been called 3 times
+      expect(connection().query).toHaveBeenCalledTimes(3);
+
+      // Expect the first, second, and the third ssdaAdmin getConnection query to
+      // have been called with the correct sql query and the suplied params
+      expect(connection().query.mock.calls[0][0]).toContain("INSERT INTO User");
+      expect(connection().query.mock.calls[0][1]).toEqual([
+        "Test1 Affiliation",
+        "test1@gmail.com",
+        "Test1",
+        "Test1",
+        1,
+        "test1-uuid"
+      ]);
+
+      expect(connection().query.mock.calls[1][0]).toContain("WHERE email = ?");
+      expect(connection().query.mock.calls[1][1]).toEqual(["test1@gmail.com"]);
+
+      expect(connection().query.mock.calls[2][0]).toContain(
+        "INSERT INTO SSDAUserAuth"
+      );
+      expect(connection().query.mock.calls[2][1]).toEqual([
+        1,
+        "test1",
+        "hashed-password"
+      ]);
+
+      // Expect commit to have been called
+      expect(connection().commit).toHaveBeenCalled();
+    } catch (e) {
+      expect(connection().rollback).toHaveBeenCalled();
+    }
   });
 
   it("should not register the user with an empty username", async () => {
@@ -98,24 +144,18 @@ describe("User registration", () => {
       email: "test2@gmail.com",
       familyName: "Test2",
       givenName: "Test2",
-      password: "test2",
+      password: "test2password",
       username: ""
     };
 
-    // Mock the users query with an empty array (the user does not exist yet)
-    (prisma.users as any).mockResolvedValue([]);
+    (ssdaAdminPool.query as any).mockReturnValueOnce([[]]);
 
     // Expect signing up to fail with the appropriate error
-    let message = "";
     try {
-      await resolvers.Mutation.signup({}, args, {
-        prisma,
-        user: { id: "" }
-      });
+      await resolvers.Mutation.signup({}, args, {});
     } catch (e) {
-      message = e.message;
+      expect(e.message).toContain("empty");
     }
-    expect(message).toContain("empty");
   });
 
   it("should not register the user with a username containing an upper case character", async () => {
@@ -125,24 +165,18 @@ describe("User registration", () => {
       email: "test3@gmail.com",
       familyName: "Test3",
       givenName: "Test3",
-      password: "test3",
+      password: "test3password",
       username: "tesT3"
     };
 
-    // Mock the users query with an empty array (the user does not exist yet)
-    (prisma.users as any).mockResolvedValue([]);
+    (ssdaAdminPool.query as any).mockReturnValueOnce([[]]);
 
     // Expect signing up to fail with the appropriate error
-    let message = "";
     try {
-      await resolvers.Mutation.signup({}, args, {
-        prisma,
-        user: { id: "" }
-      });
+      await resolvers.Mutation.signup({}, args, {});
     } catch (e) {
-      message = e.message;
+      expect(e.message).toContain("tesT3");
     }
-    expect(message).toContain("tesT3");
   });
 
   it("should not register a user with an existing username", async () => {
@@ -152,26 +186,22 @@ describe("User registration", () => {
       email: "test4@gmail.com",
       familyName: "Test4",
       givenName: "Test4",
-      password: "test4",
+      password: "test4password",
       username: "existingusername"
     };
 
-    // Mock the users query. A non-empty array is returned (the user exists
-    // already).
-    (prisma.users as any).mockResolvedValue([{ id: "42" }]);
+    (ssdaAdminPool.query as any)
+      .mockReturnValueOnce([[]])
+      .mockReturnValueOnce([[{ id: 42 }]])
+      .mockReturnValueOnce([[]]);
 
     // Expect signing up to fail with the appropriate error.
-    let message = "";
     try {
-      await resolvers.Mutation.signup({}, args, {
-        prisma,
-        user: { id: "" }
-      });
+      await resolvers.Mutation.signup({}, args, {});
     } catch (e) {
-      message = e.message;
+      expect(e.message).toContain("exists");
+      expect(e.message).toContain("existingusername");
     }
-    expect(message).toContain("exists");
-    expect(message).toContain("existingusername");
   });
 
   it("should not register a user with an invalid email address", async () => {
@@ -185,21 +215,13 @@ describe("User registration", () => {
       username: "test5"
     };
 
-    // Mock the users query with an empty array (the user does not exist yet)
-    (prisma.users as any).mockResolvedValue([]);
-
     // Expect signing up to fail with the appropriate error
-    let message = "";
     try {
-      await resolvers.Mutation.signup({}, args, {
-        prisma,
-        user: { id: "" }
-      });
+      await resolvers.Mutation.signup({}, args, {});
     } catch (e) {
-      message = e.message;
+      expect(e.message).toContain("invalid");
+      expect(e.message).toContain("invalidemail");
     }
-    expect(message).toContain("invalidemail@gmail");
-    expect(message).toContain("invalid");
   });
 
   it("should not register a user with an existing email address", async () => {
@@ -213,25 +235,17 @@ describe("User registration", () => {
       username: "test6"
     };
 
-    // Mock the users query. The first call returns an empty array (there is no
-    // user with the given username yet), the second call returns a non-empty
-    // array (there exists a user with the email address already).
-    (prisma.users as any)
-      .mockResolvedValueOnce([])
-      .mockResolvedValue([{ id: 7 }]);
+    (ssdaAdminPool.query as any)
+      .mockReturnValueOnce([[{ id: 42 }]])
+      .mockReturnValueOnce([[]]);
 
     // Expect signing up to fail with the appropriate error.
-    let message = null;
     try {
-      await resolvers.Mutation.signup({}, args, {
-        prisma,
-        user: { id: "" }
-      });
+      await resolvers.Mutation.signup({}, args, {});
     } catch (e) {
-      message = e.message;
+      expect(e.message).toContain("exists");
+      expect(e.message).toContain("existing@gmail.com");
     }
-    expect(message).toContain("exists");
-    expect(message).toContain("existing@gmail.com");
   });
 
   it("should not register the user with a password shorter than 7 characters", async () => {
@@ -245,19 +259,13 @@ describe("User registration", () => {
       username: "test7"
     };
 
-    // Mock the users query with an empty array (the user does not exist yet)
-    (prisma.users as any).mockResolvedValue([]);
+    (ssdaAdminPool.query as any).mockReturnValueOnce([[]]);
 
     // Expect signing up to fail with the appropriate error.
-    let message = "";
     try {
-      await resolvers.Mutation.signup({}, args, {
-        prisma,
-        user: { id: "" }
-      });
+      await resolvers.Mutation.signup({}, args, {});
     } catch (e) {
-      message = e.message;
+      expect(e.message).toContain("at least 7 characters long");
     }
-    expect(message).toContain("at least 7 characters long");
   });
 });

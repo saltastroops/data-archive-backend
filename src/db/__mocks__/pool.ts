@@ -1,6 +1,6 @@
 const ssdaAdminPool: any = jest.genMockFromModule("");
 
-// add required fields
 ssdaAdminPool.query = jest.fn();
+ssdaAdminPool.getConnection = jest.fn();
 
 export { ssdaAdminPool };

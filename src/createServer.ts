@@ -49,8 +49,11 @@ const createServer = async () => {
         usernameField: "username"
       },
       async (request, username, password, done) => {
+        // console.log(username, password, request.body.authProvider)
+        // tslint:disable-next-line:variable-name
         const _authProvider = authProvider(request.body.authProvider);
         const user = await _authProvider.authenticate(username, password);
+        // console.log("In local strategy", user)
         done(null, user ? user : false);
       }
     )
@@ -116,7 +119,9 @@ const createServer = async () => {
   });
 
   passport.deserializeUser(async (user: any, done) => {
+    // console.log("Input user id to deserialize", user)
     const ssdaUser = await getUserById(user.userId);
+    // console.log("User to deserialize", ssdaUser)
     done(null, ssdaUser ? ssdaUser : false);
   });
 
@@ -436,7 +441,7 @@ async function downloadDataRequest({
   // Check that the user may download content for the data request, either
   // because they own the request or because they are an administrator.
   const mayDownload =
-    ownsDataRequest(dataRequest[0], req.user) || isAdmin(req.user);
+    ownsDataRequest(dataRequest[0][0], req.user) || isAdmin(req.user);
 
   if (!mayDownload) {
     return res.status(403).send({

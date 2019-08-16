@@ -116,6 +116,7 @@ abstract class AuthProvider {
   abstract get institution(): string;
 }
 
+// tslint:disable-next-line:max-classes-per-file
 class SSDAAuthProvider extends AuthProvider {
   /**
    * Find the user with the given username and check that the password is
@@ -174,6 +175,7 @@ class SSDAAuthProvider extends AuthProvider {
   }
 }
 
+// tslint:disable-next-line:max-classes-per-file
 class SDBAuthProvider extends AuthProvider {
   /**
    * Find the user with the given username and check that the password is

@@ -1,3 +1,4 @@
+// tslint:disable-next-line:no-submodule-imports
 import mysql from "mysql2/promise";
 
 const createPool = (config: any) => {
