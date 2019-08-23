@@ -28,7 +28,7 @@ const requestPasswordReset = async (
   }
 
   // Create a reset token
-  const randomBytesPromisified = await promisify(randomBytes);
+  const randomBytesPromisified = promisify(randomBytes);
   const passwordResetToken = (await randomBytesPromisified(30)).toString("hex");
 
   // Create a reset token expiry date
