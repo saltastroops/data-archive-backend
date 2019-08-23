@@ -30,6 +30,11 @@ beforeEach(() => {
 
 describe("/auth/login", () => {
   it("should log in the user if a valid username and password are supplied", async () => {
+    // Mock the database querying
+    // 1. & 2. Mocks the get user by id when querying unauthenticated user.
+    // 3. & 4. Mocks the get user by username of the user to authenticate.
+    // 5. & 6. Mocks the get user by id when deserializing.
+    // 7. & 8. Mocks the get user by id when querying authenticated user.
     (ssdaAdminPool.query as any)
       .mockReturnValueOnce([[{ id: 1 }]])
       .mockReturnValueOnce([[]])
@@ -40,7 +45,9 @@ describe("/auth/login", () => {
       .mockReturnValueOnce([[{ id: 1, givenName: "Test" }]])
       .mockReturnValueOnce([[]]);
 
+    // Mock the bcrypt password compare to return true.
     (bcrypt.compare as any).mockReturnValue(true);
+
     try {
       const server = (await createServer()).createHttpServer({});
 
@@ -61,7 +68,6 @@ describe("/auth/login", () => {
 
       // User logging in
       const authenticatedAgent = request.agent(server);
-
       response = await authenticatedAgent
         .post("/auth/login")
         .send({ username: "test", password: "test", authProvider: "SSDA" });
@@ -85,6 +91,9 @@ describe("/auth/login", () => {
   });
 
   it("should return an error message and status code 401 if the username or password are wrong", async () => {
+    // Mock the database querying
+    // 1. & 2. Mocks the get user by username of the unauthenticated user.
+    // 3. & 4. Mocks the get user by id when querying unauthenticated user.
     (ssdaAdminPool.query as any)
       .mockReturnValueOnce([[]])
       .mockReturnValueOnce([[]])
@@ -129,6 +138,12 @@ describe("/auth/login", () => {
 
 describe("/auth/logout", () => {
   it("should log out the user who was logged in", async () => {
+    // Mock the database querying
+    // 1. & 2. Mocks the get user by username of the user to authenticate.
+    // 3. & 4. Mocks the get user by id when deserializing.
+    // 5. & 6. Mocks the get user by id when deserializing.
+    // 7. & 8. Mocks the get user by id when querying authenticated user.
+    // 9. Mocks the get user by id when querying unauthenticated user.
     (ssdaAdminPool.query as any)
       .mockReturnValueOnce([[{ id: 1 }]])
       .mockReturnValueOnce([[]])
@@ -140,6 +155,7 @@ describe("/auth/logout", () => {
       .mockReturnValueOnce([[]])
       .mockReturnValueOnce([[]]);
 
+    // Mock the bcrypt password compare to return true.
     (bcrypt.compare as any).mockReturnValue(true);
 
     // Authenticate the user

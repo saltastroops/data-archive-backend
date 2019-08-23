@@ -21,6 +21,13 @@ afterEach(() => {
 describe("User update", () => {
   describe("Update user information of the currently logged in user", () => {
     it("should update the user with valid information having a different unique username and email address", async () => {
+      // Mock the database querying
+      // 1. & 2. Mocks the get user by id of the currently logged in user to exist.
+      // 3. & 4. Mocks the get user by id of the user to update to exist.
+      // 5. Mocks the get user by username to update with not to exist.
+      // 6. Mocks the get user by email address to update with not to exist.
+      // 7. Mocks the updation of the user to succeed.
+      // 8. & 9. Mocks the get user by id of the updated user to exist.
       (ssdaAdminPool.query as any)
         .mockReturnValueOnce([[{ id: 1 }]])
         .mockReturnValueOnce([[]])
@@ -31,7 +38,9 @@ describe("User update", () => {
         .mockReturnValueOnce([[{ id: 1 }]])
         .mockReturnValueOnce([[]]);
 
+      // Mock the bcrypt password compare to return true.
       (bcrypt.compare as any).mockReturnValueOnce(true);
+      // Mock the bcrypt password hashing to hash the password.
       (bcrypt.hash as any).mockReturnValueOnce("new-hashed-password");
 
       // Updating user with valid information having a different unique username and email address.
@@ -47,19 +56,73 @@ describe("User update", () => {
 
       // Update the user
       await resolvers.Mutation.updateUser({}, args, {
-        user: { id: "1", authProvider: "SSDA" }
+        user: { id: 1, authProvider: "SSDA" }
       });
 
-      // Expect ssdaAdminPool query to have been called 4 times
+      // Expect ssdaAdminPool query to have been called 8 times
       expect(ssdaAdminPool.query).toHaveBeenCalledTimes(8);
 
-      // Expect the first, sixth and last ssdaAdminPool query to
-      // have been called with the correct sql query and the suplied params
+      // Expect the first and second query to have been called
+      // with the correct sql query and the suplied params
+      expect((ssdaAdminPool.query as any).mock.calls[0][0]).toContain(
+        "SELECT u.userId AS id"
+      );
       expect((ssdaAdminPool.query as any).mock.calls[0][0]).toContain(
         "WHERE u.userId = ?"
       );
-      expect((ssdaAdminPool.query as any).mock.calls[0][1]).toEqual(["1"]);
+      expect((ssdaAdminPool.query as any).mock.calls[0][1]).toEqual([1]);
+      expect((ssdaAdminPool.query as any).mock.calls[1][0]).toContain(
+        "SELECT role"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[1][0]).toContain(
+        "WHERE ur.userId = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[1][1]).toEqual([1]);
 
+      // Expect the third and forth query to have been called
+      // with the correct sql query and the suplied params
+      expect((ssdaAdminPool.query as any).mock.calls[2][0]).toContain(
+        "SELECT u.userId AS id"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[2][0]).toContain(
+        "WHERE u.userId = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[2][1]).toEqual([1]);
+      expect((ssdaAdminPool.query as any).mock.calls[3][0]).toContain(
+        "SELECT role"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[3][0]).toContain(
+        "WHERE ur.userId = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[3][1]).toEqual([1]);
+
+      // Expect the fith query to have been called
+      // with the correct sql query and the suplied params
+      expect((ssdaAdminPool.query as any).mock.calls[4][0]).toContain(
+        "SELECT u.userId AS id"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[4][0]).toContain(
+        "WHERE ua.username = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[4][1]).toEqual([
+        "newuniqueusername"
+      ]);
+
+      // Expect the sixth query to have been called
+      // with the correct sql query and the suplied params
+      expect((ssdaAdminPool.query as any).mock.calls[5][0]).toContain(
+        "SELECT u.userId AS id"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[5][0]).toContain(
+        "WHERE u.email = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[5][1]).toEqual([
+        "newunique@gmail.com",
+        "SSDA"
+      ]);
+
+      // Expect the seventh query to have been called
+      // with the correct sql query and the suplied params
       expect((ssdaAdminPool.query as any).mock.calls[6][0]).toContain(
         "UPDATE User u"
       );
@@ -73,6 +136,8 @@ describe("User update", () => {
         1
       ]);
 
+      // Expect the eighth query to have been called
+      // with the correct sql query and the suplied params
       expect((ssdaAdminPool.query as any).mock.calls[7][0]).toContain(
         "WHERE u.userId = ?"
       );
@@ -80,6 +145,13 @@ describe("User update", () => {
     });
 
     it("should update the user with valid information having the same unique username and email address", async () => {
+      // Mock the database querying
+      // 1. & 2. Mocks the get user by id of the currently logged in user to exist.
+      // 3. & 4. Mocks the get user by id of the user to update to exist.
+      // 5. Mocks the get user by username to update with not to exist.
+      // 6. Mocks the get user by email address to update with not to exist.
+      // 7. Mocks the updation of the user to succeed.
+      // 8. & 9. Mocks the get user by id of the updated user to exist.
       (ssdaAdminPool.query as any)
         .mockReturnValueOnce([[{ id: 1 }]])
         .mockReturnValueOnce([[]])
@@ -90,10 +162,12 @@ describe("User update", () => {
         .mockReturnValueOnce([[{ id: 1 }]])
         .mockReturnValueOnce([[]]);
 
+      // Mock the bcrypt password compare to return true.
       (bcrypt.compare as any).mockReturnValueOnce(true);
+      // Mock the bcrypt password hashing to hash the password.
       (bcrypt.hash as any).mockReturnValueOnce("new-hashed-password");
 
-      // Update user information.
+      // Update user information having same username and email address.
       const args: IUserUpdateInputArgs = {
         affiliation: "New affiliation",
         email: "test@gmail.com",
@@ -106,19 +180,71 @@ describe("User update", () => {
 
       // Update the user
       await resolvers.Mutation.updateUser({}, args, {
-        user: { id: "1", authProvider: "SSDA" }
+        user: { id: 1, authProvider: "SSDA" }
       });
 
-      // Expect ssdaAdminPool query to have been called 4 times
+      // Expect ssdaAdminPool query to have been called 8 times
       expect(ssdaAdminPool.query).toHaveBeenCalledTimes(8);
 
-      // Expect the first, sixth and last ssdaAdminPool query to
-      // have been called with the correct sql query and the suplied params
+      // Expect the first and second query to have been called
+      // with the correct sql query and the suplied params
+      expect((ssdaAdminPool.query as any).mock.calls[0][0]).toContain(
+        "SELECT u.userId AS id"
+      );
       expect((ssdaAdminPool.query as any).mock.calls[0][0]).toContain(
         "WHERE u.userId = ?"
       );
-      expect((ssdaAdminPool.query as any).mock.calls[0][1]).toEqual(["1"]);
+      expect((ssdaAdminPool.query as any).mock.calls[0][1]).toEqual([1]);
+      expect((ssdaAdminPool.query as any).mock.calls[1][0]).toContain(
+        "SELECT role"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[1][0]).toContain(
+        "WHERE ur.userId = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[1][1]).toEqual([1]);
 
+      // Expect the third and forth query to have been called
+      // with the correct sql query and the suplied params
+      expect((ssdaAdminPool.query as any).mock.calls[2][0]).toContain(
+        "SELECT u.userId AS id"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[2][0]).toContain(
+        "WHERE u.userId = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[2][1]).toEqual([1]);
+      expect((ssdaAdminPool.query as any).mock.calls[3][0]).toContain(
+        "SELECT role"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[3][0]).toContain(
+        "WHERE ur.userId = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[3][1]).toEqual([1]);
+
+      // Expect the fith query to have been called
+      // with the correct sql query and the suplied params
+      expect((ssdaAdminPool.query as any).mock.calls[4][0]).toContain(
+        "SELECT u.userId AS id"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[4][0]).toContain(
+        "WHERE ua.username = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[4][1]).toEqual(["test"]);
+
+      // Expect the sixth query to have been called
+      // with the correct sql query and the suplied params
+      expect((ssdaAdminPool.query as any).mock.calls[5][0]).toContain(
+        "SELECT u.userId AS id"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[5][0]).toContain(
+        "WHERE u.email = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[5][1]).toEqual([
+        "test@gmail.com",
+        "SSDA"
+      ]);
+
+      // Expect the seventh query to have been called
+      // with the correct sql query and the suplied params
       expect((ssdaAdminPool.query as any).mock.calls[6][0]).toContain(
         "UPDATE User u"
       );
@@ -132,6 +258,8 @@ describe("User update", () => {
         1
       ]);
 
+      // Expect the eighth query to have been called
+      // with the correct sql query and the suplied params
       expect((ssdaAdminPool.query as any).mock.calls[7][0]).toContain(
         "WHERE u.userId = ?"
       );
@@ -139,10 +267,13 @@ describe("User update", () => {
     });
 
     it("should raise an error if the current password is wrong", async () => {
+      // Mock the database querying
+      // 1. & 2. Mocks the get user by id of the currently logged in user to exist.
       (ssdaAdminPool.query as any)
         .mockReturnValueOnce([[{ id: 1 }]])
         .mockReturnValueOnce([[]]);
 
+      // Mock the bcrypt password compare to return false.
       (bcrypt.compare as any).mockReturnValueOnce(false);
 
       // Updating user with an invalid password.
@@ -150,19 +281,21 @@ describe("User update", () => {
         password: "wrongpassword"
       };
 
-      // Expect the user update to fail with the appropriate error
-      let message = null;
+      // Expect the user update to fail with an appropriate error
       try {
         await resolvers.Mutation.updateUser({}, args, {
-          user: { id: "1", authProvider: "SSDA" }
+          user: { id: 1, authProvider: "SSDA" }
         });
       } catch (e) {
-        message = e.message;
+        expect(e.message).toContain("The old password is wrong");
       }
-      expect(message).toContain("The old password is wrong");
     });
 
     it("should raise an error if the email address is used by another user", async () => {
+      // Mock the database querying
+      // 1. & 2. Mocks the get user by id of the currently logged in user to exist.
+      // 3. & 4. Mocks the get user by id of the user to update to exist.
+      // 5. Mocks the get user by email address to update with not to exist.
       (ssdaAdminPool.query as any)
         .mockReturnValueOnce([[{ id: 1 }]])
         .mockReturnValueOnce([[]])
@@ -171,6 +304,7 @@ describe("User update", () => {
         .mockReturnValueOnce([[{ email: "existing@email.address", id: 2 }]])
         .mockReturnValueOnce([[]]);
 
+      // Mock the bcrypt password compare to return true.
       (bcrypt.compare as any).mockReturnValueOnce(true);
 
       // Updating user with an email that is in use already
@@ -180,19 +314,21 @@ describe("User update", () => {
       };
 
       // Expect the user update to fail with the appropriate error
-      let message = null;
       try {
         await resolvers.Mutation.updateUser({}, args, {
           user: { id: "1", authProvider: "SSDA" }
         });
       } catch (e) {
-        message = e.message;
+        expect(e.message).toContain("already exists");
+        expect(e.message).toContain("email address");
       }
-      expect(message).toContain("already exists");
-      expect(message).toContain("email address");
     });
 
     it("should raise an error if the username is used by another user", async () => {
+      // Mock the database querying
+      // 1. & 2. Mocks the get user by id of the currently logged in user to exist.
+      // 3. & 4. Mocks the get user by id of the user to update to exist.
+      // 5. & 6. Mocks the get user by username to update with not to exist.
       (ssdaAdminPool.query as any)
         .mockReturnValueOnce([[{ id: 1 }]])
         .mockReturnValueOnce([[]])
@@ -201,7 +337,9 @@ describe("User update", () => {
         .mockReturnValueOnce([[{ username: "existingusername", id: 2 }]])
         .mockReturnValueOnce([[]]);
 
+      // Mock the bcrypt password compare to return true.
       (bcrypt.compare as any).mockReturnValueOnce(true);
+
       // Updating user with a username that is in use already
       const args: IUserUpdateInputArgs = {
         password: "test",
@@ -209,21 +347,26 @@ describe("User update", () => {
       };
 
       // Expect the user update to fail with the appropriate error
-      let message = null;
       try {
         await resolvers.Mutation.updateUser({}, args, {
-          user: { id: "1", authProvider: "SSDA" }
+          user: { id: 1, authProvider: "SSDA" }
         });
       } catch (e) {
-        message = e.message;
+        expect(e.message).toContain("already exists");
+        expect(e.message).toContain("username");
       }
-      expect(message).toContain("already exists");
-      expect(message).toContain("username");
     });
   });
 
   describe("Update user information of a user other than the currently logged in user", () => {
     it("should update the user information of a user other than the logged in user", async () => {
+      // Mock the database querying
+      // 1. & 2. Mocks the get admin user by id of the currently logged in user to exist.
+      // 3. & 4. Mocks the get user by id of the user to update to exist.
+      // 5. Mocks the get user by username to update with not to exist.
+      // 6. Mocks the get user by email address to update with not to exist.
+      // 7. Mocks the updation of the user to succeed.
+      // 8. & 9. Mocks the get user by id of the updated user to exist.
       (ssdaAdminPool.query as any)
         .mockReturnValueOnce([[{ id: 1 }]])
         .mockReturnValueOnce([[{ role: "ADMIN" }]])
@@ -234,7 +377,9 @@ describe("User update", () => {
         .mockReturnValueOnce([[{ id: 1 }]])
         .mockReturnValueOnce([[]]);
 
+      // Mock the bcrypt password compare to return true.
       (bcrypt.compare as any).mockReturnValueOnce(true);
+      // Mock the bcrypt password hashing to hash the password.
       (bcrypt.hash as any).mockReturnValueOnce("new-hashed-password");
 
       // Updating user with valid information.
@@ -246,7 +391,7 @@ describe("User update", () => {
         id: 2,
         newPassword: "New password",
         password: "test",
-        username: "new unique username"
+        username: "newuniqueusername"
       };
 
       // Update the user
@@ -254,16 +399,70 @@ describe("User update", () => {
         user: { id: 1, authProvider: "SSDA" }
       });
 
-      // Expect ssdaAdminPool query to have been called 4 times
+      // Expect ssdaAdminPool query to have been called 8 times
       expect(ssdaAdminPool.query).toHaveBeenCalledTimes(8);
 
-      // Expect the first, sixth and last ssdaAdminPool query to
-      // have been called with the correct sql query and the suplied params
+      // Expect the first and second query to have been called
+      // with the correct sql query and the suplied params
+      expect((ssdaAdminPool.query as any).mock.calls[0][0]).toContain(
+        "SELECT u.userId AS id"
+      );
       expect((ssdaAdminPool.query as any).mock.calls[0][0]).toContain(
         "WHERE u.userId = ?"
       );
       expect((ssdaAdminPool.query as any).mock.calls[0][1]).toEqual([1]);
+      expect((ssdaAdminPool.query as any).mock.calls[1][0]).toContain(
+        "SELECT role"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[1][0]).toContain(
+        "WHERE ur.userId = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[1][1]).toEqual([1]);
 
+      // Expect the third and forth query to have been called
+      // with the correct sql query and the suplied params
+      expect((ssdaAdminPool.query as any).mock.calls[2][0]).toContain(
+        "SELECT u.userId AS id"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[2][0]).toContain(
+        "WHERE u.userId = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[2][1]).toEqual([2]);
+      expect((ssdaAdminPool.query as any).mock.calls[3][0]).toContain(
+        "SELECT role"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[3][0]).toContain(
+        "WHERE ur.userId = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[3][1]).toEqual([2]);
+
+      // Expect the fith query to have been called
+      // with the correct sql query and the suplied params
+      expect((ssdaAdminPool.query as any).mock.calls[4][0]).toContain(
+        "SELECT u.userId AS id"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[4][0]).toContain(
+        "WHERE ua.username = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[4][1]).toEqual([
+        "newuniqueusername"
+      ]);
+
+      // Expect the sixth query to have been called
+      // with the correct sql query and the suplied params
+      expect((ssdaAdminPool.query as any).mock.calls[5][0]).toContain(
+        "SELECT u.userId AS id"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[5][0]).toContain(
+        "WHERE u.email = ?"
+      );
+      expect((ssdaAdminPool.query as any).mock.calls[5][1]).toEqual([
+        "new@unique.email",
+        "SSDA"
+      ]);
+
+      // Expect the seventh query to have been called
+      // with the correct sql query and the suplied params
       expect((ssdaAdminPool.query as any).mock.calls[6][0]).toContain(
         "UPDATE User u"
       );
@@ -273,10 +472,12 @@ describe("User update", () => {
         "New family name",
         "New given name",
         "new-hashed-password",
-        "new unique username",
+        "newuniqueusername",
         2
       ]);
 
+      // Expect the eighth query to have been called
+      // with the correct sql query and the suplied params
       expect((ssdaAdminPool.query as any).mock.calls[7][0]).toContain(
         "WHERE u.userId = ?"
       );
@@ -284,12 +485,17 @@ describe("User update", () => {
     });
 
     it("should throw an error if the user does not exist", async () => {
+      // Mock the database querying
+      // 1. & 2. Mocks the get admin user by id of the currently logged in user to exist.
+      // 3. Mocks the get user by id of the user to update to not exist.
       (ssdaAdminPool.query as any)
         .mockReturnValueOnce([[{ id: 1 }]])
         .mockReturnValueOnce([[{ role: "ADMIN" }]])
         .mockReturnValueOnce([[]]);
 
+      // Mock the bcrypt password compare to return true.
       (bcrypt.compare as any).mockReturnValueOnce(true);
+
       // Updating a user that does not exist
       const args: IUserUpdateInputArgs = {
         id: 2,
@@ -297,16 +503,14 @@ describe("User update", () => {
       };
 
       // Expect the user update to fail with the appropriate error
-      let message = null;
       try {
         await resolvers.Mutation.updateUser({}, args, {
           user: { id: 1, authProvider: "SSDA" }
         });
       } catch (e) {
-        message = e.message;
+        expect(e.message).toContain(`ID ${args.id}`);
+        expect(e.message).toContain("no user");
       }
-      expect(message).toContain(`ID ${args.id}`);
-      expect(message).toContain("no user");
     });
   });
 });

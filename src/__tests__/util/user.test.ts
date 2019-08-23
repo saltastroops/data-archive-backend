@@ -9,6 +9,7 @@ import { isAdmin } from "../../util/user";
 
 describe("User is admin", () => {
   it("should return true if the user has the admin role", () => {
+    // An admin user
     const adminUser = isAdmin({
       affiliation: "string",
       authProvider: "SSDA",
@@ -26,6 +27,7 @@ describe("User is admin", () => {
   });
 
   it("should return false if the user has only roles other than admin", () => {
+    // A normal user
     const normalUser = isAdmin({
       affiliation: "string",
       authProvider: "SSDA",

@@ -15,20 +15,12 @@ afterEach(() => {
 
 describe("User registration", () => {
   it("should register the user successfully", async () => {
-    // User signing up with valid information.
-    const args = {
-      affiliation: "Test1 Affiliation",
-      email: "test1@gmail.com",
-      familyName: "Test1",
-      givenName: "Test1",
-      password: "testpassword",
-      username: "test1"
-    };
-
-    (uuid as any).mockReturnValue("test1-uuid");
-
-    (bcrypt.hash as any).mockReturnValue("hashed-password");
-
+    // Mock the database querying
+    // 1. Mocks the get user by email address to register with not to exist.
+    // 2. Mocks the get user by username to register with not to exist.
+    // 3. Mocks the auth provider used to register.
+    // 4. Mocks the creation of the new user entry.
+    // 5. Mocks the get user by username of the newly created user to exist.
     (ssdaAdminPool.query as any)
       .mockReturnValueOnce([[]])
       .mockReturnValueOnce([[]])
@@ -51,6 +43,15 @@ describe("User registration", () => {
         ]
       ]);
 
+    // Mocks the database transaction
+    // 1. Mocks database connection.
+    // 2. Mocks begining of the transaction.
+    // 3. Mocks the inserting of the user details.
+    // 4. Mocks the selection of the user.
+    // 5. Mocks the inserting ot the user credentials.
+    // 6. Mocks the transaction commit.
+    // 7. Mocks the transaction roll back.
+    // 8. Mocks the connection release.
     const connection = (ssdaAdminPool.getConnection as any).mockReturnValue({
       beginTransaction: jest.fn().mockReturnValueOnce("begin transaction"),
       commit: jest.fn().mockReturnValueOnce("commit"),
@@ -65,6 +66,22 @@ describe("User registration", () => {
       rollback: jest.fn().mockReturnValueOnce("rool back")
     });
 
+    // Mocks the UUID
+    (uuid as any).mockReturnValue("test1-uuid");
+
+    // Mock the bcrypt password hashing to hash the password.
+    (bcrypt.hash as any).mockReturnValue("hashed-password");
+
+    // User signing up with valid information.
+    const args = {
+      affiliation: "Test1 Affiliation",
+      email: "test1@gmail.com",
+      familyName: "Test1",
+      givenName: "Test1",
+      password: "testpassword",
+      username: "test1"
+    };
+
     try {
       // Register the user
       await resolvers.Mutation.signup({}, args, {});
@@ -72,7 +89,7 @@ describe("User registration", () => {
       // Expect ssdaAdminPool query to have been called 4 times
       expect(ssdaAdminPool.query).toHaveBeenCalledTimes(4);
 
-      // Expect the first, second, third and fourth ssdaAdminPool query to
+      // Expect the first ssdaAdminPool query to
       // have been called with the correct sql query and the suplied params
       expect((ssdaAdminPool.query as any).mock.calls[0][0]).toContain(
         "WHERE u.email = ? AND ap.authProvider = ?"
@@ -82,16 +99,22 @@ describe("User registration", () => {
         "SSDA"
       ]);
 
+      // Expect the second ssdaAdminPool query to
+      // have been called with the correct sql query and the suplied params
       expect((ssdaAdminPool.query as any).mock.calls[1][0]).toContain(
         "WHERE ua.username = ?"
       );
       expect((ssdaAdminPool.query as any).mock.calls[1][1]).toEqual(["test1"]);
 
+      // Expect the third ssdaAdminPool query to
+      // have been called with the correct sql query and the suplied params
       expect((ssdaAdminPool.query as any).mock.calls[2][0]).toContain(
         "WHERE authProvider = ?"
       );
       expect((ssdaAdminPool.query as any).mock.calls[2][1]).toEqual(["SSDA"]);
 
+      // Expect the fourth ssdaAdminPool query to
+      // have been called with the correct sql query and the suplied params
       expect((ssdaAdminPool.query as any).mock.calls[3][0]).toContain(
         "WHERE ua.username = ?"
       );
@@ -106,7 +129,7 @@ describe("User registration", () => {
       // Expect the ssdaAdmin getConnection query to have been called 3 times
       expect(connection().query).toHaveBeenCalledTimes(3);
 
-      // Expect the first, second, and the third ssdaAdmin getConnection query to
+      // Expect the first ssdaAdmin getConnection query to
       // have been called with the correct sql query and the suplied params
       expect(connection().query.mock.calls[0][0]).toContain("INSERT INTO User");
       expect(connection().query.mock.calls[0][1]).toEqual([
@@ -118,9 +141,13 @@ describe("User registration", () => {
         "test1-uuid"
       ]);
 
+      // Expect the second ssdaAdmin getConnection query to
+      // have been called with the correct sql query and the suplied params
       expect(connection().query.mock.calls[1][0]).toContain("WHERE email = ?");
       expect(connection().query.mock.calls[1][1]).toEqual(["test1@gmail.com"]);
 
+      // Expect the third ssdaAdmin getConnection query to
+      // have been called with the correct sql query and the suplied params
       expect(connection().query.mock.calls[2][0]).toContain(
         "INSERT INTO SSDAUserAuth"
       );
@@ -132,12 +159,16 @@ describe("User registration", () => {
 
       // Expect commit to have been called
       expect(connection().commit).toHaveBeenCalled();
-    } catch (e) {
-      expect(connection().rollback).toHaveBeenCalled();
+    } finally {
+      expect(connection().release).toHaveBeenCalled();
     }
   });
 
   it("should not register the user with an empty username", async () => {
+    // Mock the database querying
+    // 1. Mocks the get user by email address to register with not to exist.
+    (ssdaAdminPool.query as any).mockReturnValueOnce([[]]);
+
     // User signing up with an empty username
     const args = {
       affiliation: "Test2 Affiliation",
@@ -148,8 +179,6 @@ describe("User registration", () => {
       username: ""
     };
 
-    (ssdaAdminPool.query as any).mockReturnValueOnce([[]]);
-
     // Expect signing up to fail with the appropriate error
     try {
       await resolvers.Mutation.signup({}, args, {});
@@ -159,6 +188,10 @@ describe("User registration", () => {
   });
 
   it("should not register the user with a username containing an upper case character", async () => {
+    // Mock the database querying
+    // 1. Mocks the get user by email address to register with not to exist.
+    (ssdaAdminPool.query as any).mockReturnValueOnce([[]]);
+
     // User signing up with a username that contains an upper case character
     const args = {
       affiliation: "Test3 Affiliation",
@@ -169,8 +202,6 @@ describe("User registration", () => {
       username: "tesT3"
     };
 
-    (ssdaAdminPool.query as any).mockReturnValueOnce([[]]);
-
     // Expect signing up to fail with the appropriate error
     try {
       await resolvers.Mutation.signup({}, args, {});
@@ -180,6 +211,14 @@ describe("User registration", () => {
   });
 
   it("should not register a user with an existing username", async () => {
+    // Mock the database querying
+    // 1. Mocks the get user by email address to register with not to exist.
+    // 2. & 3. Mocks get use by username to already exists
+    (ssdaAdminPool.query as any)
+      .mockReturnValueOnce([[]])
+      .mockReturnValueOnce([[{ id: 42 }]])
+      .mockReturnValueOnce([[]]);
+
     // User signing up with a username that already exists
     const args = {
       affiliation: "Test4 Affiliation",
@@ -189,11 +228,6 @@ describe("User registration", () => {
       password: "test4password",
       username: "existingusername"
     };
-
-    (ssdaAdminPool.query as any)
-      .mockReturnValueOnce([[]])
-      .mockReturnValueOnce([[{ id: 42 }]])
-      .mockReturnValueOnce([[]]);
 
     // Expect signing up to fail with the appropriate error.
     try {
@@ -225,6 +259,12 @@ describe("User registration", () => {
   });
 
   it("should not register a user with an existing email address", async () => {
+    // Mock the database querying
+    // 1. & 2. Mocks the get user by email address to register with to already exist.
+    (ssdaAdminPool.query as any)
+      .mockReturnValueOnce([[{ id: 42 }]])
+      .mockReturnValueOnce([[]]);
+
     // User signing up with an email address that already exists
     const args = {
       affiliation: "Test6 Affiliation",
@@ -234,10 +274,6 @@ describe("User registration", () => {
       password: "test6",
       username: "test6"
     };
-
-    (ssdaAdminPool.query as any)
-      .mockReturnValueOnce([[{ id: 42 }]])
-      .mockReturnValueOnce([[]]);
 
     // Expect signing up to fail with the appropriate error.
     try {
@@ -249,6 +285,10 @@ describe("User registration", () => {
   });
 
   it("should not register the user with a password shorter than 7 characters", async () => {
+    // Mock the database querying
+    // 1. Mocks the get user by email address to register with not to exist.
+    (ssdaAdminPool.query as any).mockReturnValueOnce([[]]);
+
     // User signing up with the password less than 6 characters.
     const args = {
       affiliation: "Test7 Affiliation",
@@ -258,8 +298,6 @@ describe("User registration", () => {
       password: "test7",
       username: "test7"
     };
-
-    (ssdaAdminPool.query as any).mockReturnValueOnce([[]]);
 
     // Expect signing up to fail with the appropriate error.
     try {
