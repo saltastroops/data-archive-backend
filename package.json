@@ -53,7 +53,6 @@
     "express-session": "^1.15.6",
     "fs": "^0.0.1-security",
     "graphql-yoga": "^1.17.1",
-    "iconv-lite": "^0.5.0",
     "isemail": "^3.2.0",
     "moment": "^2.24.0",
     "mysql2": "^1.6.5",
