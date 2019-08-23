@@ -192,10 +192,10 @@ describe("reset password", () => {
     }
   });
 
-  it("should pass only when", async () => {
+  it("should update the password successfully", async () => {
     // Mock the database querying
-    // 1. & 2. Mocks get user by the token to have suceeded.
-    // 3. Moks user updation to have suceeded
+    // 1. & 2. Mocks get user by the token to have succeeded.
+    // 3. Mocks user update to have succeeded
     // 4. & 5. Mocks get user by id of the just updated user password to have suceeded.
     (ssdaAdminPool.query as any)
       .mockReturnValueOnce([
