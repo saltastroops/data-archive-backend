@@ -4,7 +4,7 @@ const launchServer = async () => {
   // Instantiate the server
   const server = createServer();
 
-  if (process.env.NODE_ENV) {
+  if (process.env.NODE_ENV === "test") {
     return;
   }
 
