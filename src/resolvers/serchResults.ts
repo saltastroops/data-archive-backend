@@ -1,4 +1,4 @@
-import { ssdaPool } from "../db/pool";
+import { ssdaPool } from "../db/postgresql_pool";
 import {
   createFromExpression,
   parseWhereCondition
@@ -54,7 +54,7 @@ export const queryDataFiles = async (
       `;
   const countResults: any = (await ssdaPool.query(countSQL, [
     ...whereDetails.values
-  ]))[0];
+  ])).rows;
   const itemsTotal = countResults[0].itemsTotal;
 
   // Second pass: Get the data file details
@@ -72,7 +72,7 @@ export const queryDataFiles = async (
     ...whereDetails.values,
     limit,
     startIndex
-  ]))[0];
+  ])).rows;
 
   // Which of the files are owned by the user?
   const ids = itemResults.map((row: any) => row["DataFile.dataFileId"]);

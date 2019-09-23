@@ -1,4 +1,4 @@
-import { ssdaAdminPool, ssdaPool } from "../db/pool";
+import { ssdaPool } from "../db/postgresql_pool";
 import { zipDataRequest } from "../util/zipDataRequest";
 import { mayViewAllOfDataFiles } from "../util/user";
 
@@ -24,7 +24,7 @@ const groupByObservation = (dataFiles: [any]) => {
 export const createDataRequest = async (dataFiles: [number], user: any) => {
   // check if user is logged in
   if (!user) {
-    throw new Error("You must be logged in to create data request");
+    throw new Error("You must be logged in to a create data request");
   }
 
   const dataFileIdStrings = dataFiles.map(id => id.toString());
@@ -57,20 +57,20 @@ export const createDataRequest = async (dataFiles: [number], user: any) => {
   );
 
   // Get pending status
-  const pendingStatusId = ((await ssdaAdminPool.query(
+  const pendingStatusId = ((await ssdaPool.query(
     `
     SELECT dataRequestStatusId FROM DataRequestStatus WHERE dataRequestStatus=?`,
     ["PENDING"]
   )) as any)[0][0].dataRequestStatusId;
 
   // Create a data request
-  const newDataRequestId = ((await ssdaAdminPool.query(
+  const newDataRequestId = ((await ssdaPool.query(
     `INSERT INTO DataRequest (dataRequestStatusId, madeAt, userId) VALUES (?, ?, ?)`,
     [pendingStatusId, new Date(), user.id]
   )) as any)[0].insertId;
 
   groupedDataFiles.forEach(async (observation: any, key: string) => {
-    const newObzId = ((await ssdaAdminPool.query(
+    const newObzId = ((await ssdaPool.query(
       `
     INSERT INTO DataRequestObservation (dataRequestId, name) VALUES (?, ?)
     `,
@@ -78,7 +78,7 @@ export const createDataRequest = async (dataFiles: [number], user: any) => {
     )) as any)[0].insertId;
     Promise.all(
       Array.from(observation).map(async (file: any) => {
-        await ssdaAdminPool.query(
+        await ssdaPool.query(
           `
       INSERT INTO DataRequestFile (dataRequestObservationId, dataFileUUID, name) VALUES (?, ?, ?)
       `,

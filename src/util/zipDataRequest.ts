@@ -1,10 +1,10 @@
 import archiver from "archiver";
 import fs from "fs";
-import { ssdaAdminPool, ssdaPool } from "../db/pool";
+import { ssdaPool } from "../db/postgresql_pool";
 
 const successfullyZipDataRequest = async (dataRequestId: number) => {
   // get success status id
-  const successStatusId = ((await ssdaAdminPool.query(
+  const successStatusId = ((await ssdaPool.query(
     `
     SELECT dataRequestStatusId FROM DataRequestStatus WHERE dataRequestStatus=?
     `,
@@ -12,7 +12,7 @@ const successfullyZipDataRequest = async (dataRequestId: number) => {
   )) as any)[0][0].dataRequestStatusId;
 
   // update SSDA Admin with success status
-  await ssdaAdminPool.query(
+  await ssdaPool.query(
     `
     UPDATE DataRequest 
     SET 
@@ -32,14 +32,14 @@ const successfullyZipDataRequest = async (dataRequestId: number) => {
 
 const failToZipDataRequest = async (dataRequestId: number) => {
   // Get fail status id
-  const failStatusId = ((await ssdaAdminPool.query(
+  const failStatusId = ((await ssdaPool.query(
     `
     SELECT dataRequestStatusId FROM DataRequestStatus WHERE dataRequestStatus=?
     `,
     ["FAILED"]
   )) as any)[0][0].dataRequestStatusId;
   // update SSDA Admin with fail
-  await ssdaAdminPool.query(
+  await ssdaPool.query(
     `
     UPDATE DataRequest 
     SET dataRequestStatusId=?

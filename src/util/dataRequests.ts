@@ -1,6 +1,6 @@
 import DataLoader from "dataloader";
 import { groupBy, map } from "ramda";
-import { ssdaAdminPool, ssdaPool } from "../db/pool";
+import { ssdaPool } from "../db/postgresql_pool";
 
 /**
  * A data request data loader function
@@ -37,7 +37,7 @@ const dataRequestsByUserIds = async (userIds: any) => {
     WHERE dr.userId IN(?)
   `;
   // Retrieving user data requests
-  const dataRequests: any = await ssdaAdminPool.query(sql, [userIds]);
+  const dataRequests: any = await ssdaPool.query(sql, [userIds]);
   if (!dataRequests[0].length) {
     return [[]];
   }
@@ -89,7 +89,7 @@ const dataRequestObservationByDataRequestIds = async (dataRequestIds: any) => {
     WHERE dro.dataRequestId IN(?)
   `;
   // Retrieving data request observations
-  const dataRequestObservations: any = await ssdaAdminPool.query(sql, [
+  const dataRequestObservations: any = await ssdaPool.query(sql, [
     dataRequestIds
   ]);
   if (!dataRequestObservations[0].length) {
@@ -126,7 +126,7 @@ const dataRequestFilesByDataRequestObservationIds = async (
     WHERE drf.dataRequestObservationId IN(?)
   `;
   // Retrieving data request observation files
-  const dataRequestFiles: any = await ssdaAdminPool.query(sql, [
+  const dataRequestFiles: any = await ssdaPool.query(sql, [
     dataRequestObservationIds
   ]);
   if (!dataRequestFiles[0].length) {

@@ -239,7 +239,7 @@ const Mutation = {
     }
 
     // Update the user details
-    await updateUser(userUpdateInfo, userToUpdate.id);
+    await updateUser(userUpdateInfo, userToUpdate.id, ctx.user.authProvider);
 
     return getUserById(userToUpdate.id);
   },

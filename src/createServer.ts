@@ -6,7 +6,7 @@ import { GraphQLServer } from "graphql-yoga";
 import passport from "passport";
 import passportLocal from "passport-local";
 import * as path from "path";
-import { ssdaPool } from "./db/pool";
+import { ssdaPool } from "./db/postgresql_pool";
 import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
 import authProvider from "./util/authProvider";

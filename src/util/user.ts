@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import { validate } from "isemail";
 import moment = require("moment");
 import { v4 as uuid } from "uuid";
-import { ssdaAdminPool, ssdaPool } from "../db/pool";
+import { ssdaPool } from "../db/postgresql_pool";
 import authProvider, { AuthProviderName } from "./authProvider";
 
 export interface IAuthProviderUser {
@@ -124,25 +124,26 @@ export const createUser = async (args: IUserCreateInput) => {
 
   // Get the id of the auth provider
   const authProviderIdSQL = `
-      SELECT authProviderId FROM AuthProvider WHERE authProvider=?
-      `;
-  const result: any = await ssdaAdminPool.query(authProviderIdSQL, [
-    authProvider
-  ]);
-  if (result[0].length === 0) {
+      SELECT auth_provider_id
+      FROM admin.auth_provider
+      WHERE auth_provider = $1
+  `;
+  const result: any = await ssdaPool.query(authProviderIdSQL, [authProvider]);
+  if (result.rows.length === 0) {
     throw new Error(`Unknown authentication provider: ${authProvider}`);
   }
-  const authProviderId = result[0][0].authProviderId;
+  const authProviderId = result.rows[0].auth_provider_id;
 
   // Insert the user with the given details into the database
   const userInsertSQL = `
-      INSERT INTO User (affiliation, email, familyName, givenName, authProviderId, authProviderUserId)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO admin.ssda_user (affiliation, email, family_name, given_name, auth_provider_id, auth_provider_user_id)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING ssda_user_id
   `;
-  const connection = await ssdaAdminPool.getConnection();
+  const client = await ssdaPool.connect();
   try {
-    await connection.beginTransaction();
-    await connection.query(userInsertSQL, [
+    await client.query("BEGIN");
+    const res: any = await client.query(userInsertSQL, [
       affiliation,
       lowerCaseEmail,
       familyName,
@@ -150,34 +151,27 @@ export const createUser = async (args: IUserCreateInput) => {
       authProviderId,
       authProvider !== "SSDA" ? authProviderUserId : uuid()
     ]);
+    const userId = res.rows[0].ssda_user_id;
 
     // If SSDA is used as the auth provider, we have to store the user credentials
     if (authProvider === "SSDA") {
-      // As the email is unique we can identify the new user by their email
-      const userIdSQL = `SELECT userId
-                         FROM User
-                         WHERE email = ?`;
-      const { userId } = ((await connection.query(userIdSQL, [
-        email
-      ])) as any)[0][0];
-
       // Hash the password before storing it in the database
       const hashedPassword = await bcrypt.hash(args.password, 10);
 
       // Store the user credentials
-      const authInsertSQL = `INSERT INTO SSDAUserAuth (userId, username, password)
-                             VALUES (?, ?, ?)`;
+      const authInsertSQL = `INSERT INTO admin.ssda_user_auth (user_id, username, password)
+                             VALUES ($1, $2, $3)`;
 
       // Add the new user to the database
-      await connection.query(authInsertSQL, [userId, username, hashedPassword]);
+      await client.query(authInsertSQL, [userId, username, hashedPassword]);
     }
 
-    await connection.commit();
+    await client.query("COMMIT");
   } catch (e) {
-    await connection.rollback();
+    await client.query("ROLLBACK");
     throw e;
   } finally {
-    connection.release();
+    client.release();
   }
 };
 
@@ -194,16 +188,15 @@ export const userRoles = async (
 
   // Query for retrieving user roles
   const sql = `
-    SELECT role
-    FROM Role AS r
-    JOIN UserRole AS ur ON ur.roleId = r.roleId
-    WHERE ur.userId = ?
+      SELECT role
+      FROM admin.role AS r
+               JOIN admin.user_role AS ur ON ur.role_id = r.role_id
+      WHERE user_id = $1
   `;
 
   // Querying and returning the user roles
-  const roles = ((await ssdaAdminPool.query(sql, [user.id])) as any)[0].map(
-    (row: any) => row.role
-  );
+  const res = await ssdaPool.query(sql, [user.id]);
+  const roles = res.rows.map((row: any) => row.role);
 
   return new Set<Role>(roles);
 };
@@ -213,15 +206,23 @@ export const getUserById = async (
 ): Promise<User | null> => {
   // Query for retrieving a user with the supplied id
   const sql = `
-    SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username, authProvider, authProviderUserId
-    FROM User AS u
-    JOIN AuthProvider AS ap ON u.authProviderId = ap.authProviderId
-    LEFT JOIN SSDAUserAuth As ua ON ua.userId = u.userId
-    WHERE u.userId = ?
+      SELECT ssda_user_id AS id,
+             affiliation,
+             email,
+             family_name,
+             given_name,
+             password,
+             username,
+             auth_provider,
+             auth_provider_user_id
+      FROM admin.ssda_user AS u
+               JOIN admin.auth_provider AS ap ON u.auth_provider_id = ap.auth_provider_id
+               LEFT JOIN admin.ssda_user_auth As ua ON ua.user_id = u.ssda_user_id
+      WHERE ssda_user_id = $1
   `;
 
   // Querying the user
-  const result: any = await ssdaAdminPool.query(sql, [userId]);
+  const result: any = await ssdaPool.query(sql, [userId]);
 
   return userFromResult(result);
 };
@@ -231,15 +232,23 @@ export const getUserByUsername = async (
 ): Promise<User | null> => {
   // Query for retrieving a user with the supplied username
   const sql = `
-    SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username, authProvider, authProviderUserId
-    FROM User AS u
-    JOIN AuthProvider AS ap ON u.authProviderId = ap.authProviderId
-    LEFT JOIN SSDAUserAuth As ua ON ua.userId = u.userId
-    WHERE ua.username = ?
+      SELECT ssda_user_id AS id,
+             affiliation,
+             email,
+             family_name,
+             given_name,
+             password,
+             username,
+             auth_provider,
+             u.auth_provider_user_id
+      FROM admin.ssda_user AS u
+               JOIN admin.auth_provider AS ap ON u.auth_provider_id = ap.auth_provider_id
+               LEFT JOIN admin.ssda_user_auth As ua ON ua.user_id = u.ssda_user_id
+      WHERE username = $1
   `;
 
   // Querying the user
-  const result: any = await ssdaAdminPool.query(sql, [username]);
+  const result: any = await ssdaPool.query(sql, [username]);
 
   return userFromResult(result);
 };
@@ -250,15 +259,24 @@ export const getUserByEmail = async (
 ): Promise<User | null> => {
   // Query for retrieving a user with the supplied email
   const sql = `
-    SELECT u.userId AS id, affiliation, email, familyName, givenName, password, username, authProvider, authProviderUserId
-    FROM User AS u
-    LEFT JOIN SSDAUserAuth AS ua ON ua.userId = u.userId
-    JOIN AuthProvider AS ap USING (authProviderId)
-    WHERE u.email = ? AND ap.authProvider = ?
+      SELECT ssda_user_id AS id,
+             affiliation,
+             email,
+             family_name,
+             given_name,
+             password,
+             username,
+             auth_provider,
+             auth_provider_user_id
+      FROM admin.ssda_user AS u
+               LEFT JOIN admin.ssda_user_auth AS ua ON ua.user_id = u.ssda_user_id
+               JOIN admin.auth_provider AS ap USING (auth_provider_id)
+      WHERE email = $1
+        AND auth_provider = $2
   `;
 
   // Querying the user
-  const result: any = await ssdaAdminPool.query(sql, [email, authProvider]);
+  const result: any = await ssdaPool.query(sql, [email, authProvider]);
 
   return userFromResult(result);
 };
@@ -269,16 +287,26 @@ export const getUserByAuthProviderDetails = async (
 ): Promise<User | null> => {
   // Query for retrieving a user with the supplied email
   const sql = `
-    SELECT u.userId AS id, affiliation, email, familyName, givenName, 
-    password, username, passwordResetToken, passwordResetTokenExpiry, authProvider, authProviderUserId
-    FROM User AS u
-    JOIN AuthProvider AS ap ON u.authProviderId = ap.authProviderId
-    LEFT JOIN SSDAUserAuth As ua ON ua.userId = u.userId
-    WHERE ap.authProvider = ? AND u.authProviderUserId = ?
+      SELECT ssda_user_id AS id,
+             affiliation,
+             email,
+             family_name,
+             given_name,
+             password,
+             username,
+             password_reset_token,
+             password_reset_token_expiry,
+             auth_provider,
+             auth_provider_user_id
+      FROM admin.ssda_user AS u
+               JOIN admin.auth_provider AS ap ON u.auth_provider_id = ap.auth_provider_id
+               LEFT JOIN admin.ssda_user_auth As ua ON ua.user_id = u.ssda_user_id
+      WHERE auth_provider = $1
+        AND auth_provider_user_id = $2
   `;
 
   // Querying the user
-  const result: any = await ssdaAdminPool.query(sql, [
+  const result: any = await ssdaPool.query(sql, [
     authProviderName,
     authProviderUserId
   ]);
@@ -291,39 +319,48 @@ export const getUserByToken = async (
 ): Promise<User | null> => {
   // Query for retrieving a user with the supplied email
   const sql = `
-    SELECT u.userId AS id, affiliation, email, familyName, givenName, 
-    password, username, passwordResetToken, passwordResetTokenExpiry, authProvider, authProviderUserId
-    FROM User AS u
-    JOIN AuthProvider AS ap ON u.authProviderId = ap.authProviderId
-    LEFT JOIN SSDAUserAuth As ua ON ua.userId = u.userId
-    WHERE ua.passwordResetToken = ?
+      SELECT ssda_user_id AS id,
+             affiliation,
+             email,
+             family_name,
+             given_name,
+             password,
+             username,
+             password_reset_token,
+             password_reset_token_expiry,
+             auth_provider,
+             auth_provider_user_id
+      FROM admin.ssda_user AS u
+               JOIN admin.auth_provider AS ap ON u.auth_provider_id = ap.auth_provider_id
+               LEFT JOIN admin.ssda_user_auth As ua ON ua.user_id = u.ssda_user_id
+      WHERE password_reset_token = $1
   `;
 
   // Querying the user
-  const result: any = await ssdaAdminPool.query(sql, [passwordResetToken]);
+  const result: any = await ssdaPool.query(sql, [passwordResetToken]);
 
   return userFromResult(result);
 };
 
 const userFromResult = async (result: any): Promise<User | null> => {
-  if (result[0].length === 0) {
+  if (result.rows.length === 0) {
     return null;
   }
-  const user: any = result[0][0];
+  const user: any = result.rows[0];
 
   const roles = await userRoles(user);
 
   return {
     affiliation: user.affiliation,
-    authProvider: user.authProvider,
-    authProviderUserId: user.authProviderUserId,
+    authProvider: user.auth_provider,
+    authProviderUserId: user.auth_provider_user_id,
     email: user.email,
-    familyName: user.familyName,
-    givenName: user.givenName,
+    familyName: user.family_name,
+    givenName: user.given_name,
     id: user.id,
     password: user.password || "",
-    passwordResetToken: user.passwordResetToken,
-    passwordResetTokenExpiry: user.passwordResetTokenExpiry,
+    passwordResetToken: user.password_reset_token,
+    passwordResetTokenExpiry: user.password_reset_token_expiry,
     roles,
     username: user.username || ""
   };
@@ -334,28 +371,59 @@ const userFromResult = async (result: any): Promise<User | null> => {
  *
  * @param userUpdateInfo user information to update
  * @param userId user id to update
+ * @param authProvider authentication provider
  */
 export const updateUser = async (
   userUpdateInfo: IUserUpdateInput,
-  userId: string | number
+  userId: string | number,
+  authProvider: AuthProviderName
 ) => {
-  // Query for updating user unformation.
-  const userUpdateSQL = `
-    UPDATE User u INNER JOIN SSDAUserAuth ua ON (u.userId = ua.userId)
-    SET u.affiliation=?, u.email=?, u.familyName=?, u.givenName=?, ua.password=?, ua.username=?
-    WHERE u.userId=?
-  `;
+  const client = await ssdaPool.connect();
+  await client.query("BEGIN");
 
-  // Update the user details
-  await ssdaAdminPool.query(userUpdateSQL, [
-    userUpdateInfo.affiliation,
-    userUpdateInfo.email,
-    userUpdateInfo.familyName,
-    userUpdateInfo.givenName,
-    userUpdateInfo.password,
-    userUpdateInfo.username,
-    userId
-  ]);
+  try {
+    // Query for updating user information.
+    const userUpdateSQL = `
+        UPDATE admin.ssda_user
+        SET affiliation=$1,
+            email=$2,
+            family_name=$3,
+            given_name=$4
+        WHERE ssda_user_id = $5
+    `;
+
+    // Update the user details
+    await ssdaPool.query(userUpdateSQL, [
+      userUpdateInfo.affiliation,
+      userUpdateInfo.email,
+      userUpdateInfo.familyName,
+      userUpdateInfo.givenName,
+      userId
+    ]);
+
+    // Query for updating authentication details.
+    if (authProvider == "SSDA") {
+      const authUpdateQuery = `
+          UPDATE admin.ssda_user_auth
+          SET username=$1,
+              password=$2
+          WHERE user_id = $3
+      `;
+
+      // Update the authentication details.
+      client.query(authUpdateQuery, [
+        userUpdateInfo.username,
+        userUpdateInfo.password,
+        userUpdateInfo.id
+      ]);
+    }
+
+    client.query("COMMIT");
+  } catch (e) {
+    client.query("ROLLBACK");
+  } finally {
+    client.release();
+  }
 };
 
 /**
@@ -372,16 +440,24 @@ export const setUserToken = async (
 ) => {
   // Query for setting user password reset token.
   const setUserTokenSQL = `
-    UPDATE SSDAUserAuth ua INNER JOIN User u ON (u.userId = ua.userId)
-    SET passwordResetToken=?, passwordResetTokenExpiry=?
-    WHERE email=?
+      WITH id (id) AS (
+          SELECT user_id
+          FROM admin.ssda_user_auth ua
+          JOIN admin.ssda_user u ON ua.user_id=u.ssda_user_id
+          JOIN admin.auth_provider ap ON u.auth_provider_id=ap.auth_provider_id
+          WHERE email=$1 AND auth_provider=$2
+      )
+      UPDATE ssda_user_auth
+      SET password_reset_token=$3, password_reset_token_expiry=$4
+      WHERE user_id=(SELECT id FROM id);
   `;
 
   // Update the user details
-  await ssdaAdminPool.query(setUserTokenSQL, [
+  await ssdaPool.query(setUserTokenSQL, [
+    email,
+    "SSDA",
     passwordResetToken,
-    passwordResetTokenExpiry,
-    email
+    passwordResetTokenExpiry
   ]);
 
   return true;
@@ -399,17 +475,15 @@ export const changeUserPassword = async (
 ) => {
   // Query for setting user password reset token.
   const sql = `
-    UPDATE SSDAUserAuth SET password=?, passwordResetToken=?, passwordResetTokenExpiry=?
-    WHERE passwordResetToken=?
+      UPDATE admin.ssda_user_auth
+      SET password=$1,
+          password_reset_token=NULL,
+          password_reset_token_expiry=NULL
+      WHERE password_reset_token=$2
   `;
 
   // Update the user details
-  await ssdaAdminPool.query(sql, [
-    newPassword,
-    "",
-    moment(Date.now()).toDate(),
-    passwordResetToken
-  ]);
+  await ssdaPool.query(sql, [newPassword, passwordResetToken]);
 
   return true;
 };
@@ -420,7 +494,7 @@ export const changeUserPassword = async (
  * @param user user information
  */
 export const isAdmin = (user: User | undefined) =>
-  user && user.roles.has("ADMIN");
+  user && user.roles && user.roles.has("ADMIN");
 
 /**
  * Check whether a user may view a data file.
@@ -461,16 +535,18 @@ export const mayViewAllOfDataFiles = async (
 
   // Get all the release dates
   const sql = `
-    SELECT dataFileId, publicFrom
-           FROM DataFile JOIN Observation USING (observationId)
-    WHERE dataFileId IN (?)
+      SELECT artifact_id, data_release
+      FROM artifact a
+      JOIN plane p on a.plane_id = p.plane_id
+      JOIN observation o on p.observation_id = o.observation_id
+      WHERE artifact_id = ANY($1)
   `;
   const results: any = await ssdaPool.query(sql, [ids]);
 
   // Collect the release dates
   const releaseDates = new Map<string, number>();
-  results[0].forEach((row: any) =>
-    releaseDates.set(row.dataFileId.toString(), row.publicFrom)
+  results.rows.forEach((row: any) =>
+    releaseDates.set(row.artifact_id.toString(), row.data_release)
   );
 
   // Filter out the files that are public
@@ -515,15 +591,15 @@ export const ownsOutOfDataFiles = async (
   // Get the list of files owned by the user
   const institution = authProvider(user.authProvider).institution;
   const sql = `
-SELECT dataFileId
-    FROM DataFile
-    JOIN Observation ON (DataFile.observationId=Observation.observationId)
-    JOIN Proposal ON (Observation.proposalId=Proposal.proposalId)
-    JOIN ProposalInvestigator ON (Proposal.proposalId=ProposalInvestigator.proposalId)
-    JOIN Institution ON (Proposal.institutionId=Institution.institutionId)
-WHERE ProposalInvestigator.institutionUserId=?
-      AND Institution.institutionName=?
-      AND DataFile.dataFileId IN (?)`;
+      SELECT dataFileId
+      FROM DataFile
+               JOIN Observation ON (DataFile.observationId = Observation.observationId)
+               JOIN Proposal ON (Observation.proposalId = Proposal.proposalId)
+               JOIN ProposalInvestigator ON (Proposal.proposalId = ProposalInvestigator.proposalId)
+               JOIN Institution ON (Proposal.institutionId = Institution.institutionId)
+      WHERE ProposalInvestigator.institutionUserId = ?
+        AND Institution.institutionName = ?
+        AND DataFile.dataFileId IN (?)`;
 
   const results: any = await ssdaPool.query(sql, [
     user.authProviderUserId,

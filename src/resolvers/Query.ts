@@ -1,7 +1,7 @@
 import fs from "fs";
 import moment from "moment";
 import * as Path from "path";
-import { ssdaPool } from "../db/pool";
+import { ssdaPool } from "../db/postgresql_pool";
 import { getUserById, getUserByToken, User } from "../util/user";
 import { queryDataFiles } from "./serchResults";
 
@@ -107,7 +107,7 @@ const Query = {
     `;
 
     // Querying the data previews
-    const rows = (await ssdaPool.query(sql, [args.dataFileId]))[0];
+    const rows = (await ssdaPool.query(sql, [args.dataFileId])).rows;
 
     const results: IDataPreview = {
       fitsHeader: "",
