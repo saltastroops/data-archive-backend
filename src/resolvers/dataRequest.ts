@@ -32,67 +32,47 @@ export const createDataRequest = async (dataFiles: [number], user: any) => {
   if (!mayRequest) {
     throw new Error("You are not allowed to request some of the files");
   }
-  let strDataFilesIds = "";
-  dataFiles.forEach(id => {
-    strDataFilesIds += id.toString() + ",";
-  });
 
-  // Get data files info
+  const client = await ssdaPool.connect();
+  try {
+    await client.query("BEGIN");
 
-  const groupedDataFiles = groupByObservation(
-    ((await ssdaPool.query(
-      `
-  SELECT 
-      telescopeObservationId, 
-      Observation.observationId as observationId, 
-      telescopeName, dataFileName as name,
-      DataFile.dataFileId as uuid
-  FROM DataFile
-    JOIN Observation ON(Observation.observationId=DataFile.observationId)
-    JOIN Telescope ON(Telescope.telescopeId=Observation.telescopeId)
-  WHERE dataFileId IN (${dataFiles.join(", ")})
-  `,
-      []
-    )) as any)[0]
-  );
+    const dataRequestSQL = `
+    WITH pending_id (id) AS (
+        SELECT data_request_status_id
+        FROM admin.data_request_status
+        WHERE status='Pending'
+    )
+    INSERT INTO admin.data_request (made_at,
+                                    ssda_user_id,
+                                    data_request_status_id)
+    VALUES (now(), $1, (SELECT id FROM pending_id))
+    RETURNING data_request_id
+    `;
 
-  // Get pending status
-  const pendingStatusId = ((await ssdaPool.query(
-    `
-    SELECT dataRequestStatusId FROM DataRequestStatus WHERE dataRequestStatus=?`,
-    ["PENDING"]
-  )) as any)[0][0].dataRequestStatusId;
+    const res = await client.query(dataRequestSQL, [user.id]);
+    const dataRequestId = res.rows[0].data_request_id;
 
-  // Create a data request
-  const newDataRequestId = ((await ssdaPool.query(
-    `INSERT INTO DataRequest (dataRequestStatusId, madeAt, userId) VALUES (?, ?, ?)`,
-    [pendingStatusId, new Date(), user.id]
-  )) as any)[0].insertId;
+    const dataRequestArtifactSQL = `
+        INSERT INTO admin.data_request_artifact (data_request_id, artifact_id)
+        VALUES ($1, $2)
+    `;
+    dataFileIdStrings.map(async dataFileId => {
+      await client.query(dataRequestArtifactSQL, [dataRequestId, dataFileId]);
+    });
 
-  groupedDataFiles.forEach(async (observation: any, key: string) => {
-    const newObzId = ((await ssdaPool.query(
-      `
-    INSERT INTO DataRequestObservation (dataRequestId, name) VALUES (?, ?)
-    `,
-      [newDataRequestId, key]
-    )) as any)[0].insertId;
-    Promise.all(
-      Array.from(observation).map(async (file: any) => {
-        await ssdaPool.query(
-          `
-      INSERT INTO DataRequestFile (dataRequestObservationId, dataFileUUID, name) VALUES (?, ?, ?)
-      `,
-          [newObzId, file.uuid, file.name]
-        );
-        return;
-      })
-    );
-  });
+    await client.query("COMMIT");
 
-  zipDataRequest(dataFiles, newDataRequestId);
+    zipDataRequest(dataFileIdStrings, dataRequestId);
 
-  return {
-    message: "The data request was successfully requested",
-    status: true
-  };
+    return {
+      message: "The data request was successfully requested",
+      status: true
+    };
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw e;
+  } finally {
+    client.release();
+  }
 };

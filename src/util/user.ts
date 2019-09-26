@@ -418,9 +418,9 @@ export const updateUser = async (
       ]);
     }
 
-    client.query("COMMIT");
+    await client.query("COMMIT");
   } catch (e) {
-    client.query("ROLLBACK");
+    await client.query("ROLLBACK");
   } finally {
     client.release();
   }
@@ -544,15 +544,15 @@ export const mayViewAllOfDataFiles = async (
   const results: any = await ssdaPool.query(sql, [ids]);
 
   // Collect the release dates
-  const releaseDates = new Map<string, number>();
+  const releaseDates = new Map<string, Date>();
   results.rows.forEach((row: any) =>
-    releaseDates.set(row.artifact_id.toString(), row.data_release)
+    releaseDates.set(row.artifact_id, row.data_release)
   );
 
   // Filter out the files that are public
-  const now = Date.now();
+  const now = new Date();
   const proprietaryIds = ids.filter(
-    id => !(releaseDates.has(id) && (releaseDates.get(id) as number) <= now)
+    id => !(releaseDates.has(id) && (releaseDates.get(id) as Date) <= now)
   );
 
   // Check which of the remaining files the user owns
@@ -591,22 +591,21 @@ export const ownsOutOfDataFiles = async (
   // Get the list of files owned by the user
   const institution = authProvider(user.authProvider).institution;
   const sql = `
-      SELECT dataFileId
-      FROM DataFile
-               JOIN Observation ON (DataFile.observationId = Observation.observationId)
-               JOIN Proposal ON (Observation.proposalId = Proposal.proposalId)
-               JOIN ProposalInvestigator ON (Proposal.proposalId = ProposalInvestigator.proposalId)
-               JOIN Institution ON (Proposal.institutionId = Institution.institutionId)
-      WHERE ProposalInvestigator.institutionUserId = ?
-        AND Institution.institutionName = ?
-        AND DataFile.dataFileId IN (?)`;
-
-  const results: any = await ssdaPool.query(sql, [
+  SELECT artifact_id
+  FROM observations.artifact a
+JOIN observations.plane p on a.plane_id = p.plane_id
+JOIN observations.observation o on p.observation_id = o.observation_id
+JOIN observations.proposal p2 on o.proposal_id = p2.proposal_id
+JOIN admin.proposal_investigator pi ON p2.proposal_id = pi.proposal_id
+JOIN observations.institution i ON p2.institution_id = i.institution_id
+WHERE pi.institution_user_id=$1 AND i.abbreviated_name=$2 AND a.artifact_id = ANY($3)
+  `;
+  const res: any = await ssdaPool.query(sql, [
     user.authProviderUserId,
     institution,
     ids
   ]);
-  const ownedIds = results[0].map((row: any) => row.dataFileId.toString());
+  const ownedIds = res.rows.map((row: any) => row.artifact_id);
 
   return new Set(ownedIds);
 };
