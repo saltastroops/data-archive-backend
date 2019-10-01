@@ -206,7 +206,7 @@ type User {
   """
   Username, which must not contain upper case letters.
   """
-  username: String!
+  username: String
 
   """
   Email address, which will be stored as lower case.
@@ -307,20 +307,10 @@ type DataRequest {
   uri: String
   # The date a data request was made
   madeAt: DateTime!
-  # The data request observations
-  observations: [DataRequestObservation!]!
+  # The requested data files
+  dataFiles: [DataFile!]!
   # The status of the data request
   status: DataRequestStatus!
-}
-
-# Details about the data request oobservation
-type DataRequestObservation {
-  # Id of the data data request observation
-  id: ID!
-  # Observation name
-  name: String
-  # The data request observation files
-  dataFiles: [DataFile!]!
 }
 
 # The data request status
