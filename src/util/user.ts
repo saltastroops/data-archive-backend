@@ -44,7 +44,7 @@ export interface IUserUpdateInput {
   username: string;
 }
 
-type Role = "ADMIN";
+export type Role = "Admin";
 
 /**
  * Create a new user with the given details.
@@ -494,7 +494,7 @@ export const changeUserPassword = async (
  * @param user user information
  */
 export const isAdmin = (user: User | undefined) =>
-  user && user.roles && user.roles.has("ADMIN");
+  user && user.roles && user.roles.has("Admin");
 
 /**
  * Check whether a user may view a data file.

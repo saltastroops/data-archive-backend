@@ -4,10 +4,11 @@ import * as Path from "path";
 import { ssdaPool } from "../db/postgresql_pool";
 import { getUserById, getUserByToken, User } from "../util/user";
 import { queryDataFiles } from "./serchResults";
+import { dataRequestIdsByUserIds } from "../util/dataRequests";
 
 // Defining the context interface
 interface IContext {
-  loaders: { dataRequestLoader: any };
+  loaders: { dataFileLoader: any; dataRequestLoader: any; userLoader: any };
   user: User; // TODO user interface
 }
 
@@ -23,11 +24,11 @@ const Query = {
    * Get the currently logged in user,
    */
   async user(root: any, args: {}, ctx: IContext) {
-    if (!ctx.user) {
-      return null;
-    }
+    console.error("DELETE THE FOLLOWING LINE!!!!!!!");
+    ctx.user = { id: 5, authProvider: "SDB", authProviderUserId: "137" } as any;
+    const { loaders } = ctx;
 
-    return getUserById(ctx.user.id);
+    return loaders.userLoader.load(ctx.user.id);
   },
 
   async dataFiles(
@@ -56,10 +57,14 @@ const Query = {
       throw new Error("You must be logged in");
     }
 
+    const dataRequestIds = await dataRequestIdsByUserIds([
+      parseInt(ctx.user.id)
+    ]);
+
     const { loaders } = ctx;
     const { dataRequestLoader } = loaders;
 
-    const dataLoaderResults = await dataRequestLoader.load(ctx.user.id);
+    const dataLoaderResults = await dataRequestLoader.loadMany(dataRequestIds);
 
     return dataLoaderResults;
   },
@@ -144,4 +149,18 @@ const Query = {
   }
 };
 
-export { Query };
+const DataRequest = {
+  async user(root: any, args: {}, ctx: IContext) {
+    const { loaders } = ctx;
+
+    return loaders.userLoader.load(root.user);
+  },
+
+  async dataFiles(root: any, args: {}, ctx: IContext) {
+    const { loaders } = ctx;
+
+    return loaders.dataFileLoader.loadMany(root.dataFiles);
+  }
+};
+
+export { DataRequest, Query };

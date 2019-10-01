@@ -1,8 +1,9 @@
 import { Mutation } from "./Mutation";
-import { Query } from "./Query";
+import { DataRequest, Query } from "./Query";
 
 // Defining resolvers
 const resolvers = {
+  DataRequest,
   Mutation,
   Query
 };

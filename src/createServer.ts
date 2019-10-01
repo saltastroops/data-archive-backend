@@ -10,7 +10,7 @@ import { ssdaPool } from "./db/postgresql_pool";
 import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
 import authProvider from "./util/authProvider";
-import { dataRequestDataLoader } from "./util/dataRequests";
+import { dataFileDataLoader, dataRequestDataLoader, userDataLoader } from "./util/loaders";
 import {
   getUserById,
   isAdmin,
@@ -60,7 +60,9 @@ const createServer = async () => {
   const server = new GraphQLServer({
     context: (req: any) => ({
       loaders: {
-        dataRequestLoader: dataRequestDataLoader()
+        dataRequestLoader: dataRequestDataLoader(),
+        dataFileLoader: dataFileDataLoader(req.request.user),
+        userLoader: userDataLoader()
       },
       prisma,
       user: req.request.user
