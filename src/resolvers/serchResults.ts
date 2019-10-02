@@ -65,7 +65,7 @@ export const queryDataFiles = async (
       SELECT ${Array.from(fields).join(", ")}
              FROM ${sqlFrom}
       WHERE ${whereDetails.sql}
-      ORDER BY DataFile.startTime DESC
+      ORDER BY observations.observation_time.start_time DESC
       LIMIT ? OFFSET ?
              `;
   const itemResults: any = (await ssdaPool.query(itemSQL, [
