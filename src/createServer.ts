@@ -422,19 +422,22 @@ async function downloadDataRequest({
     FROM admin.data_request dr
     JOIN admin.data_request_status
     ON dr.data_request_status_id = data_request_status.data_request_status_id
-    WHERE data_request_id = ANY ($1)
+    WHERE data_request_id=$1
   `;
-  const dataRequest: any = await ssdaPool.query(dataRequestsSQL, [dataRequestId]);
+  const queryResult: any = await ssdaPool.query(dataRequestsSQL, [dataRequestId]);
+  const rows = queryResult.rows;
 
-  if (!dataRequest.length) {
+  if (!rows.length) {
     return res.status(404).send(notFound);
   }
+
+  const dataRequest = queryResult.rows[0];
 
   // TODO UPDATE include dataRequest interface according to the mysql database
   // Check that the user may download content for the data request, either
   // because they own the request or because they are an administrator.
   const mayDownload =
-    ownsDataRequest(dataRequest[0], req.user) || isAdmin(req.user);
+    ownsDataRequest({ user: { id: dataRequest.ssda_user_id } }, req.user) || isAdmin(req.user);
 
   if (!mayDownload) {
     return res.status(403).send({
@@ -444,7 +447,13 @@ async function downloadDataRequest({
   }
 
   // Get the download URI
-  const uri = dataRequest[0].path;
+  const uri = dataRequest.path;
+
+  // Handle a missing path
+  if (!uri) {
+    res.status(404).send(notFound);
+    return;
+  }
 
   // Download the data request file
   res.download(uri, filename, err => {

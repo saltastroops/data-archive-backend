@@ -614,11 +614,11 @@ WHERE pi.institution_user_id=$1 AND i.abbreviated_name=$2 AND a.artifact_id = AN
 /**
  * A function that checks if the user owns the data request
  *
- * @param dataReqeust the data reuest
+ * @param dataRequest the data request
  * @param user user information
  */
-export const ownsDataRequest = (dataReqeust: any, user: User) =>
-  dataReqeust.user.id === user.id;
+export const ownsDataRequest = (dataRequest: any, user: User) =>
+  dataRequest.user.id === user.id;
 
 // Check whether a password is sufficiently strong.
 function checkPasswordStrength(password: string) {
