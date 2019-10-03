@@ -82,6 +82,13 @@ export class WhereConditionContent {
  * An object with The SQL statement, its values abd the columns used.
  */
 export function parseWhereCondition(where: string): WhereConditionContent {
+  let valueCounter = 0;
+
+  function parameterPlaceholder() {
+    valueCounter++;
+    return `\$${valueCounter}`;
+  }
+
   function convertToSQL(o: any): WhereConditionContent {
     let sql: string;
     let values: Array<boolean | number | string>;
@@ -134,7 +141,7 @@ export function parseWhereCondition(where: string): WhereConditionContent {
     } else if (o.EQUALS) {
       validateColumn(o.EQUALS.column);
       validateValue(o.EQUALS.value);
-      sql = "(" + o.EQUALS.column + " = ?)";
+      sql = "(" + o.EQUALS.column + " = " + parameterPlaceholder() + ")";
       values = [o.EQUALS.value];
       columns.add(o.EQUALS.column);
     } else if (o.IS_NULL) {
@@ -145,19 +152,19 @@ export function parseWhereCondition(where: string): WhereConditionContent {
     } else if (o.LESS_THAN) {
       validateColumn(o.LESS_THAN.column);
       validateValue(o.LESS_THAN.value);
-      sql = "(" + o.LESS_THAN.column + " < ?)";
+      sql = "(" + o.LESS_THAN.column + " < " + parameterPlaceholder() + ")";
       values = [o.LESS_THAN.value];
       columns.add(o.LESS_THAN.column);
     } else if (o.GREATER_THAN) {
       validateColumn(o.GREATER_THAN.column);
       validateValue(o.GREATER_THAN.value);
-      sql = "(" + o.GREATER_THAN.column + " > ?)";
+      sql = "(" + o.GREATER_THAN.column + " > " + parameterPlaceholder() + ")";
       values = [o.GREATER_THAN.value];
       columns.add(o.GREATER_THAN.column);
     } else if (o.LESS_EQUAL) {
       validateColumn(o.LESS_EQUAL.column);
       validateValue(o.LESS_EQUAL.value);
-      sql = "(" + o.LESS_EQUAL.column + " <= ?)";
+      sql = "(" + o.LESS_EQUAL.column + " <= " + parameterPlaceholder() + ")";
       values = [o.LESS_EQUAL.value];
       columns.add(o.LESS_EQUAL.column);
     } else if (o.GREATER_EQUAL) {
@@ -172,16 +179,23 @@ export function parseWhereCondition(where: string): WhereConditionContent {
       sql =
         "(" +
         o.IS_IN.column +
-        " IN (" +
-        o.IS_IN.values.map((v: any) => "?").join(", ") +
-        "))";
+        " = ANY(ARRAY[" +
+        o.IS_IN.values.map((v: any) => parameterPlaceholder()).join(", ") +
+        "]))";
       values = [...o.IS_IN.values];
       columns.add(o.IS_IN.column);
     } else if (o.CONTAINS) {
       validateColumn(o.CONTAINS.column);
       validateValue(o.CONTAINS.value);
       const escapeChar = escapeCharacter(o.CONTAINS.value);
-      sql = "(" + o.CONTAINS.column + " LIKE ? ESCAPE '" + escapeChar + "')";
+      sql =
+        "(" +
+        o.CONTAINS.column +
+        " LIKE " +
+        parameterPlaceholder() +
+        " ESCAPE '" +
+        escapeChar +
+        "')";
       values = [
         "%" + o.CONTAINS.value.replace(/([%_])/g, escapeChar + "$1") + "%"
       ];
@@ -190,7 +204,14 @@ export function parseWhereCondition(where: string): WhereConditionContent {
       validateColumn(o.STARTS_WITH.column);
       validateValue(o.STARTS_WITH.value);
       const escapeChar = escapeCharacter(o.STARTS_WITH.value);
-      sql = "(" + o.STARTS_WITH.column + " LIKE ? ESCAPE '" + escapeChar + "')";
+      sql =
+        "(" +
+        o.STARTS_WITH.column +
+        " LIKE " +
+        parameterPlaceholder() +
+        " ESCAPE '" +
+        escapeChar +
+        "')";
       values = [
         o.STARTS_WITH.value.replace(/([%_])/g, escapeChar + "$1") + "%"
       ];
@@ -199,7 +220,14 @@ export function parseWhereCondition(where: string): WhereConditionContent {
       validateColumn(o.ENDS_WITH.column);
       validateValue(o.ENDS_WITH.value);
       const escapeChar = escapeCharacter(o.ENDS_WITH.value);
-      sql = "(" + o.ENDS_WITH.column + " LIKE ? ESCAPE '" + escapeChar + "')";
+      sql =
+        "(" +
+        o.ENDS_WITH.column +
+        " LIKE " +
+        parameterPlaceholder() +
+        " ESCAPE '" +
+        escapeChar +
+        "')";
       values = ["%" + o.ENDS_WITH.value.replace(/([%_])/g, escapeChar + "$1")];
       columns.add(o.ENDS_WITH.column);
     } else if (o.WITHIN_RADIUS) {
@@ -259,20 +287,20 @@ export function parseWhereCondition(where: string): WhereConditionContent {
         const minRA = rightAscension - dRA;
         const maxRA = rightAscension + dRA;
         if (minRA < 0) {
-          sql += `((${rightAscensionColumn} BETWEEN 0 AND ?) OR (${rightAscensionColumn} BETWEEN ? AND 360))`;
+          sql += `((${rightAscensionColumn} BETWEEN 0 AND " + parameterPlaceholder() + ") OR (${rightAscensionColumn} BETWEEN " + parameterPlaceholder() + " AND 360))`;
           values.push(maxRA, 360 + minRA);
         } else if (maxRA > 360) {
-          sql += `((${rightAscensionColumn} BETWEEN 0 AND ?) OR (${rightAscensionColumn} BETWEEN ? AND 360))`;
+          sql += `((${rightAscensionColumn} BETWEEN 0 AND " + parameterPlaceholder() + ") OR (${rightAscensionColumn} BETWEEN " + parameterPlaceholder() + " AND 360))`;
           values.push(maxRA - 360, minRA);
         } else {
-          sql += `(${rightAscensionColumn} BETWEEN ? AND ?)`;
+          sql += `(${rightAscensionColumn} BETWEEN " + parameterPlaceholder() + " AND " + parameterPlaceholder() + ")`;
           values.push(minRA, maxRA);
         }
 
         // limiting declination
         const minDec = declination - 2 * radius;
         const maxDec = declination + 2 * radius;
-        sql += ` AND (${declinationColumn} BETWEEN ? AND ?)`;
+        sql += ` AND (${declinationColumn} BETWEEN " + parameterPlaceholder() + " AND " + parameterPlaceholder() + ")`;
         values.push(minDec, maxDec);
 
         sql += ")";
@@ -281,7 +309,7 @@ export function parseWhereCondition(where: string): WhereConditionContent {
         // restrict right ascension values.
         const minDec = Math.max(declination - 2 * radius, -90);
         const maxDec = Math.min(declination + 2 * radius, 90);
-        sql += `(${declinationColumn} BETWEEN ? AND ?)`;
+        sql += `(${declinationColumn} BETWEEN " + parameterPlaceholder() + " AND " + parameterPlaceholder() + ")`;
         values.push(minDec, maxDec);
       }
 
@@ -296,7 +324,8 @@ export function parseWhereCondition(where: string): WhereConditionContent {
       // See
       // https://www.plumislandmedia.net/mysql/vicenty-great-circle-distance-formula/
       // for a possible implementation of the function.
-      sql += ` AND (ANGULAR_DISTANCE(${declinationColumn}, ${rightAscensionColumn}, ?, ?) <= ?)`;
+      if (0 == 0) throw new Error("NOT UPDATED YET!!!");
+      sql += ` AND (ANGULAR_DISTANCE(${declinationColumn}, ${rightAscensionColumn}, " + parameterPlaceholder() + ", " + parameterPlaceholder() + ") <= " + parameterPlaceholder() + ")`;
       values.push(declination, rightAscension, radius);
       sql += ")";
 
@@ -412,9 +441,9 @@ export function createFromExpression(columns: Set<string>, dm: DatabaseModel) {
 
   // Now that we have the tables we can construct the FROM expression by joining
   // the tables with their JOIN statements
-  let fromSQL = `\`${tables[0]}\``;
+  let fromSQL = `"${tables[0]}"`;
   for (let i = 1; i < tables.length; i++) {
-    fromSQL += ` LEFT JOIN \`${tables[i]}\` ON (${dm.table(tables[i]).join})`;
+    fromSQL += ` LEFT JOIN "${tables[i]}" ON (${dm.table(tables[i]).join})`;
   }
   return fromSQL;
 }
