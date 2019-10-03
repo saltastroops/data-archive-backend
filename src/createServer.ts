@@ -7,7 +7,6 @@ import passport from "passport";
 import passportLocal from "passport-local";
 import * as path from "path";
 import { ssdaPool } from "./db/postgresql_pool";
-import { prisma } from "./generated/prisma-client";
 import { resolvers } from "./resolvers";
 import authProvider from "./util/authProvider";
 import { dataFileDataLoader, dataRequestDataLoader, userDataLoader } from "./util/loaders";
@@ -60,11 +59,10 @@ const createServer = async () => {
   const server = new GraphQLServer({
     context: (req: any) => ({
       loaders: {
-        dataRequestLoader: dataRequestDataLoader(),
         dataFileLoader: dataFileDataLoader(req.request.user),
+        dataRequestLoader: dataRequestDataLoader(),
         userLoader: userDataLoader()
       },
-      prisma,
       user: req.request.user
     }),
     resolvers,
@@ -408,7 +406,6 @@ interface IDataRequestDownloadParameters {
 
 async function downloadDataRequest({
   dataRequestId,
-  dataRequestPartId,
   filename,
   req,
   res
@@ -419,21 +416,17 @@ async function downloadDataRequest({
     success: false
   };
 
-  // TODO UPDATE INCLUDE MORE INFORMATION IN THE FRAGMENT AS REQUIRED
-  const dataRequest = await prisma.dataRequest({ id: dataRequestId })
-    .$fragment(`{
-    id
-    uri
-    parts{
-      id
-      uri
-    }
-    user{
-      id
-    }
-  }`);
+  // get the data requests
+  const dataRequestsSQL = `
+    SELECT data_request_id, path, status, made_at, ssda_user_id
+    FROM admin.data_request dr
+    JOIN admin.data_request_status
+    ON dr.data_request_status_id = data_request_status.data_request_status_id
+    WHERE data_request_id = ANY ($1)
+  `;
+  const dataRequest: any = await ssdaPool.query(dataRequestsSQL, [dataRequestId]);
 
-  if (!dataRequest) {
+  if (!dataRequest.length) {
     return res.status(404).send(notFound);
   }
 
@@ -441,7 +434,7 @@ async function downloadDataRequest({
   // Check that the user may download content for the data request, either
   // because they own the request or because they are an administrator.
   const mayDownload =
-    ownsDataRequest(dataRequest, req.user) || isAdmin(req.user);
+    ownsDataRequest(dataRequest[0], req.user) || isAdmin(req.user);
 
   if (!mayDownload) {
     return res.status(403).send({
@@ -451,18 +444,7 @@ async function downloadDataRequest({
   }
 
   // Get the download URI
-  let uri: string;
-  if (dataRequestPartId) {
-    const dataRequestPart = (dataRequest as any).parts.find(
-      (part: any) => part.id === dataRequestPartId
-    );
-    if (!dataRequestPart) {
-      return res.status(404).send(notFound);
-    }
-    uri = dataRequestPart.uri;
-  } else {
-    uri = (dataRequest as any).uri;
-  }
+  const uri = dataRequest[0].path;
 
   // Download the data request file
   res.download(uri, filename, err => {
