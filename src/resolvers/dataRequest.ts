@@ -1,6 +1,6 @@
 import { ssdaPool } from "../db/postgresql_pool";
-import { zipDataRequest } from "../util/zipDataRequest";
 import { mayViewAllOfDataFiles } from "../util/user";
+import { zipDataRequest } from "../util/zipDataRequest";
 
 async function asyncForEach(array: any, callback: any) {
   for (let index = 0; index < array.length; index++) {

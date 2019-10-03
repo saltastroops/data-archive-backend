@@ -18,7 +18,7 @@ async function batchGetDataRequests(ids: number[]) {
   const dataRequestsRes = await ssdaPool.query(dataRequestsSQL, [ids]);
   const dataRequests = dataRequestsRes.rows.map((d: any) => ({
     ...d,
-    data_request_id: parseInt(d.data_request_id)
+    data_request_id: parseInt(d.data_request_id, 10)
   }));
 
   // Use an int rather than string as id
@@ -34,10 +34,10 @@ async function batchGetDataRequests(ids: number[]) {
 
   // Group the artifacts by data requests
   const dataRequestArtifacts = new Map<number, number[]>();
-  for (let id of ids) {
+  for (const id of ids) {
     dataRequestArtifacts.set(id, []);
   }
-  for (let row of artifacts) {
+  for (const row of artifacts) {
     (dataRequestArtifacts.get(row.data_request_id) as any).push(
       row.artifact_id
     );
@@ -107,10 +107,10 @@ async function batchGetUsers(ids: number[]) {
 
   // Group the roles by user
   const userRoles = new Map<number, Role[]>();
-  for (let id of ids) {
+  for (const id of ids) {
     userRoles.set(id, []);
   }
-  for (let role of roles) {
+  for (const role of roles) {
     (userRoles.get(role.user_id) as any).push(role.role as Role);
   }
 

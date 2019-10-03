@@ -18,5 +18,5 @@ export const dataRequestIdsByUserIds = async (
   `;
   const res: any = await ssdaPool.query(sql, [userIds]);
 
-  return res.rows.map((row: any) => parseInt(row.data_request_id));
+  return res.rows.map((row: any) => parseInt(row.data_request_id, 10));
 };

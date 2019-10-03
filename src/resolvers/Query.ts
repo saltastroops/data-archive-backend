@@ -2,9 +2,9 @@ import fs from "fs";
 import moment from "moment";
 import * as Path from "path";
 import { ssdaPool } from "../db/postgresql_pool";
+import { dataRequestIdsByUserIds } from "../util/dataRequests";
 import { getUserById, getUserByToken, User } from "../util/user";
 import { queryDataFiles } from "./serchResults";
-import { dataRequestIdsByUserIds } from "../util/dataRequests";
 
 // Defining the context interface
 interface IContext {
@@ -58,7 +58,7 @@ const Query = {
     }
 
     const dataRequestIds = await dataRequestIdsByUserIds([
-      parseInt(ctx.user.id)
+      parseInt(ctx.user.id, 10)
     ]);
 
     const { loaders } = ctx;

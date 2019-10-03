@@ -1,8 +1,5 @@
 {
   "extends": ["tslint:latest", "tslint-config-prettier"],
-  "linterOptions": {
-    "exclude": ["src/generated/**/*"]
-  },
   "rules": {
     "member-access": {
       "severity": "off"

@@ -40,6 +40,7 @@ export interface IUserUpdateInput {
   familyName: string;
   givenName: string;
   id: string;
+  newPassword?: string;
   password: string;
   username: string;
 }
@@ -402,7 +403,7 @@ export const updateUser = async (
     ]);
 
     // Query for updating authentication details.
-    if (authProvider == "SSDA") {
+    if (authProvider === "SSDA") {
       const authUpdateQuery = `
           UPDATE admin.ssda_user_auth
           SET username=$1,
