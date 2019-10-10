@@ -103,7 +103,7 @@ const polarization = {
 const position = {
   join: "plane.plane_id=position.plane_id",
   name: "position",
-  rightOf: new Set(["position"])
+  rightOf: new Set(["plane"])
 };
 
 const product_type = {
