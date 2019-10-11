@@ -24,8 +24,6 @@ const Query = {
    * Get the currently logged in user,
    */
   async user(root: any, args: {}, ctx: IContext) {
-    console.error("DELETE THE FOLLOWING LINE!!!!!!!");
-    ctx.user = { id: 5, authProvider: "SDB", authProviderUserId: "137" } as any;
     const { loaders } = ctx;
 
     return loaders.userLoader.load(ctx.user.id);
