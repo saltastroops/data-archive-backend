@@ -1,4 +1,4 @@
-const mysql: any = jest.genMockFromModule("mysql2/promise");
+const mysql: any = jest.genMockFromModule("mysql2");
 
 mysql.createPool = jest.fn(() => {
   return {
