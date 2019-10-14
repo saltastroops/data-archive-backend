@@ -38,7 +38,7 @@ jobs:
         # This specifies the commands to run after the build is done.
         # The first command is for installing the node packages.
         # The second command is for executing the tests.
-        run: |
+      - run: |
           yarn install
           yarn test
         shell: bash
