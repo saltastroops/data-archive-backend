@@ -11,6 +11,7 @@ const createPool = (config: any) => {
       const connection = await pool.getConnection();
       connection.release();
     } catch (e) {
+      console.log(e);
       if (e.code === "PROTOCOL_CONNECTION_LOST") {
         throw new Error("Database connection was closed.");
       }
