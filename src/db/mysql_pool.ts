@@ -9,6 +9,7 @@ const createPool = (config: any) => {
   (async () => {
     try {
       const connection = await pool.getConnection();
+      console.log(connection);
       connection.release();
     } catch (e) {
       if (e.code === "PROTOCOL_CONNECTION_LOST") {
@@ -18,7 +19,7 @@ const createPool = (config: any) => {
         throw new Error("Database has too many connections.");
       }
       if (e.code === "ECONNREFUSED") {
-        throw new Error("Database connection was refused.");
+        throw new Error("The Database connection was refused.");
       }
     }
   })();
