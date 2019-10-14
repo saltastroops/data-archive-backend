@@ -1,0 +1,24 @@
+name: Data Archive API
+
+on:
+  push:
+    branches:
+      - 'move-tests-to-postgres'
+
+jobs:
+  features-build-test-run:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [10.x]
+
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: |
+          yarn install
+          yarn test
+        shell: bash
