@@ -2,7 +2,6 @@ import mysql from "mysql2/promise";
 
 const createPool = (config: any) => {
   // Creating a pool of database connections
-  config.host = "foobar";
   const pool = mysql.createPool(config);
 
   // Test the database connection
@@ -19,7 +18,6 @@ const createPool = (config: any) => {
         throw new Error("Database has too many connections.");
       }
       if (e.code === "ECONNREFUSED") {
-        console.log(config);
         throw new Error("The Database connection was refused.");
       }
     }
