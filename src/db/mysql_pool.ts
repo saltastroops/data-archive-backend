@@ -18,7 +18,6 @@ const createPool = (config: any) => {
         throw new Error("Database has too many connections.");
       }
       if (e.code === "ECONNREFUSED") {
-        console.log(config);
         throw new Error("The Database connection was refused.");
       }
     }
