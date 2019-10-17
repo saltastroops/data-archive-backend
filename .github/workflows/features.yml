@@ -1,6 +1,8 @@
 # The Data Archive API Features Workflow
 name: Data Archive API Features Workflow
-# This workflow is triggered whenever there is a push to any branch other than development and master branch.
+
+# This workflow is triggered whenever there are new commits pushed
+# to any branch other than development and master branch.
 on:
   push:
     branches:
@@ -31,13 +33,13 @@ jobs:
       # This step uses the setup-node action to setup the nodejs environment.
       - name: Setup the nodejs environment
         uses: actions/setup-node@v1
-        # The setup-node action accepts the parameters.
-        # In this case, the nodejs version parameter specifying the version of nodejs to use.
+        # The setup-node action accepts parameters.
+        # In this case, the nodejs version parameter specifying the version of nodejs to use is supplied..
         with:
           node-version: ${{ matrix.node-version }}
-        # This specifies the commands to run after the build is done.
-        # The first command is for installing the node packages.
-        # The second command is for executing the tests.
+      # This specifies the commands to run after the build is done.
+      # The first command is for installing the nodejs packages.
+      # The second command is for executing the tests.
       - run: |
           yarn install
           yarn test

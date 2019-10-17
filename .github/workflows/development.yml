@@ -1,0 +1,134 @@
+# The Data Archive API Development Workflow
+name: Data Archive API Development Workflow
+
+# This workflow is triggered whenever there are new commits pushed to the development branch.
+on:
+  push:
+    branches:
+      - development
+
+jobs:
+  job1:
+    # The job for building, testing and deploy the code inside the github virtual machine.
+    name: Build, test and run the app on the github virtual machine
+    # This job is executed on the Linux machine.
+    runs-on: ubuntu-latest
+
+    # The matrix strategy is used to specify the nodejs version to use for the node packages management.
+    strategy:
+      # In this case, nodejs version 10.x is used.
+      # To include more versions, you can add them as follows: [8.x, 10.x, 12.x].
+      matrix:
+        node-version: [10.x]
+
+    # The steps to be executed for this job.
+    steps:
+      # This step uses the checkout action to make sure the latest code is used.
+      - name: Use the latest code
+        uses: actions/checkout@v1
+      # This step uses the setup-node action to setup the nodejs environment.
+      - name: Setup the nodejs environment
+        uses: actions/setup-node@v1
+        # The setup-node action accepts parameters.
+        # In this case, the nodejs version parameter specifying the version of nodejs to use is supplied.
+        with:
+          node-version: ${{ matrix.node-version }}
+      # This specifies the commands to run after the build is done.
+      # The first command makes sure you are in the development branch.
+      # The second command is for installing PM2 which is a daemon process manager for nodejs.
+      # The third command is for installing the nodejs packages.
+      # The fourth command is for executing the tests.
+      # The fifth command is for executing the application in development mode.
+      - run: |
+          git checkout development
+          yarn global add pm2
+          yarn install
+          yarn test
+          yarn dev
+        shell: bash
+
+  job2:
+    # This job is only executed when job1 executed successfully
+    needs: job1
+
+    # The job for building, testing and deploy the code to the development server.
+    name: Build, test and deploy on the development server
+    # This job is executed on the Linux machine.
+    runs-on: ubuntu-latest
+
+    # The steps to be executed for this job.
+    steps:
+      # This step uses the checkout action to make sure the latest code is used.
+      - name: Use the latest code
+        uses: actions/checkout@v1
+      # This step uses the ssh action to setup a ssh server used to ssh into the development server.
+      - name: Ssh server
+        uses: ./ssh
+        # The ssh action accepts environment variables.
+        # These environment variables are secretly stored in GitHub secrete store.
+        # In this case, the following environment variables are supplied
+        # SSH_PRIVATE_KEY, the client ssh private key
+        # HOST, the host to ssh into
+        # USER, the host username to ssh into
+        # PORT, the host port to ssh into
+        # COMMAND, the command to be executed inside th sshed into host.
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.TEST_PRIVATE_SSH_KEY}}
+          HOST: ${{ secrets.TEST_HOST}}
+          USER: ${{ secrets.TEST_USER}}
+          PORT: ${{ secrets.TEST_PORT}}
+          COMMAND: |
+            cd /home/ssda/data-archive-backend
+            git checkout development
+            git pull
+            yarn install
+            yarn test
+            yarn restart
+            exit
+
+  job3:
+    # This job is only executed when job1 and job 2 are executed successfully
+    needs: job2
+
+    # The job for creating a pull request from the development to the master branch .
+    name: Create a pull request to update the master branch with the development branch
+    # This job is executed on the Linux machine.
+    runs-on: ubuntu-latest
+
+    # The steps to be executed for this job.
+    steps:
+      # This step uses the checkout action to make sure the latest code is used.
+      - name: Use the latest code
+        uses: actions/checkout@v1
+      # This specifies the commands to run for creating the pull request.
+      # The first command is for switching to the development branch.
+      # The second command is for creating the pull request fro the development branch to the master branch.
+      - run: |
+          git checkout development
+          git request-pull master ./
+        shell: bash
+
+
+
+
+#      # This step uses the ssh action to setup a ssh server used to ssh into the development server.
+#      - name: Ssh server
+#      - uses: ./ssh
+#        # The ssh action accepts environment variables.
+#        # These environment variables are secretly stored in GitHub secrete store.
+#        # In this case, the following environment variables are supplied
+#        # SSH_PRIVATE_KEY, the client ssh private key
+#        # HOST, the host to ssh into
+#        # USER, the host username to ssh into
+#        # PORT, the host port to ssh into
+#        # COMMAND, the command to be executed inside th sshed into host.
+#        env:
+#          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY}}
+#          HOST: ${{ secrets.HOST}}
+#          USER: ${{ secrets.USER}}
+#          PORT: ${{ secrets.PORT}}
+#          COMMAND: |
+#            cd /home/sifiso/github-node-ci-cd
+#            git checkout development
+#            git request-pull master ./
+#            exit
