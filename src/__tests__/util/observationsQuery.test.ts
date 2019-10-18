@@ -10,7 +10,10 @@ function checkInvalidColumn(column: string) {
 }
 
 function objectToSQL(condition: any) {
-  return parseWhereCondition(JSON.stringify(condition)).sql;
+  return parseWhereCondition(JSON.stringify(condition)).sql.replace(
+    /\$\d+/g,
+    "?"
+  );
 }
 
 function objectToValues(condition: any) {
@@ -51,12 +54,12 @@ describe("parseWhereCondition", () => {
     });
 
     it("should refuse column names with invalid characters", () => {
-      checkInvalidColumn("`Proposal.Name");
+      checkInvalidColumn('"Proposal.Name');
       checkInvalidColumn("Prop;osal.Name");
     });
 
     it("should refuse table names with invalid characters", () => {
-      checkInvalidColumn("Proposal.Name`");
+      checkInvalidColumn('Proposal.Name"');
       checkInvalidColumn("Proposal.Nam;e");
     });
   });
@@ -765,7 +768,7 @@ describe("createFromExpression", () => {
     const a = { join: "", name: "A", rightOf: new Set<string>() };
     const dm = new DatabaseModel(new Set([a]));
 
-    expect(createFromExpression(new Set(["A"]), dm)).toEqual("`A`");
+    expect(createFromExpression(new Set(["A"]), dm)).toEqual('"A"');
   });
 
   it("should create the FROM expression for a linear dependency", () => {
@@ -782,29 +785,29 @@ describe("createFromExpression", () => {
     };
     const dm = new DatabaseModel(new Set([a, b, c]));
 
-    expect(createFromExpression(new Set(["A"]), dm)).toEqual("`A`");
+    expect(createFromExpression(new Set(["A"]), dm)).toEqual('"A"');
     expect(createFromExpression(new Set(["A", "B"]), dm)).toEqual(
-      "`A` LEFT JOIN `B` ON (A.b_id=B.id)"
+      '"A" LEFT JOIN "B" ON (A.b_id=B.id)'
     );
     expect(createFromExpression(new Set(["A", "B", "C"]), dm)).toEqual(
-      "`A` LEFT JOIN `B` ON (A.b_id=B.id) LEFT JOIN `C` ON (B.c_id=C.id)"
+      '"A" LEFT JOIN "B" ON (A.b_id=B.id) LEFT JOIN "C" ON (B.c_id=C.id)'
     );
 
     // The order to which tables are passed to the set is irrelevant
     expect(createFromExpression(new Set(["B", "C", "A"]), dm)).toEqual(
-      "`A` LEFT JOIN `B` ON (A.b_id=B.id) LEFT JOIN `C` ON (B.c_id=C.id)"
+      '"A" LEFT JOIN "B" ON (A.b_id=B.id) LEFT JOIN "C" ON (B.c_id=C.id)'
     );
     expect(createFromExpression(new Set(["C", "A", "B"]), dm)).toEqual(
-      "`A` LEFT JOIN `B` ON (A.b_id=B.id) LEFT JOIN `C` ON (B.c_id=C.id)"
+      '"A" LEFT JOIN "B" ON (A.b_id=B.id) LEFT JOIN "C" ON (B.c_id=C.id)'
     );
     expect(createFromExpression(new Set(["A", "C", "B"]), dm)).toEqual(
-      "`A` LEFT JOIN `B` ON (A.b_id=B.id) LEFT JOIN `C` ON (B.c_id=C.id)"
+      '"A" LEFT JOIN "B" ON (A.b_id=B.id) LEFT JOIN "C" ON (B.c_id=C.id)'
     );
     expect(createFromExpression(new Set(["B", "A", "C"]), dm)).toEqual(
-      "`A` LEFT JOIN `B` ON (A.b_id=B.id) LEFT JOIN `C` ON (B.c_id=C.id)"
+      '"A" LEFT JOIN "B" ON (A.b_id=B.id) LEFT JOIN "C" ON (B.c_id=C.id)'
     );
     expect(createFromExpression(new Set(["C", "B", "A"]), dm)).toEqual(
-      "`A` LEFT JOIN `B` ON (A.b_id=B.id) LEFT JOIN `C` ON (B.c_id=C.id)"
+      '"A" LEFT JOIN "B" ON (A.b_id=B.id) LEFT JOIN "C" ON (B.c_id=C.id)'
     );
   });
 
@@ -842,24 +845,24 @@ describe("createFromExpression", () => {
 
     const dm = new DatabaseModel(new Set([a, b, c, d, e, f, g, x, y]));
 
-    expect(createFromExpression(new Set(["A"]), dm)).toEqual("`A`");
+    expect(createFromExpression(new Set(["A"]), dm)).toEqual('"A"');
     expect(createFromExpression(new Set(["B"]), dm)).toEqual(
-      "`A` LEFT JOIN `B` ON (A.b_id=B.id)"
+      '"A" LEFT JOIN "B" ON (A.b_id=B.id)'
     );
     expect(createFromExpression(new Set(["A", "B"]), dm)).toEqual(
-      "`A` LEFT JOIN `B` ON (A.b_id=B.id)"
+      '"A" LEFT JOIN "B" ON (A.b_id=B.id)'
     );
 
     const joins: any = {
-      a: "`A`",
-      b: "LEFT JOIN `B` ON (A.b_id=B.id)",
-      c: "LEFT JOIN `C` ON (A.c_id=C.id)",
-      d: "LEFT JOIN `D` ON (B.d_id=D.id OR C.d_id=D.id)",
-      e: "LEFT JOIN `E` ON (A.e_id=E.id)",
-      f: "LEFT JOIN `F` ON (D.f_id=F.id OR E.f_id=F.id)",
-      g: "LEFT JOIN `G` ON (A.g_id=G.id)",
-      x: "`X`",
-      y: "LEFT JOIN `Y` ON (X.y_id=Y.id)"
+      a: '"A"',
+      b: 'LEFT JOIN "B" ON (A.b_id=B.id)',
+      c: 'LEFT JOIN "C" ON (A.c_id=C.id)',
+      d: 'LEFT JOIN "D" ON (B.d_id=D.id OR C.d_id=D.id)',
+      e: 'LEFT JOIN "E" ON (A.e_id=E.id)',
+      f: 'LEFT JOIN "F" ON (D.f_id=F.id OR E.f_id=F.id)',
+      g: 'LEFT JOIN "G" ON (A.g_id=G.id)',
+      x: '"X"',
+      y: 'LEFT JOIN "Y" ON (X.y_id=Y.id)'
     };
 
     const findIndexes = (from: string) =>
