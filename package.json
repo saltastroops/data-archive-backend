@@ -7,8 +7,8 @@
     "doc": "docs"
   },
   "scripts": {
-    "start": "pm2 start src/index.ts --node-args='-r dotenv/config'",
-    "deploy": "export DEBUG=\"prisma\"; cd src/; prisma deploy --env-file ../.env",
+    "start": "pm2 start src/index.ts --name data-archive-api --node-args='-r dotenv/config'",
+    "restart": "pm2 restart data-archive-api --node-args='-r dotenv/config'",
     "dev": " export DEBUG=\"nodemon\"; nodemon -e ts,graphql -x ts-node -r dotenv/config src/index.ts",
     "test": "PRISMA_ENDPOINT=https://fakeaddress jest --detectOpenHandles",
     "test:coverage": "PRISMA_ENDPOINT=https://fakeaddress jest --coverage",

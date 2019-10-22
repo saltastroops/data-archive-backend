@@ -16,10 +16,10 @@ jobs:
 
     # The matrix strategy is used to specify the nodejs version to use for the node packages management.
     strategy:
-      # In this case, nodejs version 10.x is used.
-      # To include more versions, you can add them as follows: [8.x, 10.x, 12.x].
+      # In this case, nodejs version 8.x and 10.x is used.
+      # To include more versions, you add them as follows: [8.x, 10.x, 12.x, ...].
       matrix:
-        node-version: [10.x]
+        node-version: [8.x, 10.x]
 
     # The steps to be executed for this job.
     steps:
@@ -38,6 +38,8 @@ jobs:
       # The second command is for executing the tests.
       - run: |
           yarn install
+          yarn format
+          yarn lint
           yarn test
         shell: bash
 
@@ -55,8 +57,8 @@ jobs:
       # This step uses the checkout action to make sure the latest code is used.
       - name: Use the latest code
         uses: actions/checkout@v1
-      # This step uses the ssh action to setup a ssh server used to ssh into the development server.
-      - name: Ssh server
+      # This step uses the fifsky ssh action to setup a ssh server used to ssh into the development server.
+      - name: Fifsky ssh server
         uses: fifsky/ssh-action@master
         # The fifsky ssh action accepts parameters.
         # These parameters are secretly stored in GitHub secrete store.
@@ -66,61 +68,23 @@ jobs:
         # host, the host to ssh into
         # user, the host username to ssh into
         # port, the host port to ssh into
-        # command, the command to be executed inside th sshed into host.
+        # command, the command to be executed inside the remote host.
+        # The ssh action logs into a gateway server,
+        # and we still have to connect to the machine on which the data archive is hosted.
         with:
           key: ${{ secrets.SSH_MACHINE_PRIVATE_SSH_KEY }}
           host: ${{ secrets.SSH_MACHINE_HOST }}
           user: ${{ secrets.SSH_MACHINE_USER }}
           port: ${{ secrets.SSH_MACHINE_PORT }}
-          pass: ${{ secrets.SSH_MACHINE_PASSWORD }}
           command: |
-            pwd
-            ssh -o StrictHostKeyChecking=no -tt ${{ secrets.TEST_USER}}@${{ secrets.TEST_HOST}} -p ${{ secrets.TEST_PORT}} """
+            ssh -o StrictHostKeyChecking=no -tt ${{ secrets.DEV_USER}}@${{ secrets.DEV_HOST}} -p ${{ secrets.DEV_PORT}} """
               cd /home/ssda/data-archive-backend
-              git checkout gitactions-featuredev-test
+              git checkout development
               git pull
               yarn install
+              yarn format
+              yarn lint
               yarn test
               yarn restart
               exit
             """
-#  job3:
-#    # This job is only executed when job1 and job 2 are executed successfully
-#    needs: job2
-#
-#    # The job for creating a pull request from the development to the master branch .
-#    name: Create a pull request to update the master branch with the development branch
-#    # This job is executed on the Linux machine.
-#    runs-on: ubuntu-latest
-#
-#    # The steps to be executed for this job.
-#    steps:
-#      # This step uses the checkout action to make sure the latest code is used.
-#      - name: Use the latest code
-#        uses: actions/checkout@v1
-#      # This step uses the ssh action to setup a ssh server used to ssh into the development server.
-#      - name: Ssh server
-#        uses: fifsky/ssh-action@master
-#        # The fifsky ssh action accepts parameters.
-#        # These parameters are secretly stored in GitHub secrete store.
-#        # In this case, the following parameters are supplied
-#        # key, the client ssh private key
-#        # pass, the client password
-#        # host, the host to ssh into
-#        # user, the host username to ssh into
-#        # port, the host port to ssh into
-#        # command, the command to be executed inside th sshed into host.
-#        with:
-#          key: ${{ secrets.SSH_MACHINE_PRIVATE_SSH_KEY }}
-#          host: ${{ secrets.SSH_MACHINE_HOST }}
-#          user: ${{ secrets.SSH_MACHINE_USER }}
-#          port: ${{ secrets.SSH_MACHINE_PORT }}
-#          pass: ${{ secrets.SSH_MACHINE_PASSWORD }}
-#          command: |
-#            pwd
-#            ssh -o StrictHostKeyChecking=no -tt ${{ secrets.TEST_USER}}@${{ secrets.TEST_HOST}} -p ${{ secrets.TEST_PORT}} """
-#              cd /home/ssda/data-archive-backend
-#              git checkout development
-#              git request-pull master ./
-#              exit
-#            """

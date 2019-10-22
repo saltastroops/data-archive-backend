@@ -66,20 +66,22 @@ jobs:
         # host, the host to ssh into
         # user, the host username to ssh into
         # port, the host port to ssh into
-        # command, the command to be executed inside th sshed into host.
+        # command, the command to be executed inside the remote host.
+        # The ssh action logs into a gateway server,
+        # and we still have to connect to the machine on which the data archive is hosted.
         with:
           key: ${{ secrets.SSH_MACHINE_PRIVATE_SSH_KEY }}
           host: ${{ secrets.SSH_MACHINE_HOST }}
           user: ${{ secrets.SSH_MACHINE_USER }}
           port: ${{ secrets.SSH_MACHINE_PORT }}
-          pass: ${{ secrets.SSH_MACHINE_PASSWORD }}
           command: |
-            pwd
             ssh -o StrictHostKeyChecking=no -tt ${{ secrets.PROD_USER}}@${{ secrets.PROD_HOST}} -p ${{ secrets.PROD_PORT}} """
               cd /home/ssda/data-archive-backend
               git checkout master
               git pull
               yarn install
+              yarn format
+              yarn lint
               yarn test
               yarn restart
               exit
