@@ -8,11 +8,11 @@ import { ownsOutOfDataFiles, Role, User } from "./user";
 async function batchGetDataRequests(ids: number[]) {
   // get the data requests
   const dataRequestsSQL = `
-      SELECT data_request_id, path, status, made_at, ssda_user_id
-      FROM admin.data_request dr
-               JOIN admin.data_request_status
-                    ON dr.data_request_status_id = data_request_status.data_request_status_id
-      WHERE data_request_id = ANY ($1)
+    SELECT data_request_id, path, status, made_at, ssda_user_id
+    FROM admin.data_request dr
+    JOIN admin.data_request_status drs
+    ON dr.data_request_status_id = drs.data_request_status_id
+    WHERE data_request_id = ANY ($1)
 
   `;
   const dataRequestsRes = await ssdaPool.query(dataRequestsSQL, [ids]);
@@ -97,9 +97,9 @@ async function batchGetUsers(ids: number[]) {
   // Get the roles
   const rolesSQL = `
   SELECT user_id, role.role
-  FROM admin.user_role
-   JOIN admin.role ON user_role.role_id = role.role_id
-   WHERE user_id = ANY($1);
+    FROM admin.user_role ur
+    JOIN admin.role r ON ur.role_id = r.role_id
+    WHERE user_id = ANY($1);
   `;
   const rolesRes = await ssdaPool.query(rolesSQL, [ids]);
   const roles = rolesRes.rows;
