@@ -59,6 +59,13 @@ export class WhereConditionContent {
   public get columns() {
     return this.columnsSet;
   }
+
+  /**
+   * Replace the first occurrence of a string in the SQL with another one.
+   */
+  public replaceInSQL(searchString: string, replaceString: string) {
+    this.sqlString = this.sqlString.replace(searchString, replaceString);
+  }
 }
 
 /**
@@ -82,12 +89,7 @@ export class WhereConditionContent {
  * An object with The SQL statement, its values abd the columns used.
  */
 export function parseWhereCondition(where: string): WhereConditionContent {
-  let valueCounter = 0;
-
-  function parameterPlaceholder() {
-    valueCounter++;
-    return `\$${valueCounter}`;
-  }
+  const PLACEHOLDER = "<|???|>";
 
   function convertToSQL(o: any): WhereConditionContent {
     let sql: string;
@@ -141,7 +143,7 @@ export function parseWhereCondition(where: string): WhereConditionContent {
     } else if (o.EQUALS) {
       validateColumn(o.EQUALS.column);
       validateValue(o.EQUALS.value);
-      sql = "(" + o.EQUALS.column + " = " + parameterPlaceholder() + ")";
+      sql = "(" + o.EQUALS.column + " = " + PLACEHOLDER + ")";
       values = [o.EQUALS.value];
       columns.add(o.EQUALS.column);
     } else if (o.IS_NULL) {
@@ -152,25 +154,25 @@ export function parseWhereCondition(where: string): WhereConditionContent {
     } else if (o.LESS_THAN) {
       validateColumn(o.LESS_THAN.column);
       validateValue(o.LESS_THAN.value);
-      sql = "(" + o.LESS_THAN.column + " < " + parameterPlaceholder() + ")";
+      sql = "(" + o.LESS_THAN.column + " < " + PLACEHOLDER + ")";
       values = [o.LESS_THAN.value];
       columns.add(o.LESS_THAN.column);
     } else if (o.GREATER_THAN) {
       validateColumn(o.GREATER_THAN.column);
       validateValue(o.GREATER_THAN.value);
-      sql = "(" + o.GREATER_THAN.column + " > " + parameterPlaceholder() + ")";
+      sql = "(" + o.GREATER_THAN.column + " > " + PLACEHOLDER + ")";
       values = [o.GREATER_THAN.value];
       columns.add(o.GREATER_THAN.column);
     } else if (o.LESS_EQUAL) {
       validateColumn(o.LESS_EQUAL.column);
       validateValue(o.LESS_EQUAL.value);
-      sql = "(" + o.LESS_EQUAL.column + " <= " + parameterPlaceholder() + ")";
+      sql = "(" + o.LESS_EQUAL.column + " <= " + PLACEHOLDER + ")";
       values = [o.LESS_EQUAL.value];
       columns.add(o.LESS_EQUAL.column);
     } else if (o.GREATER_EQUAL) {
       validateColumn(o.GREATER_EQUAL.column);
       validateValue(o.GREATER_EQUAL.value);
-      sql = "(" + o.GREATER_EQUAL.column + " >= ?)";
+      sql = "(" + o.GREATER_EQUAL.column + " >= " + PLACEHOLDER + ")";
       values = [o.GREATER_EQUAL.value];
       columns.add(o.GREATER_EQUAL.column);
     } else if (o.IS_IN) {
@@ -180,7 +182,7 @@ export function parseWhereCondition(where: string): WhereConditionContent {
         "(" +
         o.IS_IN.column +
         " = ANY(ARRAY[" +
-        o.IS_IN.values.map((v: any) => parameterPlaceholder()).join(", ") +
+        o.IS_IN.values.map((v: any) => PLACEHOLDER).join(", ") +
         "]))";
       values = [...o.IS_IN.values];
       columns.add(o.IS_IN.column);
@@ -192,7 +194,7 @@ export function parseWhereCondition(where: string): WhereConditionContent {
         "(" +
         o.CONTAINS.column +
         " LIKE " +
-        parameterPlaceholder() +
+        PLACEHOLDER +
         " ESCAPE '" +
         escapeChar +
         "')";
@@ -208,7 +210,7 @@ export function parseWhereCondition(where: string): WhereConditionContent {
         "(" +
         o.STARTS_WITH.column +
         " LIKE " +
-        parameterPlaceholder() +
+        PLACEHOLDER +
         " ESCAPE '" +
         escapeChar +
         "')";
@@ -224,7 +226,7 @@ export function parseWhereCondition(where: string): WhereConditionContent {
         "(" +
         o.ENDS_WITH.column +
         " LIKE " +
-        parameterPlaceholder() +
+        PLACEHOLDER +
         " ESCAPE '" +
         escapeChar +
         "')";
@@ -342,7 +344,14 @@ export function parseWhereCondition(where: string): WhereConditionContent {
     return new WhereConditionContent("1=1", [], new Set());
   }
 
-  return convertToSQL(w);
+  let parsed = convertToSQL(w);
+
+  // replace the placeholder string with the correct placeholders ($1, $2, ...)
+  for (let i = 1; i <= parsed.values.length; i++) {
+    parsed.replaceInSQL(PLACEHOLDER, `\$${i}`);
+  }
+
+  return parsed;
 }
 
 /**

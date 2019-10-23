@@ -25,10 +25,22 @@ const data_product_type = {
   rightOf: new Set(["plane"])
 };
 
+const detector_mode = {
+  join: "instrument_setup.detector_mode_id=detector_mode.detector_mode_id",
+  name: "detector_mode",
+  rightOf: new Set(["instrument_setup"])
+};
+
 const energy = {
   join: "plane.plane_id=energy.plane_id",
   name: "energy",
   rightOf: new Set(["plane"])
+};
+
+const filter = {
+  join: "instrument_setup.filter_id=filter.filter_id",
+  name: "filter",
+  rightOf: new Set(["instrument_setup"])
 };
 
 const institution = {
@@ -55,6 +67,19 @@ const instrument_keyword_value = {
     "instrument.instrument_id=instrument_keyword_value.instrument_id AND instrument_keyword.instrument_keyword_id=instrument_keyword_id",
   name: "instrument_keyword_value",
   rightOf: new Set(["instrument"])
+};
+
+const instrument_mode = {
+  join:
+    "instrument_setup.instrument_mode_id=instrument_mode.instrument_mode_id",
+  name: "instrument_mode",
+  rightOf: new Set(["instrument_setup"])
+};
+
+const instrument_setup = {
+  join: "observation.observation_id=instrument_setup.observation_id",
+  name: "instrument_setup",
+  rightOf: new Set(["observation"])
 };
 
 const intent = {
@@ -100,10 +125,17 @@ const polarization = {
   rightOf: new Set(["plane"])
 };
 
+const polarization_mode = {
+  join:
+    "polarization.polarization_mode_id=polarization_mode.polarization_mode_id",
+  name: "polarization_mode",
+  rightOf: new Set(["polarization"])
+};
+
 const position = {
   join: "plane.plane_id=position.plane_id",
   name: "position",
-  rightOf: new Set(["position"])
+  rightOf: new Set(["plane"])
 };
 
 const product_type = {
@@ -118,16 +150,29 @@ const proposal = {
   rightOf: new Set(["observation"])
 };
 
+const rss_fabry_perot_mode = {
+  join:
+    "rss_setup.rss_fabry_perot_mode_id=rss_fabry_perot_mode.rss_fabry_perot_mode_id",
+  name: "rss_fabry_perot_mode",
+  rightOf: new Set(["rss_setup"])
+};
+
+const rss_grating = {
+  join: "rss_setup.rss_grating_id=rss_grating.rss_grating_id",
+  name: "rss_grating",
+  rightOf: new Set(["rss_setup"])
+};
+
+const rss_setup = {
+  join: "instrument_setup.instrument_setup_id=rss_setup.instrument_setup_id",
+  name: "rss_setup",
+  rightOf: new Set(["instrument_setup"])
+};
+
 const status = {
   join: "observation.status_id=status.status_id",
   name: "status",
   rightOf: new Set(["observation"])
-};
-
-const stokes_parameter = {
-  join: "polarization.stokes_parameter_id=stokes_parameter.stokes_parameter_id",
-  name: "stokes_parameter",
-  rightOf: new Set(["polarization"])
 };
 
 const target = {
@@ -152,11 +197,15 @@ export const dataModel = new DatabaseModel(
   new Set([
     artifact,
     data_product_type,
+    detector_mode,
     energy,
+    filter,
     institution,
     instrument,
     instrument_keyword,
     instrument_keyword_value,
+    instrument_mode,
+    instrument_setup,
     intent,
     observation,
     observation_group,
@@ -164,11 +213,14 @@ export const dataModel = new DatabaseModel(
     observation_type,
     plane,
     polarization,
+    polarization_mode,
     position,
     product_type,
     proposal,
+    rss_fabry_perot_mode,
+    rss_grating,
+    rss_setup,
     status,
-    stokes_parameter,
     target,
     target_type,
     telescope
