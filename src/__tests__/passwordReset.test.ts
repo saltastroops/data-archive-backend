@@ -79,8 +79,6 @@ describe("Request password reset", () => {
       .mockReturnValueOnce({ rows: [] })
       .mockReturnValueOnce(true);
 
-    (transporter.sendMail as any).mockReturnValueOnce("Email error");
-
     try {
       await resolvers.Mutation.requestPasswordReset(
         {},

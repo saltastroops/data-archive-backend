@@ -420,8 +420,8 @@ async function downloadDataRequest({
   const dataRequestsSQL = `
     SELECT data_request_id, path, status, made_at, ssda_user_id
     FROM admin.data_request dr
-    JOIN admin.data_request_status
-    ON dr.data_request_status_id = data_request_status.data_request_status_id
+    JOIN admin.data_request_status drs
+    ON dr.data_request_status_id = drs.data_request_status_id
     WHERE data_request_id=$1
   `;
   const queryResult: any = await ssdaPool.query(dataRequestsSQL, [dataRequestId]);
@@ -433,7 +433,6 @@ async function downloadDataRequest({
 
   const dataRequest = queryResult.rows[0];
 
-  // TODO UPDATE include dataRequest interface according to the mysql database
   // Check that the user may download content for the data request, either
   // because they own the request or because they are an administrator.
   const mayDownload =
