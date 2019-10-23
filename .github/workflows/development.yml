@@ -69,13 +69,13 @@ jobs:
         # user, the host username to ssh into
         # port, the host port to ssh into
         # command, the command to be executed inside the remote host.
-        # The ssh action logs into a gateway server,
-        # and we still have to connect to the machine on which the data archive is hosted.
         with:
           key: ${{ secrets.SSH_MACHINE_PRIVATE_SSH_KEY }}
           host: ${{ secrets.SSH_MACHINE_HOST }}
           user: ${{ secrets.SSH_MACHINE_USER }}
           port: ${{ secrets.SSH_MACHINE_PORT }}
+          # The ssh action logs into a gateway server,
+          # and we still have to connect to the machine on which the data archive is hosted.
           command: |
             ssh -o StrictHostKeyChecking=no -tt ${{ secrets.DEV_USER}}@${{ secrets.DEV_HOST}} -p ${{ secrets.DEV_PORT}} """
               cd /home/ssda/data-archive-backend

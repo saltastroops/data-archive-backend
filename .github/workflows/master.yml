@@ -16,10 +16,10 @@ jobs:
 
     # The matrix strategy is used to specify the nodejs version to use for the node packages management.
     strategy:
-      # In this case, nodejs version 10.x is used.
-      # To include more versions, you can add them as follows: [8.x, 10.x, 12.x].
+      # In this case, nodejs version 8.x and 10.x are used.
+      # To include more versions, you can add them as follows: [8.x, 10.x, 12.x, ...].
       matrix:
-        node-version: [10.x]
+        node-version: [8.x, 10.x]
 
     # The steps to be executed for this job.
     steps:
@@ -67,20 +67,19 @@ jobs:
         # user, the host username to ssh into
         # port, the host port to ssh into
         # command, the command to be executed inside the remote host.
-        # The ssh action logs into a gateway server,
-        # and we still have to connect to the machine on which the data archive is hosted.
         with:
           key: ${{ secrets.SSH_MACHINE_PRIVATE_SSH_KEY }}
           host: ${{ secrets.SSH_MACHINE_HOST }}
           user: ${{ secrets.SSH_MACHINE_USER }}
           port: ${{ secrets.SSH_MACHINE_PORT }}
+          # The ssh action logs into a gateway server,
+          # and we still have to connect to the machine on which the data archive is hosted.
           command: |
             ssh -o StrictHostKeyChecking=no -tt ${{ secrets.PROD_USER}}@${{ secrets.PROD_HOST}} -p ${{ secrets.PROD_PORT}} """
               cd /home/ssda/data-archive-backend
               git checkout master
               git pull
               yarn install
-              yarn format
               yarn lint
               yarn test
               yarn restart
