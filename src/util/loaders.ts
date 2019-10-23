@@ -16,12 +16,11 @@ async function batchGetDataRequests(ids: number[]) {
 
   `;
   const dataRequestsRes = await ssdaPool.query(dataRequestsSQL, [ids]);
+  // Use an int rather than string as id
   const dataRequests = dataRequestsRes.rows.map((d: any) => ({
     ...d,
     data_request_id: parseInt(d.data_request_id, 10)
   }));
-
-  // Use an int rather than string as id
 
   // Get the artifacts
   const artifactsSQL = `

@@ -54,7 +54,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
         ]
       });
 
-    // Mock the bcrypt password compare to return true.
+    // Mock the bcrypt password comparison to return true.
     (bcrypt.compare as any).mockReturnValue(true);
 
     // Authenticate the user
@@ -101,7 +101,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
         ]
       });
 
-    // Mock the bcrypt password compare to return true.
+    // Mock the bcrypt password comparison to return true.
     (bcrypt.compare as any).mockReturnValue(true);
 
     // Authenticate the user
@@ -145,7 +145,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
         ]
       });
 
-    // Mock the bcrypt password compare to return true.
+    // Mock the bcrypt password comparison to return true.
     (bcrypt.compare as any).mockReturnValue(true);
 
     // Authenticate the user
@@ -182,7 +182,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
         ]
       });
 
-    // Mock the bcrypt password compare to return true.
+    // Mock the bcrypt password comparison to return true.
     (bcrypt.compare as any).mockReturnValue(true);
 
     // Authenticate the user
@@ -219,7 +219,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
       .mockReturnValueOnce({ rows: [] })
       .mockReturnValueOnce({ rows: [] });
 
-    // Mock the bcrypt password compare to return true.
+    // Mock the bcrypt password comparison to return true.
     (bcrypt.compare as any).mockReturnValue(true);
 
     // Authenticate the user
