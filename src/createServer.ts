@@ -433,7 +433,6 @@ async function downloadDataRequest({
 
   const dataRequest = queryResult.rows[0];
 
-  // TODO UPDATE include dataRequest interface according to the mysql database
   // Check that the user may download content for the data request, either
   // because they own the request or because they are an administrator.
   const mayDownload =
