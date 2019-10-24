@@ -63,7 +63,7 @@ describe("User registration", () => {
     // Register the user
     await resolvers.Mutation.signup({}, args, {
       prisma,
-      user: { id: "" }
+      user: { id: "", authProvider: "SDB" }
     });
 
     // Expect createUser to have been called
@@ -110,7 +110,7 @@ describe("User registration", () => {
     try {
       await resolvers.Mutation.signup({}, args, {
         prisma,
-        user: { id: "" }
+        user: { id: "", authProvider: "SDB" }
       });
     } catch (e) {
       message = e.message;
@@ -137,7 +137,7 @@ describe("User registration", () => {
     try {
       await resolvers.Mutation.signup({}, args, {
         prisma,
-        user: { id: "" }
+        user: { id: "", authProvider: "SDB" }
       });
     } catch (e) {
       message = e.message;
@@ -165,7 +165,7 @@ describe("User registration", () => {
     try {
       await resolvers.Mutation.signup({}, args, {
         prisma,
-        user: { id: "" }
+        user: { id: "", authProvider: "SDB" }
       });
     } catch (e) {
       message = e.message;
@@ -193,7 +193,7 @@ describe("User registration", () => {
     try {
       await resolvers.Mutation.signup({}, args, {
         prisma,
-        user: { id: "" }
+        user: { id: "", authProvider: "SDB" }
       });
     } catch (e) {
       message = e.message;
@@ -225,7 +225,7 @@ describe("User registration", () => {
     try {
       await resolvers.Mutation.signup({}, args, {
         prisma,
-        user: { id: "" }
+        user: { id: "", authProvider: "SDB" }
       });
     } catch (e) {
       message = e.message;
@@ -253,7 +253,7 @@ describe("User registration", () => {
     try {
       await resolvers.Mutation.signup({}, args, {
         prisma,
-        user: { id: "" }
+        user: { id: "", authProvider: "SDB" }
       });
     } catch (e) {
       message = e.message;

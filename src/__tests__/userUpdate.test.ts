@@ -70,7 +70,7 @@ describe("User update", () => {
       // Update the user
       await resolvers.Mutation.updateUser({}, args, {
         prisma,
-        user: { id: "1" }
+        user: { id: "1", authProvider: "SDB" }
       });
 
       // Expect updateUser to have been called
@@ -133,7 +133,7 @@ describe("User update", () => {
       // Update the user
       await resolvers.Mutation.updateUser({}, args, {
         prisma,
-        user: { id: "1" }
+        user: { id: "1", authProvider: "SDB" }
       });
 
       // Expect updateUser to have been called
@@ -177,7 +177,7 @@ describe("User update", () => {
       try {
         await resolvers.Mutation.updateUser({}, args, {
           prisma,
-          user: { id: "1" }
+          user: { id: "1", authProvider: "SDB" }
         });
       } catch (e) {
         message = e.message;
@@ -212,7 +212,7 @@ describe("User update", () => {
       try {
         await resolvers.Mutation.updateUser({}, args, {
           prisma,
-          user: { id: "1" }
+          user: { id: "1", authProvider: "SDB" }
         });
       } catch (e) {
         message = e.message;
@@ -249,7 +249,7 @@ describe("User update", () => {
       try {
         await resolvers.Mutation.updateUser({}, args, {
           prisma,
-          user: { id: "1" }
+          user: { id: "1", authProvider: "SDB" }
         });
       } catch (e) {
         message = e.message;
@@ -293,7 +293,7 @@ describe("User update", () => {
       // Update the user
       await resolvers.Mutation.updateUser({}, args, {
         prisma,
-        user: { id: "1" }
+        user: { id: "1", authProvider: "SDB" }
       });
 
       // Expect updateUser to have been called
@@ -350,7 +350,7 @@ describe("User update", () => {
       try {
         await resolvers.Mutation.updateUser({}, args, {
           prisma,
-          user: { id: "1" }
+          user: { id: "1", authProvider: "SDB" }
         });
       } catch (e) {
         message = e.message;

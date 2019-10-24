@@ -1,8 +1,6 @@
 import nodemailer from "nodemailer";
-import { Prisma } from "./generated/prisma-client";
 
 interface IContext {
-  prisma: Prisma;
   user: { id: string };
 }
 
