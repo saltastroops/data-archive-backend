@@ -26,10 +26,10 @@ describe("User registration", () => {
     // 4. Mocks get user by username of the newly created user to exist.
     // 5. Mocks get user roles of the newly created user to be empty.
     (ssdaPool.query as any)
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [{ auth_provider_id: 1 }] })
-      .mockReturnValueOnce({
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ auth_provider_id: 1 }] })
+      .mockResolvedValueOnce({
         rows: [
           {
             affiliation: "Test1 Affiliation",
@@ -44,7 +44,7 @@ describe("User registration", () => {
           }
         ]
       })
-      .mockReturnValueOnce({ rows: [] });
+      .mockResolvedValueOnce({ rows: [] });
 
     // Mocks the database transaction
     // 1. Mocks client connection.
@@ -66,10 +66,10 @@ describe("User registration", () => {
     });
 
     // Mocks the UUID
-    (uuid as any).mockReturnValue("test1-uuid");
+    (uuid as any).mockReturnValueOnce("test1-uuid");
 
     // Mock the bcrypt password hashing to hash the password.
-    (bcrypt.hash as any).mockReturnValue("hashed-password");
+    (bcrypt.hash as any).mockResolvedValueOnce("hashed-password");
 
     // User signing up with valid information.
     const args = {
@@ -166,7 +166,7 @@ describe("User registration", () => {
   it("should not register the user with an empty username", async () => {
     // Mock the database querying
     // 1. Mocks get user by email address to register with not to exist.
-    (ssdaPool.query as any).mockReturnValueOnce({ rows: [] });
+    (ssdaPool.query as any).mockResolvedValueOnce({ rows: [] });
 
     // User signing up with an empty username
     const args = {
@@ -191,7 +191,7 @@ describe("User registration", () => {
   it("should not register the user with a username containing an upper case character", async () => {
     // Mock the database querying
     // 1. Mocks the get user by email address to register with not to exist.
-    (ssdaPool.query as any).mockReturnValueOnce({ rows: [] });
+    (ssdaPool.query as any).mockResolvedValueOnce({ rows: [] });
 
     // User signing up with a username that contains an upper case character
     const args = {
@@ -218,9 +218,9 @@ describe("User registration", () => {
     // 1. Mocks get user by email address to register with not to exist.
     // 2. & 3. Mocks get use by username to already exists
     (ssdaPool.query as any)
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [{ id: 42 }] })
-      .mockReturnValueOnce({ rows: [] });
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 42 }] })
+      .mockResolvedValueOnce({ rows: [] });
 
     // User signing up with a username that already exists
     const args = {
@@ -269,8 +269,8 @@ describe("User registration", () => {
     // Mock the database querying
     // 1. & 2. Mocks the get user by email address to register with to already exist.
     (ssdaPool.query as any)
-      .mockReturnValueOnce({ rows: [{ id: 42 }] })
-      .mockReturnValueOnce({ rows: [] });
+      .mockResolvedValueOnce({ rows: [{ id: 42 }] })
+      .mockResolvedValueOnce({ rows: [] });
 
     // User signing up with an email address that already exists
     const args = {
@@ -296,7 +296,7 @@ describe("User registration", () => {
   it("should not register the user with a password shorter than 7 characters", async () => {
     // Mock the database querying
     // 1. Mocks get user by email address to register with not to exist.
-    (ssdaPool.query as any).mockReturnValueOnce({ rows: [] });
+    (ssdaPool.query as any).mockResolvedValueOnce({ rows: [] });
 
     // User signing up with the password less than 6 characters.
     const args = {

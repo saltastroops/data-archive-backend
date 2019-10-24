@@ -39,23 +39,23 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
     // 5. & 6. Mocks get user by id for the logged in normal user.
     // 5. Mocks querying of the data request with existing path.
     (ssdaPool.query as any)
-      .mockReturnValueOnce({ rows: [{ id: 1 }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [{ id: 1 }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [{ id: 1 }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({
         rows: [
           {
-            ssda_user_id: 1,
-            path: "./src/__tests__/data/data-file-request.zip"
+            path: "./src/__tests__/data/data-file-request.zip",
+            ssda_user_id: 1
           }
         ]
       });
 
     // Mock the bcrypt password comparison to return true.
-    (bcrypt.compare as any).mockReturnValue(true);
+    (bcrypt.compare as any).mockResolvedValueOnce(true);
 
     // Authenticate the user
     const agent = await createAuthenticatedAgent("test", "test", "SSDA");
@@ -86,23 +86,23 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
     // 5. & 6. Mocks get user by id for the logged in an admin user.
     // 5. Mocks querying of the data request with existing path.
     (ssdaPool.query as any)
-      .mockReturnValueOnce({ rows: [{ id: 1 }] })
-      .mockReturnValueOnce({ rows: [{ role: "Admin" }] })
-      .mockReturnValueOnce({ rows: [{ id: 1 }] })
-      .mockReturnValueOnce({ rows: [{ role: "Admin" }] })
-      .mockReturnValueOnce({ rows: [{ id: 1 }] })
-      .mockReturnValueOnce({ rows: [{ role: "Admin" }] })
-      .mockReturnValueOnce({
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+      .mockResolvedValueOnce({ rows: [{ role: "Admin" }] })
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+      .mockResolvedValueOnce({ rows: [{ role: "Admin" }] })
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+      .mockResolvedValueOnce({ rows: [{ role: "Admin" }] })
+      .mockResolvedValueOnce({
         rows: [
           {
-            ssda_user_id: 2,
-            path: "./src/__tests__/data/data-file-request.zip"
+            path: "./src/__tests__/data/data-file-request.zip",
+            ssda_user_id: 2
           }
         ]
       });
 
     // Mock the bcrypt password comparison to return true.
-    (bcrypt.compare as any).mockReturnValue(true);
+    (bcrypt.compare as any).mockResolvedValueOnce(true);
 
     // Authenticate the user
     const agent = await createAuthenticatedAgent("test", "test", "SSDA");
@@ -133,20 +133,20 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
     // 5. & 6. Mocks get user by id for the logged user.
     // 5. Mocks querying of the data request with no longer existing path.
     (ssdaPool.query as any)
-      .mockReturnValueOnce({ rows: [{ id: 1 }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [{ id: 1 }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [{ id: 1 }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({
         rows: [
           { ssda_user_id: 1, path: "path/to/no-longer-existing/data-request" }
         ]
       });
 
     // Mock the bcrypt password comparison to return true.
-    (bcrypt.compare as any).mockReturnValue(true);
+    (bcrypt.compare as any).mockResolvedValueOnce(true);
 
     // Authenticate the user
     const agent = await createAuthenticatedAgent("test", "test", "SSDA");
@@ -170,20 +170,20 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
     // 5. & 6. Mocks get user by id for the logged user.
     // 5. Mocks querying of the data request for a different user than the one who is logged in.
     (ssdaPool.query as any)
-      .mockReturnValueOnce({ rows: [{ id: 1 }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [{ id: 1 }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [{ id: 1 }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({
         rows: [
           { userId: 2, path: "./src/__tests__/data/data-file-request.zip" }
         ]
       });
 
     // Mock the bcrypt password comparison to return true.
-    (bcrypt.compare as any).mockReturnValue(true);
+    (bcrypt.compare as any).mockResolvedValueOnce(true);
 
     // Authenticate the user
     const agent = await createAuthenticatedAgent("test", "test", "SSDA");
@@ -211,16 +211,16 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
     // 5. & 6. Mocks get user by id for the logged user.
     // 5. Mocks querying of the data request not to exist.
     (ssdaPool.query as any)
-      .mockReturnValueOnce({ rows: [{ id: 1 }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [{ id: 1 }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [{ id: 1 }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [] });
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] });
 
     // Mock the bcrypt password comparison to return true.
-    (bcrypt.compare as any).mockReturnValue(true);
+    (bcrypt.compare as any).mockResolvedValueOnce(true);
 
     // Authenticate the user
     const agent = await createAuthenticatedAgent("test", "test", "SSDA");

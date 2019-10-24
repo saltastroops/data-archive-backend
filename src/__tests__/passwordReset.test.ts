@@ -33,7 +33,7 @@ describe("Request password reset", () => {
   it("should fail if email provided is not known", async () => {
     // Mock the database querying
     // 1. Mocks get user by email address not to exist.
-    (ssdaPool.query as any).mockReturnValueOnce({ rows: [] });
+    (ssdaPool.query as any).mockResolvedValueOnce({ rows: [] });
 
     try {
       await resolvers.Mutation.requestPasswordReset(
@@ -53,9 +53,11 @@ describe("Request password reset", () => {
     // 1.& 2. Mocks the get user by email address to exist.
     // 3. Mocks setting the token to have failed
     (ssdaPool.query as any)
-      .mockReturnValueOnce({ rows: [{ email: "xxx@xxx.xx", username: "xxx" }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [] });
+      .mockResolvedValueOnce({
+        rows: [{ email: "xxx@xxx.xx", username: "xxx" }]
+      })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] });
 
     try {
       await resolvers.Mutation.requestPasswordReset(
@@ -75,9 +77,11 @@ describe("Request password reset", () => {
     // 1.& 2. Mocks get user by email address to exist.
     // 3. Mocks setting the token to have succeeded.
     (ssdaPool.query as any)
-      .mockReturnValueOnce({ rows: [{ email: "xxx@xxx.xx", username: "xxx" }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce(true);
+      .mockResolvedValueOnce({
+        rows: [{ email: "xxx@xxx.xx", username: "xxx" }]
+      })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce(true);
 
     try {
       await resolvers.Mutation.requestPasswordReset(
@@ -97,11 +101,13 @@ describe("Request password reset", () => {
     // 1.& 2. Mocks get user by email address to exist.
     // 3. Mocks setting the token to have succeeded.
     (ssdaPool.query as any)
-      .mockReturnValueOnce({ rows: [{ email: "xxx@xxx.xx", username: "xxx" }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce(true);
+      .mockResolvedValueOnce({
+        rows: [{ email: "xxx@xxx.xx", username: "xxx" }]
+      })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce(true);
 
-    (transporter.sendMail as any).mockReturnValueOnce("Email sent");
+    (transporter.sendMail as any).mockResolvedValueOnce("Email sent");
 
     try {
       await resolvers.Mutation.requestPasswordReset(
@@ -134,7 +140,7 @@ describe("reset password", () => {
   it("should fail if the token is invalid", async () => {
     // Mock the database querying
     // 1. Mocks get user by the token to have failed.
-    (ssdaPool.query as any).mockReturnValueOnce({ rows: [] });
+    (ssdaPool.query as any).mockResolvedValueOnce({ rows: [] });
 
     try {
       await resolvers.Mutation.resetPassword(
@@ -151,7 +157,7 @@ describe("reset password", () => {
     // Mock the database querying
     // 1. & 2. Mocks get user by the token to have suceeded but token expired.
     (ssdaPool.query as any)
-      .mockReturnValueOnce({
+      .mockResolvedValueOnce({
         rows: [
           {
             password_reset_token_expiry: moment(Date.now()).subtract(
@@ -161,7 +167,7 @@ describe("reset password", () => {
           }
         ]
       })
-      .mockReturnValueOnce({ rows: [] });
+      .mockResolvedValueOnce({ rows: [] });
 
     try {
       await resolvers.Mutation.resetPassword(
@@ -179,14 +185,14 @@ describe("reset password", () => {
     // 1. & 2. Mocks get user by the token to have suceeded.
     // 3. Moks user updation to have failed
     (ssdaPool.query as any)
-      .mockReturnValueOnce({
+      .mockResolvedValueOnce({
         rows: [
           { password_reset_token_expiry: moment(Date.now()).add(1, "hour") }
         ]
       })
-      .mockReturnValueOnce({ rows: [{ password_reset_token: "validtoken" }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [] });
+      .mockResolvedValueOnce({ rows: [{ password_reset_token: "validtoken" }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] });
 
     try {
       await resolvers.Mutation.resetPassword(
@@ -205,13 +211,13 @@ describe("reset password", () => {
     // 3. Mocks user update to have succeeded
     // 4. & 5. Mocks get user by id of the just updated user password to have suceeded.
     (ssdaPool.query as any)
-      .mockReturnValueOnce({
+      .mockResolvedValueOnce({
         rows: [{ passwordResetTokenExpiry: moment(Date.now()).add(1, "hour") }]
       })
-      .mockReturnValueOnce({ rows: [{ token: "validtoken" }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [{ id: 1 }] })
-      .mockReturnValueOnce({ rows: [] });
+      .mockResolvedValueOnce({ rows: [{ token: "validtoken" }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+      .mockResolvedValueOnce({ rows: [] });
 
     try {
       await resolvers.Mutation.resetPassword(

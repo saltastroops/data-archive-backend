@@ -32,18 +32,18 @@ describe("User update", () => {
       // 6. Mocks the get user by email address to update with not to exist.
       // 7. & 8. Mocks the get user by id of the updated user to exist.
       (ssdaPool.query as any)
-        .mockReturnValueOnce({ rows: [{ id: 1 }] })
-        .mockReturnValueOnce({ rows: [] })
-        .mockReturnValueOnce({ rows: [{ id: 1 }] })
-        .mockReturnValueOnce({ rows: [] })
-        .mockReturnValueOnce({ rows: [] })
-        .mockReturnValueOnce({ rows: [] })
-        .mockReturnValueOnce({ rows: [{ id: 1 }] })
-        .mockReturnValueOnce({ rows: [] });
+        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+        .mockResolvedValueOnce({ rows: [] });
 
       // Mocks the database transaction
       // 1. Mocks client connection.
-      // 2. Mocks begining of the client transaction.
+      // 2. Mocks beginning of the client transaction.
       // 3. Mocks a select of the user id.
       // 4. Mocks an insert of the user details.
       // 5. Mocks a commit of the client transaction.
@@ -56,13 +56,13 @@ describe("User update", () => {
             () => "Update user in the SSDA user auth table"
           )
           .mockImplementationOnce(() => "COMMIT"),
-        release: jest.fn().mockReturnValueOnce("release connection")
+        release: jest.fn().mockResolvedValueOnce("release connection")
       });
 
       // Mock the bcrypt password compare to return true.
-      (bcrypt.compare as any).mockReturnValueOnce(true);
+      (bcrypt.compare as any).mockResolvedValueOnce(true);
       // Mock the bcrypt password hashing to hash the password.
-      (bcrypt.hash as any).mockReturnValueOnce("new-hashed-password");
+      (bcrypt.hash as any).mockResolvedValueOnce("new-hashed-password");
 
       // Updating user with valid information having a different unique username and email address.
       const args: IUserUpdateInputArgs = {
@@ -100,7 +100,7 @@ describe("User update", () => {
       expect((ssdaPool.query as any).mock.calls[1][1]).toEqual([1]);
 
       // Expect the third and forth query to have been called
-      // with the correct sql query and the suplied params
+      // with the correct sql query and the supplied params
       expect((ssdaPool.query as any).mock.calls[2][0]).toContain(
         "SELECT ssda_user_id AS id"
       );
@@ -191,14 +191,14 @@ describe("User update", () => {
       // 6. Mocks the get user by email address to update with not to exist.
       // 7. & 8. Mocks the get user by id of the updated user to exist.
       (ssdaPool.query as any)
-        .mockReturnValueOnce({ rows: [{ id: 1 }] })
-        .mockReturnValueOnce({ rows: [] })
-        .mockReturnValueOnce({ rows: [{ id: 1 }] })
-        .mockReturnValueOnce({ rows: [] })
-        .mockReturnValueOnce({ rows: [] })
-        .mockReturnValueOnce({ rows: [] })
-        .mockReturnValueOnce({ rows: [{ id: 1 }] })
-        .mockReturnValueOnce({ rows: [] });
+        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+        .mockResolvedValueOnce({ rows: [] });
 
       // Mocks the database transaction
       // 1. Mocks client connection.
@@ -215,13 +215,13 @@ describe("User update", () => {
             () => "Update user in the SSDA user auth table"
           )
           .mockImplementationOnce(() => "COMMIT"),
-        release: jest.fn().mockReturnValueOnce("release connection")
+        release: jest.fn().mockResolvedValueOnce("release connection")
       });
 
       // Mock the bcrypt password compare to return true.
-      (bcrypt.compare as any).mockReturnValueOnce(true);
+      (bcrypt.compare as any).mockResolvedValueOnce(true);
       // Mock the bcrypt password hashing to hash the password.
-      (bcrypt.hash as any).mockReturnValueOnce("new-hashed-password");
+      (bcrypt.hash as any).mockResolvedValueOnce("new-hashed-password");
 
       // Update user information having same username and email address.
       const args: IUserUpdateInputArgs = {
@@ -344,11 +344,11 @@ describe("User update", () => {
       // Mock the database querying
       // 1. & 2. Mocks get user by id of the currently logged in user to exist.
       (ssdaPool.query as any)
-        .mockReturnValueOnce({ rows: [{ id: 1 }] })
-        .mockReturnValueOnce({ rows: [] });
+        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+        .mockResolvedValueOnce({ rows: [] });
 
       // Mock the bcrypt password compare to return false.
-      (bcrypt.compare as any).mockReturnValueOnce(false);
+      (bcrypt.compare as any).mockResolvedValueOnce(false);
 
       // Updating user with an invalid password.
       const args: IUserUpdateInputArgs = {
@@ -371,17 +371,17 @@ describe("User update", () => {
       // 3. & 4. Mocks get user by id of the user to update to exist.
       // 5. Mocks the get user by email address to update with not to exist.
       (ssdaPool.query as any)
-        .mockReturnValueOnce({ rows: [{ id: 1 }] })
-        .mockReturnValueOnce({ rows: [] })
-        .mockReturnValueOnce({ rows: [{ id: 1 }] })
-        .mockReturnValueOnce({ rows: [] })
-        .mockReturnValueOnce({
+        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({
           rows: [{ email: "existing@email.address", id: 2 }]
         })
-        .mockReturnValueOnce({ rows: [] });
+        .mockResolvedValueOnce({ rows: [] });
 
       // Mock the bcrypt password compare to return true.
-      (bcrypt.compare as any).mockReturnValueOnce(true);
+      (bcrypt.compare as any).mockResolvedValueOnce(true);
 
       // Updating user with an email that is in use already
       const args: IUserUpdateInput = {
@@ -406,17 +406,17 @@ describe("User update", () => {
       // 3. & 4. Mocks get user by id of the user to update to exist.
       // 5. & 6. Mocks get user by username to update with not to exist.
       (ssdaPool.query as any)
-        .mockReturnValueOnce({ rows: [{ id: 1 }] })
-        .mockReturnValueOnce({ rows: [] })
-        .mockReturnValueOnce({ rows: [{ id: 1 }] })
-        .mockReturnValueOnce({ rows: [] })
-        .mockReturnValueOnce({
+        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({
           rows: [{ username: "existingusername", id: 2 }]
         })
-        .mockReturnValueOnce({ rows: [] });
+        .mockResolvedValueOnce({ rows: [] });
 
       // Mock the bcrypt password compare to return true.
-      (bcrypt.compare as any).mockReturnValueOnce(true);
+      (bcrypt.compare as any).mockResolvedValueOnce(true);
 
       // Updating user with a username that is in use already
       const args: IUserUpdateInputArgs = {
@@ -445,14 +445,14 @@ describe("User update", () => {
       // 6. Mocks the get user by email address to update with not to exist.
       // 7. & 8. Mocks the get user by id of the updated user to exist.
       (ssdaPool.query as any)
-        .mockReturnValueOnce({ rows: [{ id: 1 }] })
-        .mockReturnValueOnce({ rows: [{ role: "Admin" }] })
-        .mockReturnValueOnce({ rows: [{ id: 2 }] })
-        .mockReturnValueOnce({ rows: [] })
-        .mockReturnValueOnce({ rows: [] })
-        .mockReturnValueOnce({ rows: [] })
-        .mockReturnValueOnce({ rows: [{ id: 1 }] })
-        .mockReturnValueOnce({ rows: [] });
+        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+        .mockResolvedValueOnce({ rows: [{ role: "Admin" }] })
+        .mockResolvedValueOnce({ rows: [{ id: 2 }] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+        .mockResolvedValueOnce({ rows: [] });
 
       // Mocks the database transaction
       // 1. Mocks client connection.
@@ -469,13 +469,13 @@ describe("User update", () => {
             () => "Update user in the SSDA user auth table"
           )
           .mockImplementationOnce(() => "COMMIT"),
-        release: jest.fn().mockReturnValueOnce("release connection")
+        release: jest.fn().mockResolvedValueOnce("release connection")
       });
 
       // Mock the bcrypt password compare to return true.
-      (bcrypt.compare as any).mockReturnValueOnce(true);
+      (bcrypt.compare as any).mockResolvedValueOnce(true);
       // Mock the bcrypt password hashing to hash the password.
-      (bcrypt.hash as any).mockReturnValueOnce("new-hashed-password");
+      (bcrypt.hash as any).mockResolvedValueOnce("new-hashed-password");
 
       // Updating user with valid information.
       const args: IUserUpdateInputArgs = {
@@ -601,12 +601,12 @@ describe("User update", () => {
       // 1. & 2. Mocks the get admin user by id of the currently logged in user to exist.
       // 3. Mocks the get user by id of the user to update to not exist.
       (ssdaPool.query as any)
-        .mockReturnValueOnce({ rows: [{ id: 1 }] })
-        .mockReturnValueOnce({ rows: [{ role: "Admin" }] })
-        .mockReturnValueOnce({ rows: [] });
+        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+        .mockResolvedValueOnce({ rows: [{ role: "Admin" }] })
+        .mockResolvedValueOnce({ rows: [] });
 
       // Mock the bcrypt password compare to return true.
-      (bcrypt.compare as any).mockReturnValueOnce(true);
+      (bcrypt.compare as any).mockResolvedValueOnce(true);
 
       // Updating a user that does not exist
       const args: IUserUpdateInputArgs = {

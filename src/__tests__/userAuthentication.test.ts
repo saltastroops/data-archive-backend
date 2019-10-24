@@ -44,14 +44,14 @@ describe("/auth/login", () => {
     // 5. & 6. Mocks get user by id when deserializing.
     // 7. & 8. Mocks get user by id when querying authenticated user.
     (ssdaPool.query as any)
-      .mockReturnValueOnce({ rows: [{ id: 1 }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [{ id: 1 }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [{ id: 1 }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [{ id: 1, given_name: "Test" }] })
-      .mockReturnValueOnce({ rows: [] });
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 1, given_name: "Test" }] })
+      .mockResolvedValueOnce({ rows: [] });
 
     // Mock the bcrypt password compare to return true.
     (bcrypt.compare as any).mockReturnValue(true);
@@ -103,10 +103,10 @@ describe("/auth/login", () => {
     // 1. & 2. Mocks the get user by username of the unauthenticated user.
     // 3. & 4. Mocks the get user by id when querying unauthenticated user.
     (ssdaPool.query as any)
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [] });
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] });
     try {
       const server = (await createServer()).createHttpServer({});
       // User logging in with invalid credentials.
@@ -153,15 +153,15 @@ describe("/auth/logout", () => {
     // 7. & 8. Mocks the get user by id when querying authenticated user.
     // 9. Mocks the get user by id when querying unauthenticated user.
     (ssdaPool.query as any)
-      .mockReturnValueOnce({ rows: [{ id: 1 }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [{ id: 1 }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [{ id: 1 }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [{ id: 1, given_name: "Test" }] })
-      .mockReturnValueOnce({ rows: [] })
-      .mockReturnValueOnce({ rows: [] });
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 1, given_name: "Test" }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] });
 
     // Mock the bcrypt password compare to return true.
     (bcrypt.compare as any).mockReturnValue(true);
