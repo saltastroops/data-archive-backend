@@ -10,7 +10,10 @@ function checkInvalidColumn(column: string) {
 }
 
 function objectToSQL(condition: any) {
-  return parseWhereCondition(JSON.stringify(condition)).sql;
+  return parseWhereCondition(JSON.stringify(condition)).sql.replace(
+    /\$\d+/g,
+    "?"
+  );
 }
 
 function objectToValues(condition: any) {
@@ -51,12 +54,12 @@ describe("parseWhereCondition", () => {
     });
 
     it("should refuse column names with invalid characters", () => {
-      checkInvalidColumn("`Proposal.Name");
+      checkInvalidColumn('"Proposal.Name');
       checkInvalidColumn("Prop;osal.Name");
     });
 
     it("should refuse table names with invalid characters", () => {
-      checkInvalidColumn("Proposal.Name`");
+      checkInvalidColumn('Proposal.Name"');
       checkInvalidColumn("Proposal.Nam;e");
     });
   });
