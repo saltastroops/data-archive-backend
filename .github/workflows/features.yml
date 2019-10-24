@@ -1,0 +1,46 @@
+#  The Data Archive API Features Workflow
+name: Data Archive API Features Workflow
+
+# This workflow is triggered whenever there are new commits pushed to the features branch.
+on:
+  push:
+    branches:
+      - '*'
+      - '!development'
+      - '!master'
+
+jobs:
+  job1:
+    # The job for building, testing and deploy the code inside the github virtual machine.
+    name: Build, test and run the app on the github virtual machine
+    # This job is executed on the Linux machine.
+    runs-on: ubuntu-latest
+
+    # The matrix strategy is used to specify the nodejs version to use for the node packages management.
+    strategy:
+      # In this case, nodejs version 8.x and 10.x is used.
+      # To include more versions, you add them as follows: [8.x, 10.x, 12.x, ...].
+      matrix:
+        node-version: [8.x, 10.x]
+
+    # The steps to be executed for this job.
+    steps:
+      # This step uses the checkout action to make sure the latest code is used.
+      - name: Use the latest code
+        uses: actions/checkout@v1
+      # This step uses the setup-node action to setup the nodejs environment.
+      - name: Setup the nodejs environment
+        uses: actions/setup-node@v1
+        # The setup-node action accepts parameters.
+        # In this case, the nodejs version parameter specifying the version of nodejs to use is supplied.
+        with:
+          node-version: ${{ matrix.node-version }}
+      # This specifies the commands to run after the build is done.
+      # The first command is for installing the nodejs packages.
+      # The second command is for typescript linting.
+      # The third command is for executing the tests.
+      - run: |
+          yarn install
+          yarn lint
+          yarn test
+        shell: bash
