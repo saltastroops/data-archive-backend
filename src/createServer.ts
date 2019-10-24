@@ -6,11 +6,14 @@ import { GraphQLServer } from "graphql-yoga";
 import passport from "passport";
 import passportLocal from "passport-local";
 import * as path from "path";
-import { ssdaPool } from "./db/pool";
-import { prisma } from "./generated/prisma-client";
+import { ssdaPool } from "./db/postgresql_pool";
 import { resolvers } from "./resolvers";
 import authProvider from "./util/authProvider";
-import { dataRequestDataLoader } from "./util/dataRequests";
+import {
+  dataFileDataLoader,
+  dataRequestDataLoader,
+  userDataLoader
+} from "./util/loaders";
 import {
   getUserById,
   isAdmin,
@@ -60,9 +63,10 @@ const createServer = async () => {
   const server = new GraphQLServer({
     context: (req: any) => ({
       loaders: {
-        dataRequestLoader: dataRequestDataLoader()
+        dataFileLoader: dataFileDataLoader(req.request.user),
+        dataRequestLoader: dataRequestDataLoader(),
+        userLoader: userDataLoader()
       },
-      prisma,
       user: req.request.user
     }),
     resolvers,
@@ -354,44 +358,6 @@ const createServer = async () => {
     }
   );
 
-  /**
-   * Endpoint for downloading the data for a data request part.
-   *
-   * The URL includes the following parameters.
-   *
-   * :dataRequestId
-   *     The id of the data request.
-   * :dataRequestPartId:
-   *     The id of the data request part.
-   * :filename
-   *     The filename to use for the downloaded file. It is not used for
-   *     identifying the data file, but is used in the attachment HTTP header.
-   */
-  server.express.get(
-    "/downloads/data-requests/:dataRequestId/:dataRequestPartId/:filename",
-    async (req, res) => {
-      // Check if the user is logged in
-      if (!req.user) {
-        return res.status(401).send({
-          message: "You must be logged in.",
-          success: false
-        });
-      }
-
-      // Get all the params from the request
-      const { dataRequestId, dataRequestPartId, filename } = req.params;
-
-      // Download the data file for the data request part
-      return downloadDataRequest({
-        dataRequestId,
-        dataRequestPartId,
-        filename,
-        req,
-        res
-      });
-    }
-  );
-
   // Returning the server
   return server;
 };
@@ -406,7 +372,6 @@ interface IDataRequestDownloadParameters {
 
 async function downloadDataRequest({
   dataRequestId,
-  dataRequestPartId,
   filename,
   req,
   res
@@ -417,29 +382,30 @@ async function downloadDataRequest({
     success: false
   };
 
-  // TODO UPDATE INCLUDE MORE INFORMATION IN THE FRAGMENT AS REQUIRED
-  const dataRequest = await prisma.dataRequest({ id: dataRequestId })
-    .$fragment(`{
-    id
-    uri
-    parts{
-      id
-      uri
-    }
-    user{
-      id
-    }
-  }`);
+  // get the data requests
+  const dataRequestsSQL = `
+    SELECT data_request_id, path, status, made_at, ssda_user_id
+    FROM admin.data_request dr
+    JOIN admin.data_request_status drs
+    ON dr.data_request_status_id = drs.data_request_status_id
+    WHERE data_request_id=$1
+  `;
+  const queryResult: any = await ssdaPool.query(dataRequestsSQL, [
+    dataRequestId
+  ]);
+  const rows = queryResult.rows;
 
-  if (!dataRequest) {
+  if (!rows.length) {
     return res.status(404).send(notFound);
   }
 
-  // TODO UPDATE include dataRequest interface according to the mysql database
+  const dataRequest = queryResult.rows[0];
+
   // Check that the user may download content for the data request, either
   // because they own the request or because they are an administrator.
   const mayDownload =
-    ownsDataRequest(dataRequest, req.user) || isAdmin(req.user);
+    ownsDataRequest({ user: { id: dataRequest.ssda_user_id } }, req.user) ||
+    isAdmin(req.user);
 
   if (!mayDownload) {
     return res.status(403).send({
@@ -449,17 +415,12 @@ async function downloadDataRequest({
   }
 
   // Get the download URI
-  let uri: string;
-  if (dataRequestPartId) {
-    const dataRequestPart = (dataRequest as any).parts.find(
-      (part: any) => part.id === dataRequestPartId
-    );
-    if (!dataRequestPart) {
-      return res.status(404).send(notFound);
-    }
-    uri = dataRequestPart.uri;
-  } else {
-    uri = (dataRequest as any).uri;
+  const uri = dataRequest.path;
+
+  // Handle a missing path
+  if (!uri) {
+    res.status(404).send(notFound);
+    return;
   }
 
   // Download the data request file

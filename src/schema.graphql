@@ -1,5 +1,3 @@
-# import * from './generated/prisma.graphql'
-
 """
 The schema's root query type.
 """
@@ -181,9 +179,7 @@ type Mutation {
   ): User!
 
   # Create a data request
-  createDataRequest(
-      dataFiles: [Int!]!
-    ): Status!
+  createDataRequest(dataFiles: [Int!]!): Status!
 }
 
 # A data archive user.
@@ -206,7 +202,7 @@ type User {
   """
   Username, which must not contain upper case letters.
   """
-  username: String!
+  username: String
 
   """
   Email address, which will be stored as lower case.
@@ -306,21 +302,11 @@ type DataRequest {
   # file location fro download
   uri: String
   # The date a data request was made
-  madeAt: DateTime!
-  # The data request observations
-  observations: [DataRequestObservation!]!
+  madeAt: String!
+  # The requested data files
+  dataFiles: [DataFile!]!
   # The status of the data request
   status: DataRequestStatus!
-}
-
-# Details about the data request oobservation
-type DataRequestObservation {
-  # Id of the data data request observation
-  id: ID!
-  # Observation name
-  name: String
-  # The data request observation files
-  dataFiles: [DataFile!]!
 }
 
 # The data request status
@@ -328,4 +314,10 @@ enum DataRequestStatus {
   PENDING
   FAILED
   SUCCESSFUL
+}
+
+# An enumeration of the user roles, which define the permissions a user has.
+enum Role {
+  # Administrator with full power
+  ADMIN
 }

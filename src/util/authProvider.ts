@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { sdbPool } from "../db/pool";
+import { sdbPool } from "../db/mysql_pool";
 import {
   createUser,
   getUserByAuthProviderDetails,

@@ -18,28 +18,12 @@ const createPool = (config: any) => {
         throw new Error("Database has too many connections.");
       }
       if (e.code === "ECONNREFUSED") {
-        throw new Error("Database connection was refused.");
+        throw new Error("The Database connection was refused.");
       }
     }
   })();
 
   return pool;
-};
-
-// Database configuration parameters
-const ssdaConfig = {
-  database: process.env.SSDA_DATABASE_NAME,
-  host: process.env.DATABASE_HOST,
-  password: process.env.DATABASE_PASSWORD,
-  user: process.env.DATABASE_USER
-};
-
-// Database configuration parameters
-const ssdaAdminConfig = {
-  database: process.env.SSDA_ADMIN_DATABASE_NAME,
-  host: process.env.DATABASE_HOST,
-  password: process.env.DATABASE_PASSWORD,
-  user: process.env.DATABASE_USER
 };
 
 // SDB configuration parameters
@@ -52,7 +36,5 @@ const sdbConfig = {
 
 // Creating poos of database connections
 const sdbPool = createPool(sdbConfig);
-const ssdaPool = createPool(ssdaConfig);
-const ssdaAdminPool = createPool(ssdaAdminConfig);
 
-export { sdbPool, ssdaPool, ssdaAdminPool };
+export { sdbPool };

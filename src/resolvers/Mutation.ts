@@ -1,6 +1,5 @@
 import bcrypt from "bcrypt";
 import { validate } from "isemail";
-import { Prisma, UserUpdateInput } from "../generated/prisma-client";
 import { AuthProviderName } from "../util/authProvider";
 import {
   createUser,
@@ -9,6 +8,7 @@ import {
   getUserByUsername,
   isAdmin,
   IUserCreateInput,
+  IUserUpdateInput,
   updateUser
 } from "../util/user";
 import { createDataRequest } from "./dataRequest";
@@ -16,14 +16,7 @@ import { requestPasswordReset, resetPassword } from "./resetPassword";
 
 // Defining the context interface
 interface IContext {
-  prisma: Prisma;
   user: { id: string | number; authProvider: AuthProviderName }; // TODO user interface
-}
-
-// Defining the update user interface
-interface IUserUpdateInput extends UserUpdateInput {
-  id?: string | number;
-  newPassword?: string;
 }
 
 // Check whether a password is sufficiently strong.
@@ -157,13 +150,9 @@ const Mutation = {
     // Get the current details of the updated user.
     const userToUpdate = await getUserById(updatedUserId);
     if (!userToUpdate) {
-      throw new Error("There exists no user with the given id.");
-    }
-    const userUpdateInfo = userToUpdate;
-
-    if (!userToUpdate) {
       throw new Error(`There exists no user with the ID ${updatedUserId}.`);
     }
+    const userUpdateInfo = userToUpdate;
 
     // If the username is to change
     if (args.username) {
@@ -239,7 +228,7 @@ const Mutation = {
     }
 
     // Update the user details
-    await updateUser(userUpdateInfo, userToUpdate.id);
+    await updateUser(userUpdateInfo, userToUpdate.id, ctx.user.authProvider);
 
     return getUserById(userToUpdate.id);
   },

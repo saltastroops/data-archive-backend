@@ -1,4 +1,4 @@
-import { ssdaPool } from "../db/pool";
+import { ssdaPool } from "../db/postgresql_pool";
 import {
   createFromExpression,
   parseWhereCondition
@@ -42,7 +42,10 @@ export const queryDataFiles = async (
 
   // Columns to include in the search results
   const allColumns = new Set(columns);
-  allColumns.add("DataFile.dataFileId");
+  allColumns.add("artifact.artifact_id");
+  allColumns.add("artifact.content_length");
+  allColumns.add("artifact.name");
+  allColumns.add("observation_time.start_time");
   whereDetails.columns.forEach(column => allColumns.add(column));
 
   // All the data model tables need to make this query
@@ -50,32 +53,33 @@ export const queryDataFiles = async (
 
   // First pass: Get the number of search results
   const countSQL = `
-      SELECT COUNT(*) as itemsTotal FROM ${sqlFrom} WHERE ${whereDetails.sql}
+      SELECT COUNT(*) as items_total FROM ${sqlFrom} WHERE ${whereDetails.sql}
       `;
   const countResults: any = (await ssdaPool.query(countSQL, [
     ...whereDetails.values
-  ]))[0];
-  const itemsTotal = countResults[0].itemsTotal;
+  ])).rows;
+  const itemsTotal = countResults[0].items_total;
 
   // Second pass: Get the data file details
   const fields = Array.from(allColumns).map(
-    column => `${column} AS \`${column}\``
+    column => `${column} AS "${column}"`
   );
   const itemSQL = `
       SELECT ${Array.from(fields).join(", ")}
              FROM ${sqlFrom}
       WHERE ${whereDetails.sql}
-      ORDER BY DataFile.startTime DESC
-      LIMIT ? OFFSET ?
+      ORDER BY observations.observation_time.start_time DESC
+      LIMIT \$${whereDetails.values.length + 1} OFFSET \$${whereDetails.values
+    .length + 2}
              `;
   const itemResults: any = (await ssdaPool.query(itemSQL, [
     ...whereDetails.values,
     limit,
     startIndex
-  ]))[0];
+  ])).rows;
 
   // Which of the files are owned by the user?
-  const ids = itemResults.map((row: any) => row["DataFile.dataFileId"]);
+  const ids = itemResults.map((row: any) => row["artifact.artifact_id"]);
   const userOwnedFileIds = await ownsOutOfDataFiles(user, ids);
 
   // Collect all the details
@@ -85,14 +89,16 @@ export const queryDataFiles = async (
     startIndex
   };
   const dataFiles = itemResults.map((row: any) => ({
-    id: row["DataFile.dataFileId"],
+    id: row["artifact.artifact_id"],
     metadata: [
       ...Object.entries(row).map(entry => ({
         name: entry[0],
         value: entry[1]
       }))
     ],
-    ownedByUser: userOwnedFileIds.has(row["DataFile.dataFileId"].toString())
+    name: row["artifact.name"],
+    ownedByUser: userOwnedFileIds.has(row["artifact.artifact_id"].toString()),
+    size: row["artifact.content_length"]
   }));
 
   return {
