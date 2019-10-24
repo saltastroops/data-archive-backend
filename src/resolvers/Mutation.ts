@@ -150,13 +150,9 @@ const Mutation = {
     // Get the current details of the updated user.
     const userToUpdate = await getUserById(updatedUserId);
     if (!userToUpdate) {
-      throw new Error("There exists no user with the given id.");
-    }
-    const userUpdateInfo = userToUpdate;
-
-    if (!userToUpdate) {
       throw new Error(`There exists no user with the ID ${updatedUserId}.`);
     }
+    const userUpdateInfo = userToUpdate;
 
     // If the username is to change
     if (args.username) {

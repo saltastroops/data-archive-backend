@@ -24,7 +24,7 @@ const groupByObservation = (dataFiles: [any]) => {
 export const createDataRequest = async (dataFiles: [number], user: any) => {
   // check if user is logged in
   if (!user) {
-    throw new Error("You must be logged in to a create data request");
+    throw new Error("You must be logged in to create a data request");
   }
 
   const dataFileIdStrings = dataFiles.map(id => id.toString());

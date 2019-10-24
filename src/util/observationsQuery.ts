@@ -334,7 +334,7 @@ export function parseWhereCondition(where: string): WhereConditionContent {
     return new WhereConditionContent("1=1", [], new Set());
   }
 
-  let parsed = convertToSQL(w);
+  const parsed = convertToSQL(w);
 
   // replace the placeholder string with the correct placeholders ($1, $2, ...)
   for (let i = 1; i <= parsed.values.length; i++) {

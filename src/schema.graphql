@@ -179,9 +179,7 @@ type Mutation {
   ): User!
 
   # Create a data request
-  createDataRequest(
-      dataFiles: [Int!]!
-    ): Status!
+  createDataRequest(dataFiles: [Int!]!): Status!
 }
 
 # A data archive user.
