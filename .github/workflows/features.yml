@@ -36,11 +36,10 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       # This specifies the commands to run after the build is done.
-      # The first command makes sure you are in the development branch.
-      # The second command is for installing PM2 which is a daemon process manager for nodejs.
-      # The third command is for installing the nodejs packages.
+      # The first command is for installing the nodejs packages.
+      # The second command is for code formatting by prettier.
+      # The third command is for typescript linting.
       # The fourth command is for executing the tests.
-      # The fifth command is for executing the application in development mode.
       - run: |
           yarn install
           yarn format
