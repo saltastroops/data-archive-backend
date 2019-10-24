@@ -9,7 +9,11 @@ import * as path from "path";
 import { ssdaPool } from "./db/postgresql_pool";
 import { resolvers } from "./resolvers";
 import authProvider from "./util/authProvider";
-import { dataFileDataLoader, dataRequestDataLoader, userDataLoader } from "./util/loaders";
+import {
+  dataFileDataLoader,
+  dataRequestDataLoader,
+  userDataLoader
+} from "./util/loaders";
 import {
   getUserById,
   isAdmin,
@@ -382,11 +386,13 @@ async function downloadDataRequest({
   const dataRequestsSQL = `
     SELECT data_request_id, path, status, made_at, ssda_user_id
     FROM admin.data_request dr
-    JOIN admin.data_request_status
-    ON dr.data_request_status_id = data_request_status.data_request_status_id
+    JOIN admin.data_request_status drs
+    ON dr.data_request_status_id = drs.data_request_status_id
     WHERE data_request_id=$1
   `;
-  const queryResult: any = await ssdaPool.query(dataRequestsSQL, [dataRequestId]);
+  const queryResult: any = await ssdaPool.query(dataRequestsSQL, [
+    dataRequestId
+  ]);
   const rows = queryResult.rows;
 
   if (!rows.length) {
@@ -398,7 +404,8 @@ async function downloadDataRequest({
   // Check that the user may download content for the data request, either
   // because they own the request or because they are an administrator.
   const mayDownload =
-    ownsDataRequest({ user: { id: dataRequest.ssda_user_id } }, req.user) || isAdmin(req.user);
+    ownsDataRequest({ user: { id: dataRequest.ssda_user_id } }, req.user) ||
+    isAdmin(req.user);
 
   if (!mayDownload) {
     return res.status(403).send({

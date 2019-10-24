@@ -326,7 +326,9 @@ export function parseWhereCondition(where: string): WhereConditionContent {
       // See
       // https://www.plumislandmedia.net/mysql/vicenty-great-circle-distance-formula/
       // for a possible implementation of the function.
-      if (0 == 0) throw new Error("NOT UPDATED YET!!!");
+      if (0 === 0) {
+        throw new Error("NOT UPDATED YET!!!");
+      }
       sql += ` AND (ANGULAR_DISTANCE(${declinationColumn}, ${rightAscensionColumn}, " + parameterPlaceholder() + ", " + parameterPlaceholder() + ") <= " + parameterPlaceholder() + ")`;
       values.push(declination, rightAscension, radius);
       sql += ")";
@@ -344,7 +346,7 @@ export function parseWhereCondition(where: string): WhereConditionContent {
     return new WhereConditionContent("1=1", [], new Set());
   }
 
-  let parsed = convertToSQL(w);
+  const parsed = convertToSQL(w);
 
   // replace the placeholder string with the correct placeholders ($1, $2, ...)
   for (let i = 1; i <= parsed.values.length; i++) {

@@ -35,14 +35,14 @@ export interface IUserCreateInput {
 }
 
 export interface IUserUpdateInput {
-  affiliation: string;
-  email: string;
-  familyName: string;
-  givenName: string;
-  id: string;
+  affiliation?: string;
+  email?: string;
+  familyName?: string;
+  givenName?: string;
+  id?: string | number;
   newPassword?: string;
   password: string;
-  username: string;
+  username?: string;
 }
 
 export type Role = "Admin";
@@ -67,23 +67,19 @@ export const createUser = async (args: IUserCreateInput) => {
   } = args;
 
   // Check if the submitted email address is valid
-  if (!validate(args.email, { minDomainAtoms: 2 })) {
+  if (!validate(email, { minDomainAtoms: 2 })) {
     throw new Error(`The email address "${args.email}" is invalid.`);
   }
 
   // Transform the email address to lower case.
-  const lowerCaseEmail = args.email.toLowerCase();
+  const lowerCaseEmail = email.toLowerCase();
 
   // Check if there already exists a user with the submitted email address
-  const userWithGivenEmail = await getUserByEmail(
-    args.email,
-    args.authProvider
-  );
+  const userWithGivenEmail = await getUserByEmail(email, authProvider);
+
   if (userWithGivenEmail) {
     throw new Error(
-      `There already exists a user with the email address ${
-        args.email
-      } for this authentication provider.`
+      `There already exists a user with the email address ${email} for this authentication provider.`
     );
   }
 
@@ -97,23 +93,23 @@ export const createUser = async (args: IUserCreateInput) => {
     checkPasswordStrength(password);
 
     // Check that the submitted username is not empty
-    if (!args.username) {
+    if (!username) {
       throw new Error(`The username must not be empty.`);
     }
 
     // Check that the submitted username does not contain upper case characters
-    if (args.username !== args.username.toLowerCase()) {
+    if (username !== username.toLowerCase()) {
       throw new Error(
-        `The username ${args.username} contains upper case characters.`
+        `The username ${username} contains upper case characters.`
       );
     }
 
     // Check if there already exists a user with the submitted username
-    const userWithGivenUsername = await getUserByUsername(args.username);
+    const userWithGivenUsername = await getUserByUsername(username);
 
     if (userWithGivenUsername) {
       throw new Error(
-        `There already exists a user with the username ${args.username}.`
+        `There already exists a user with the username ${username}.`
       );
     }
   }
@@ -166,7 +162,6 @@ export const createUser = async (args: IUserCreateInput) => {
       // Add the new user to the database
       await client.query(authInsertSQL, [userId, username, hashedPassword]);
     }
-
     await client.query("COMMIT");
   } catch (e) {
     await client.query("ROLLBACK");
@@ -494,8 +489,9 @@ export const changeUserPassword = async (
  *
  * @param user user information
  */
-export const isAdmin = (user: User | undefined) =>
-  user && user.roles && user.roles.has("Admin");
+export const isAdmin = (user: User | undefined) => {
+  return user && user.roles && user.roles.has("Admin");
+};
 
 /**
  * Check whether a user may view a data file.
