@@ -37,12 +37,10 @@ jobs:
           node-version: ${{ matrix.node-version }}
       # This specifies the commands to run after the build is done.
       # The first command is for installing the nodejs packages.
-      # The second command is for code formatting by prettier.
-      # The third command is for typescript linting.
-      # The fourth command is for executing the tests.
+      # The second command is for typescript linting.
+      # The third command is for executing the tests.
       - run: |
           yarn install
-          yarn format
           yarn lint
           yarn test
         shell: bash
