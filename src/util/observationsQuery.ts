@@ -289,20 +289,20 @@ export function parseWhereCondition(where: string): WhereConditionContent {
         const minRA = rightAscension - dRA;
         const maxRA = rightAscension + dRA;
         if (minRA < 0) {
-          sql += `((${rightAscensionColumn} BETWEEN 0 AND " + parameterPlaceholder() + ") OR (${rightAscensionColumn} BETWEEN " + parameterPlaceholder() + " AND 360))`;
+          sql += `((${rightAscensionColumn} BETWEEN 0 AND ${PLACEHOLDER} + ") OR (${rightAscensionColumn} BETWEEN ${PLACEHOLDER} AND 360))`;
           values.push(maxRA, 360 + minRA);
         } else if (maxRA > 360) {
-          sql += `((${rightAscensionColumn} BETWEEN 0 AND " + parameterPlaceholder() + ") OR (${rightAscensionColumn} BETWEEN " + parameterPlaceholder() + " AND 360))`;
+          sql += `((${rightAscensionColumn} BETWEEN 0 AND ${PLACEHOLDER}) OR (${rightAscensionColumn} BETWEEN ${PLACEHOLDER} AND 360))`;
           values.push(maxRA - 360, minRA);
         } else {
-          sql += `(${rightAscensionColumn} BETWEEN " + parameterPlaceholder() + " AND " + parameterPlaceholder() + ")`;
+          sql += `(${rightAscensionColumn} BETWEEN ${PLACEHOLDER} AND ${PLACEHOLDER})`;
           values.push(minRA, maxRA);
         }
 
         // limiting declination
         const minDec = declination - 2 * radius;
         const maxDec = declination + 2 * radius;
-        sql += ` AND (${declinationColumn} BETWEEN " + parameterPlaceholder() + " AND " + parameterPlaceholder() + ")`;
+        sql += ` AND (${declinationColumn} BETWEEN ${PLACEHOLDER} AND ${PLACEHOLDER})`;
         values.push(minDec, maxDec);
 
         sql += ")";
@@ -311,24 +311,14 @@ export function parseWhereCondition(where: string): WhereConditionContent {
         // restrict right ascension values.
         const minDec = Math.max(declination - 2 * radius, -90);
         const maxDec = Math.min(declination + 2 * radius, 90);
-        sql += `(${declinationColumn} BETWEEN " + parameterPlaceholder() + " AND " + parameterPlaceholder() + ")`;
+        sql += `(${declinationColumn} BETWEEN ${PLACEHOLDER} AND ${PLACEHOLDER})`;
         values.push(minDec, maxDec);
       }
 
-      // We assume that there exists a stored function called ANGULAR_DISTANCE
-      // with the following signature:
-      //
-      // ANGULAR_DISTANCE(latitude1, longitude1, latitude2, longitude2)
-      //
-      // This must return the angular distance in degrees between the two
-      // positions.
-      //
-      // See
-      // https://www.plumislandmedia.net/mysql/vicenty-great-circle-distance-formula/
-      // for a possible implementation of the function.
-      if (0 == 0) throw new Error("NOT UPDATED YET!!!");
-      sql += ` AND (ANGULAR_DISTANCE(${declinationColumn}, ${rightAscensionColumn}, " + parameterPlaceholder() + ", " + parameterPlaceholder() + ") <= " + parameterPlaceholder() + ")`;
-      values.push(declination, rightAscension, radius);
+      // spoint, scircle and the @ operator are provided by pgSphere, which must
+      // be installed and added as an extension.
+      sql += ` AND (spoint(radians(${rightAscensionColumn}), radians(${declinationColumn})) @ scircle(spoint(radians(${PLACEHOLDER}), radians(${PLACEHOLDER})), radians(${PLACEHOLDER})))`;
+      values.push(rightAscension, declination, radius);
       sql += ")";
 
       columns.add(declinationColumn).add(rightAscensionColumn);
