@@ -693,7 +693,7 @@ describe("parseWhereCondition", () => {
     it("should generate the correct SQL close to the celestial south pole", () => {
       const wr = withinRadius(12.9, -89.9, 0.5);
       expect(objectToSQL(wr)).toEqual(
-        "((Target.Dec BETWEEN ? AND ?) AND (spoint(radians(Target.RA), radians(Target.Dec))  scircle(spoint(radians(?), radians(?)), radians(?))))"
+        "((Target.Dec BETWEEN ? AND ?) AND (spoint(radians(Target.RA), radians(Target.Dec)) @ scircle(spoint(radians(?), radians(?)), radians(?))))"
       );
       const expected = [-90, -88.9, 12.9, -89.9, 0.5];
       const values = objectToValues(wr);
