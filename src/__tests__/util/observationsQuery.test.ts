@@ -154,7 +154,7 @@ describe("parseWhereCondition", () => {
       const condition1 = { EQUALS: { column: "A.B", value: "A" } };
       const condition2 = { EQUALS: { column: "C.D", value: "C" } };
       const and = { AND: [condition1, condition2] };
-      expect(objectToSQL(and)).toEqual("((A.B = $1) AND (C.D = $2))");
+      expect(objectToSQL(and)).toEqual("((A.B = ?) AND (C.D = ?))");
       expect(objectToValues(and)).toEqual(["A", "C"]);
     });
 
@@ -164,7 +164,7 @@ describe("parseWhereCondition", () => {
       const condition3 = { IS_NULL: { column: "E.F" } };
       const and = { AND: [condition1, condition2, condition3] };
       expect(objectToSQL(and)).toEqual(
-        "((A.B = $1) AND (C.D = $2) AND (E.F IS NULL))"
+        "((A.B = ?) AND (C.D = ?) AND (E.F IS NULL))"
       );
       expect(objectToValues(and)).toEqual(["A", "C"]);
     });
@@ -192,7 +192,7 @@ describe("parseWhereCondition", () => {
       const condition1 = { EQUALS: { column: "A.B", value: "A" } };
       const condition2 = { EQUALS: { column: "C.D", value: "C" } };
       const or = { OR: [condition1, condition2] };
-      expect(objectToSQL(or)).toEqual("((A.B = $1) OR (C.D = $2))");
+      expect(objectToSQL(or)).toEqual("((A.B = ?) OR (C.D = ?))");
       expect(objectToValues(or)).toEqual(["A", "C"]);
     });
 
@@ -202,7 +202,7 @@ describe("parseWhereCondition", () => {
       const condition3 = { IS_NULL: { column: "E.F" } };
       const or = { OR: [condition1, condition2, condition3] };
       expect(objectToSQL(or)).toEqual(
-        "((A.B = $1) OR (C.D = $2) OR (E.F IS NULL))"
+        "((A.B = ?) OR (C.D = ?) OR (E.F IS NULL))"
       );
       expect(objectToValues(or)).toEqual(["A", "C"]);
     });
@@ -276,7 +276,7 @@ describe("parseWhereCondition", () => {
 
     it("should generate the correct SQL", () => {
       const equals = { EQUALS: { column: "A.B", value: "Simbad" } };
-      expect(objectToSQL(equals)).toEqual("(A.B = $1)");
+      expect(objectToSQL(equals)).toEqual("(A.B = ?)");
       expect(objectToValues(equals)).toEqual(["Simbad"]);
     });
 
@@ -306,7 +306,7 @@ describe("parseWhereCondition", () => {
 
     it("should generate the correct SQL", () => {
       const lessThan = { LESS_THAN: { column: "A.B", value: "Doe" } };
-      expect(objectToSQL(lessThan)).toEqual("(A.B < $1)");
+      expect(objectToSQL(lessThan)).toEqual("(A.B < ?)");
       expect(objectToValues(lessThan)).toEqual(["Doe"]);
     });
 
@@ -336,7 +336,7 @@ describe("parseWhereCondition", () => {
 
     it("should generate the correct SQL", () => {
       const greaterThan = { GREATER_THAN: { column: "A.B", value: "Doe" } };
-      expect(objectToSQL(greaterThan)).toEqual("(A.B > $1)");
+      expect(objectToSQL(greaterThan)).toEqual("(A.B > ?)");
       expect(objectToValues(greaterThan)).toEqual(["Doe"]);
     });
 
@@ -366,7 +366,7 @@ describe("parseWhereCondition", () => {
 
     it("should generate the correct SQL", () => {
       const lessEqual = { LESS_EQUAL: { column: "A.B", value: "Doe" } };
-      expect(objectToSQL(lessEqual)).toEqual("(A.B <= $1)");
+      expect(objectToSQL(lessEqual)).toEqual("(A.B <= ?)");
       expect(objectToValues(lessEqual)).toEqual(["Doe"]);
     });
 
@@ -396,7 +396,7 @@ describe("parseWhereCondition", () => {
 
     it("should generate the correct SQL", () => {
       const greaterEqual = { GREATER_EQUAL: { column: "A.B", value: "Doe" } };
-      expect(objectToSQL(greaterEqual)).toEqual("(A.B >= $1)");
+      expect(objectToSQL(greaterEqual)).toEqual("(A.B >= ?)");
       expect(objectToValues(greaterEqual)).toEqual(["Doe"]);
     });
 
@@ -426,14 +426,14 @@ describe("parseWhereCondition", () => {
 
     it("should generate the correct SQL", () => {
       const isInOneItem = { IS_IN: { column: "A.B", values: ["Doe"] } };
-      expect(objectToSQL(isInOneItem)).toEqual("(A.B = ANY(ARRAY[$1]))");
+      expect(objectToSQL(isInOneItem)).toEqual("(A.B = ANY(ARRAY[?]))");
       expect(objectToValues(isInOneItem)).toEqual(["Doe"]);
 
       const isInThreeItems = {
         IS_IN: { column: "A.B", values: ["John", "Peter", "Vuyo"] }
       };
       expect(objectToSQL(isInThreeItems)).toEqual(
-        "(A.B = ANY(ARRAY[$1, $2, $3]))"
+        "(A.B = ANY(ARRAY[?, ?, ?]))"
       );
       expect(objectToValues(isInThreeItems)).toEqual(["John", "Peter", "Vuyo"]);
     });
@@ -464,7 +464,7 @@ describe("parseWhereCondition", () => {
 
     it("should generate the correct SQL", () => {
       const contains = { CONTAINS: { column: "A.B", value: "SCI-%-_024" } };
-      expect(objectToSQL(contains)).toEqual("(A.B LIKE $1 ESCAPE '|')");
+      expect(objectToSQL(contains)).toEqual("(A.B LIKE ? ESCAPE '|')");
       expect(objectToValues(contains)).toEqual(["%SCI-|%-|_024%"]);
     });
 
@@ -496,7 +496,7 @@ describe("parseWhereCondition", () => {
       const startsWith = {
         STARTS_WITH: { column: "A.B", value: "SCI-%-_024" }
       };
-      expect(objectToSQL(startsWith)).toEqual("(A.B LIKE $1 ESCAPE '|')");
+      expect(objectToSQL(startsWith)).toEqual("(A.B LIKE ? ESCAPE '|')");
       expect(objectToValues(startsWith)).toEqual(["SCI-|%-|_024%"]);
     });
 
@@ -526,7 +526,7 @@ describe("parseWhereCondition", () => {
 
     it("should generate the correct SQL", () => {
       const endsWith = { ENDS_WITH: { column: "A.B", value: "SCI-%-_024" } };
-      expect(objectToSQL(endsWith)).toEqual("(A.B LIKE $1 ESCAPE '|')");
+      expect(objectToSQL(endsWith)).toEqual("(A.B LIKE ? ESCAPE '|')");
       expect(objectToValues(endsWith)).toEqual(["%SCI-|%-|_024"]);
     });
 
@@ -646,81 +646,81 @@ describe("parseWhereCondition", () => {
       expect(h).toThrowError("not greater than 1");
     });
 
-    //   it("should generate the correct SQL close to a right ascension of 0", () => {
-    //     const declination = (Math.acos(0.25) * 180) / Math.PI - 2 * 0.5;
-    //     const wr = withinRadius(0.1, declination, 0.5);
-    //     expect(objectToSQL(wr)).toEqual(
-    //       "((((Target.RA BETWEEN 0 AND ?) OR (Target.RA BETWEEN ? AND 360)) AND (Target.Dec BETWEEN ? AND ?)) AND (ANGULAR_DISTANCE(Target.Dec, Target.RA, ?, ?) <= ?))"
-    //     );
-    //     const expected = [
-    //       2.1,
-    //       358.1,
-    //       declination - 2 * 0.5,
-    //       declination + 2 * 0.5,
-    //       declination,
-    //       0.1,
-    //       0.5
-    //     ];
-    //     const values = objectToValues(wr);
-    //     expect(values.length).toBe(expected.length);
-    //     values.forEach((v: any, i: number) =>
-    //       expect(values[i]).toBeCloseTo(expected[i])
-    //     );
-    //   });
+    it("should generate the correct SQL close to a right ascension of 0", () => {
+      const declination = (Math.acos(0.25) * 180) / Math.PI - 2 * 0.5;
+      const wr = withinRadius(0.1, declination, 0.5);
+      expect(objectToSQL(wr)).toEqual(
+        "((((Target.RA BETWEEN 0 AND ?) OR (Target.RA BETWEEN ? AND 360)) AND (Target.Dec BETWEEN ? AND ?)) AND (spoint(radians(Target.RA), radians(Target.Dec)) @ scircle(spoint(radians(?), radians(?)), radians(?))))"
+      );
+      const expected = [
+        2.1,
+        358.1,
+        declination - 2 * 0.5,
+        declination + 2 * 0.5,
+        0.1,
+        declination,
+        0.5
+      ];
+      const values = objectToValues(wr);
+      expect(values.length).toBe(expected.length);
+      values.forEach((v: any, i: number) =>
+        expect(values[i]).toBeCloseTo(expected[i])
+      );
+    });
 
-    //   it("should generate the correct SQL close to a right ascension of 360", () => {
-    //     const declination = (Math.acos(0.25) * 180) / Math.PI - 2 * 0.5;
-    //     const wr = withinRadius(359.9, declination, 0.5);
-    //     expect(objectToSQL(wr)).toEqual(
-    //       "((((Target.RA BETWEEN 0 AND ?) OR (Target.RA BETWEEN ? AND 360)) AND (Target.Dec BETWEEN ? AND ?)) AND (ANGULAR_DISTANCE(Target.Dec, Target.RA, ?, ?) <= ?))"
-    //     );
-    //     const expected = [
-    //       1.9,
-    //       357.9,
-    //       declination - 2 * 0.5,
-    //       declination + 2 * 0.5,
-    //       declination,
-    //       359.9,
-    //       0.5
-    //     ];
-    //     const values = objectToValues(wr);
-    //     expect(values.length).toBe(expected.length);
-    //     values.forEach((v: any, i: number) =>
-    //       expect(values[i]).toBeCloseTo(expected[i])
-    //     );
-    //   });
+    it("should generate the correct SQL close to a right ascension of 360", () => {
+      const declination = (Math.acos(0.25) * 180) / Math.PI - 2 * 0.5;
+      const wr = withinRadius(359.9, declination, 0.5);
+      expect(objectToSQL(wr)).toEqual(
+        "((((Target.RA BETWEEN 0 AND ?) OR (Target.RA BETWEEN ? AND 360)) AND (Target.Dec BETWEEN ? AND ?)) AND (spoint(radians(Target.RA), radians(Target.Dec)) @ scircle(spoint(radians(?), radians(?)), radians(?))))"
+      );
+      const expected = [
+        1.9,
+        357.9,
+        declination - 2 * 0.5,
+        declination + 2 * 0.5,
+        359.9,
+        declination,
+        0.5
+      ];
+      const values = objectToValues(wr);
+      expect(values.length).toBe(expected.length);
+      values.forEach((v: any, i: number) =>
+        expect(values[i]).toBeCloseTo(expected[i])
+      );
+    });
 
-    //   it("should generate the correct SQL close to the celestial south pole", () => {
-    //     const wr = withinRadius(12.9, -89.9, 0.5);
-    //     expect(objectToSQL(wr)).toEqual(
-    //       "((Target.Dec BETWEEN ? AND ?) AND (ANGULAR_DISTANCE(Target.Dec, Target.RA, ?, ?) <= ?))"
-    //     );
-    //     const expected = [-90, -88.9, -89.9, 12.9, 0.5];
-    //     const values = objectToValues(wr);
-    //     expect(values.length).toBe(expected.length);
-    //     values.forEach((v: any, i: number) =>
-    //       expect(values[i]).toBeCloseTo(expected[i])
-    //     );
-    //   });
+    it("should generate the correct SQL close to the celestial south pole", () => {
+      const wr = withinRadius(12.9, -89.9, 0.5);
+      expect(objectToSQL(wr)).toEqual(
+        "((Target.Dec BETWEEN ? AND ?) AND (spoint(radians(Target.RA), radians(Target.Dec))  scircle(spoint(radians(?), radians(?)), radians(?))))"
+      );
+      const expected = [-90, -88.9, 12.9, -89.9, 0.5];
+      const values = objectToValues(wr);
+      expect(values.length).toBe(expected.length);
+      values.forEach((v: any, i: number) =>
+        expect(values[i]).toBeCloseTo(expected[i])
+      );
+    });
 
-    //   it("should generate the correct SQL close to the celestial north pole", () => {
-    //     const wr = withinRadius(12.9, 89.9, 0.5);
-    //     expect(objectToSQL(wr)).toEqual(
-    //       "((Target.Dec BETWEEN ? AND ?) AND (ANGULAR_DISTANCE(Target.Dec, Target.RA, ?, ?) <= ?))"
-    //     );
-    //     const expected = [88.9, 90, 89.9, 12.9, 0.5];
-    //     const values = objectToValues(wr);
-    //     expect(values.length).toBe(expected.length);
-    //     values.forEach((v: any, i: number) =>
-    //       expect(values[i]).toBeCloseTo(expected[i])
-    //     );
-    //   });
+    it("should generate the correct SQL close to the celestial north pole", () => {
+      const wr = withinRadius(12.9, 89.9, 0.5);
+      expect(objectToSQL(wr)).toEqual(
+        "((Target.Dec BETWEEN ? AND ?) AND (spoint(radians(Target.RA), radians(Target.Dec)) @ scircle(spoint(radians(?), radians(?)), radians(?))))"
+      );
+      const expected = [88.9, 90, 12.9, 89.9, 0.5];
+      const values = objectToValues(wr);
+      expect(values.length).toBe(expected.length);
+      values.forEach((v: any, i: number) =>
+        expect(values[i]).toBeCloseTo(expected[i])
+      );
+    });
 
-    //   it("should collect the columns", () => {
-    //     expect(objectToColumns(withinRadius())).toEqual(
-    //       new Set<string>(["Target.Dec", "Target.RA"])
-    //     );
-    //   });
+    it("should collect the columns", () => {
+      expect(objectToColumns(withinRadius())).toEqual(
+        new Set<string>(["Target.Dec", "Target.RA"])
+      );
+    });
   });
 });
 
