@@ -1,0 +1,89 @@
+# The Data Archive API Master Workflow
+name: Data Archive API Master Workflow
+
+# This workflow is triggered whenever there are new commits pushed to the master branch.
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  job1:
+    # The job for building, testing and deploy the code inside the github virtual machine.
+    name: Build, test and run the app on the github virtual machine
+    # This job is executed on the Linux machine.
+    runs-on: ubuntu-latest
+
+    # The matrix strategy is used to specify the nodejs version to use for the node packages management.
+    strategy:
+      # In this case, nodejs version 8.x and 10.x are used.
+      # To include more versions, you can add them as follows: [8.x, 10.x, 12.x, ...].
+      matrix:
+        node-version: [8.x, 10.x]
+
+    # The steps to be executed for this job.
+    steps:
+      # This step uses the checkout action to make sure the latest code is used.
+      - name: Use the latest code
+        uses: actions/checkout@v1
+      # This step uses the setup-node action to setup the nodejs environment.
+      - name: Setup the nodejs environment
+        uses: actions/setup-node@v1
+        # The setup-node action accepts parameters.
+        # In this case, the nodejs version parameter specifying the version of nodejs to use is supplied.
+        with:
+          node-version: ${{ matrix.node-version }}
+      # This specifies the commands to run after the build is done.
+      # The first command is for installing the nodejs packages.
+      # The second command is for typescript linting.
+      # The third command is for executing the tests.
+      - run: |
+          yarn install
+          yarn lint
+          yarn test
+        shell: bash
+
+  job2:
+    # This job is only executed when job1 executed successfully
+    needs: job1
+
+    # The job for building, testing and deploy the code to the production server.
+    name: Build, test and deploy on the production server
+    # This job is executed on the Linux machine.
+    runs-on: ubuntu-latest
+
+    # The steps to be executed for this job.
+    steps:
+      # This step uses the checkout action to make sure the latest code is used.
+      - name: Use the latest code
+        uses: actions/checkout@v1
+      # This step uses the fifsky ssh action to setup a ssh server used to ssh into the production server.
+      - name: Fifsky ssh server
+        uses: fifsky/ssh-action@master
+        # The fifsky ssh action accepts parameters.
+        # These parameters are secretly stored in GitHub secrete store.
+        # In this case, the following parameters are supplied
+        # key, the client ssh private key
+        # pass, the client password
+        # host, the host to ssh into
+        # user, the host username to ssh into
+        # port, the host port to ssh into
+        # command, the command to be executed inside the remote host.
+        with:
+          key: ${{ secrets.SSH_MACHINE_PRIVATE_SSH_KEY }}
+          host: ${{ secrets.SSH_MACHINE_HOST }}
+          user: ${{ secrets.SSH_MACHINE_USER }}
+          port: ${{ secrets.SSH_MACHINE_PORT }}
+          # The ssh action logs into a gateway server,
+          # and we still have to connect to the machine on which the data archive is hosted.
+          command: |
+            ssh -o StrictHostKeyChecking=no -tt ${{ secrets.PROD_USER}}@${{ secrets.PROD_HOST}} -p ${{ secrets.PROD_PORT}} """
+              cd /home/ssda/data-archive-backend
+              git checkout master
+              git pull
+              yarn install
+              yarn lint
+              yarn test
+              yarn restart
+              exit
+            """

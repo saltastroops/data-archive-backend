@@ -289,7 +289,7 @@ export function parseWhereCondition(where: string): WhereConditionContent {
         const minRA = rightAscension - dRA;
         const maxRA = rightAscension + dRA;
         if (minRA < 0) {
-          sql += `((${rightAscensionColumn} BETWEEN 0 AND ${PLACEHOLDER} + ") OR (${rightAscensionColumn} BETWEEN ${PLACEHOLDER} AND 360))`;
+          sql += `((${rightAscensionColumn} BETWEEN 0 AND ${PLACEHOLDER}) OR (${rightAscensionColumn} BETWEEN ${PLACEHOLDER} AND 360))`;
           values.push(maxRA, 360 + minRA);
         } else if (maxRA > 360) {
           sql += `((${rightAscensionColumn} BETWEEN 0 AND ${PLACEHOLDER}) OR (${rightAscensionColumn} BETWEEN ${PLACEHOLDER} AND 360))`;
