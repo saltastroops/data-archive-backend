@@ -8,13 +8,13 @@ import passportLocal from "passport-local";
 import * as path from "path";
 import { ssdaPool } from "./db/postgresql_pool";
 import { resolvers } from "./resolvers";
-import authProvider from "./util/authProvider";
 import {
   dataFileDataLoader,
   dataRequestDataLoader,
   userDataLoader
 } from "./util/loaders";
 import {
+  getAuthProvider,
   getUserById,
   isAdmin,
   mayViewDataFile,
@@ -52,8 +52,13 @@ const createServer = async () => {
         usernameField: "username"
       },
       async (request, username, password, done) => {
-        const authenticationProvider = authProvider(request.body.authProvider);
-        const user = await authenticationProvider.authenticate(username, password);
+        const authenticationProvider = getAuthProvider(
+          request.body.authProvider
+        );
+        const user = await authenticationProvider.authenticate(
+          username,
+          password
+        );
         done(null, user ? user : false);
       }
     )

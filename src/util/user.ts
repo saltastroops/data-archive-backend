@@ -1,9 +1,10 @@
 import bcrypt from "bcrypt";
 import { validate } from "isemail";
-import moment = require("moment");
 import { v4 as uuid } from "uuid";
 import { ssdaPool } from "../db/postgresql_pool";
-import authProvider, { AuthProviderName } from "./authProvider";
+import AuthProvider, { AuthProviderName } from "./authProvider";
+import SDBAuthProvider from "./sdbAuthProvider";
+import SSDAAuthProvider from "./ssdaAuthProvider";
 
 export interface IAuthProviderUser {
   affiliation: string;
@@ -46,6 +47,19 @@ export interface IUserUpdateInput {
 }
 
 export type Role = "Admin";
+
+export const getAuthProvider = (
+  authProviderName: AuthProviderName
+): AuthProvider => {
+  switch (authProviderName) {
+    case "SDB":
+      return new SDBAuthProvider();
+    case "SSDA":
+      return new SSDAAuthProvider();
+    default:
+      throw new Error(`Unknown authentication provider: ${authProviderName}`);
+  }
+};
 
 /**
  * Create a new user with the given details.
@@ -586,7 +600,7 @@ export const ownsOutOfDataFiles = async (
   const ids = Array.from(new Set(fileIds));
 
   // Get the list of files owned by the user
-  const institution = authProvider(user.authProvider).institution;
+  const institution = getAuthProvider(user.authProvider).institution;
   const sql = `
   SELECT artifact_id
   FROM observations.artifact a

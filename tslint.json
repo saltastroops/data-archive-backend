@@ -4,6 +4,7 @@
     "member-access": {
       "severity": "off"
     },
-    "no-implicit-dependencies": [true, "dev"]
+    "no-implicit-dependencies": [true, "dev"],
+    "no-submodule-imports": [false]
   }
 }
