@@ -52,8 +52,8 @@ const createServer = async () => {
         usernameField: "username"
       },
       async (request, username, password, done) => {
-        const _authProvider = authProvider(request.body.authProvider);
-        const user = await _authProvider.authenticate(username, password);
+        const authenticationProvider = authProvider(request.body.authProvider);
+        const user = await authenticationProvider.authenticate(username, password);
         done(null, user ? user : false);
       }
     )
