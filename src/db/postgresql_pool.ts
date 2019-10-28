@@ -18,10 +18,10 @@ const createPool = (config: any) => {
 
 // Database configuration parameters (for observation queries)
 const ssdaConfig = {
-  database: process.env.DATABASE_NAME,
-  host: process.env.DATABASE_HOST,
-  password: process.env.DATABASE_PASSWORD,
-  user: process.env.DATABASE_USER
+  database: process.env.SSDA_DATABASE_NAME,
+  host: process.env.SSDA_DATABASE_HOST,
+  password: process.env.SSDA_DATABASE_PASSWORD,
+  user: process.env.SSDA_DATABASE_USER
 };
 
 // Creating pool of database connections

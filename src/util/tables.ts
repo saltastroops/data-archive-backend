@@ -1,5 +1,7 @@
 import { DatabaseModel } from "./DatabaseModel";
 
+/* tslint:disable:variable-name */
+
 /**
  * SSDA observation tables
  * See tables.sql on data archive database code(different project) for full description of each

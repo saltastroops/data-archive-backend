@@ -1,9 +1,11 @@
 import bcrypt from "bcrypt";
 import { validate } from "isemail";
-import moment = require("moment");
 import { v4 as uuid } from "uuid";
 import { ssdaPool } from "../db/postgresql_pool";
-import authProvider, { AuthProviderName } from "./authProvider";
+import AuthProvider, {
+  AuthProviderName,
+  getAuthProvider
+} from "./authProvider";
 
 export interface IAuthProviderUser {
   affiliation: string;
@@ -586,7 +588,7 @@ export const ownsOutOfDataFiles = async (
   const ids = Array.from(new Set(fileIds));
 
   // Get the list of files owned by the user
-  const institution = authProvider(user.authProvider).institution;
+  const institution = getAuthProvider(user.authProvider).institution;
   const sql = `
   SELECT artifact_id
   FROM observations.artifact a

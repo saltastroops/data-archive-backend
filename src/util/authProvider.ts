@@ -1,3 +1,5 @@
+/* tslint:disable:max-classes-per-file */
+
 import bcrypt from "bcrypt";
 import { sdbPool } from "../db/mysql_pool";
 import {
@@ -10,19 +12,6 @@ import {
 
 export type AuthProviderName = "SDB" | "SSDA";
 
-export default function authProvider(
-  authProviderName: AuthProviderName
-): AuthProvider {
-  switch (authProviderName) {
-    case "SDB":
-      return new SDBAuthProvider();
-    case "SSDA":
-      return new SSDAAuthProvider();
-    default:
-      throw new Error(`Unknown authentication provider: ${authProviderName}`);
-  }
-}
-
 /**
  * An authentication provider.
  *
@@ -30,7 +19,7 @@ export default function authProvider(
  * password and checks whether these are the valid credentials of an existing
  * user. If so, it returns this user; otherwise it returns null.
  */
-abstract class AuthProvider {
+export default abstract class AuthProvider {
   /**
    * Check the given username and password. If they are valid return the user,
    * otherwise return null.
@@ -246,3 +235,16 @@ SELECT * FROM PiptUser JOIN Investigator USING (Investigator_Id) JOIN Institute 
     return "SALT";
   }
 }
+
+export const getAuthProvider = (
+  authProviderName: AuthProviderName
+): AuthProvider => {
+  switch (authProviderName) {
+    case "SDB":
+      return new SDBAuthProvider();
+    case "SSDA":
+      return new SSDAAuthProvider();
+    default:
+      throw new Error(`Unknown authentication provider: ${authProviderName}`);
+  }
+};
