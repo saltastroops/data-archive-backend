@@ -2,9 +2,10 @@ import bcrypt from "bcrypt";
 import { validate } from "isemail";
 import { v4 as uuid } from "uuid";
 import { ssdaPool } from "../db/postgresql_pool";
-import AuthProvider, { AuthProviderName } from "./authProvider";
-import SDBAuthProvider from "./sdbAuthProvider";
-import SSDAAuthProvider from "./ssdaAuthProvider";
+import AuthProvider, {
+  AuthProviderName,
+  getAuthProvider
+} from "./authProvider";
 
 export interface IAuthProviderUser {
   affiliation: string;
@@ -47,19 +48,6 @@ export interface IUserUpdateInput {
 }
 
 export type Role = "Admin";
-
-export const getAuthProvider = (
-  authProviderName: AuthProviderName
-): AuthProvider => {
-  switch (authProviderName) {
-    case "SDB":
-      return new SDBAuthProvider();
-    case "SSDA":
-      return new SSDAAuthProvider();
-    default:
-      throw new Error(`Unknown authentication provider: ${authProviderName}`);
-  }
-};
 
 /**
  * Create a new user with the given details.
