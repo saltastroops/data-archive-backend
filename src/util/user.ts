@@ -186,7 +186,7 @@ export const userRoles = async (
 
   // Query for retrieving user roles
   const sql = `
-      SELECT role
+      SELECT r.role
       FROM admin.role AS r
                JOIN admin.user_role AS ur ON ur.role_id = r.role_id
       WHERE user_id = $1
