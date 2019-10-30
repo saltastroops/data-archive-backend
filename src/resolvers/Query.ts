@@ -26,6 +26,10 @@ const Query = {
   async user(root: any, args: {}, ctx: IContext) {
     const { loaders } = ctx;
 
+    if (!ctx.user) {
+      return null;
+    }
+
     return loaders.userLoader.load(ctx.user.id);
   },
 
