@@ -5,6 +5,10 @@
       "severity": "off"
     },
     "no-implicit-dependencies": [true, "dev"],
-    "no-submodule-imports": [true, "mysql2/node_modules/iconv-lite", "mysql2/promise"]
+    "no-submodule-imports": [
+      true,
+      "mysql2/node_modules/iconv-lite",
+      "mysql2/promise"
+    ]
   }
 }
