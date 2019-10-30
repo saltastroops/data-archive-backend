@@ -230,18 +230,20 @@ const createServer = async () => {
 
     // Query for retrieving the FITS file
     const sql = `
-        SELECT path, publicFrom
-        FROM DataFile AS df
-        JOIN Observation AS ob ON ob.observationId = df.observationId
-        WHERE df.dataFileId = ?
+        SELECT path, data_release
+        FROM observations.artifact AS a
+        JOIN observations.plane AS p ON a.plane_id = p.plane_id
+        JOIN observations.observation AS o ON p.observation_id = o.observation_id
+        WHERE artifact_id = $1
       `;
 
-    const results: any = await ssdaPool.query(sql, [dataFileId]);
-    if (!results[0].length) {
+    const queryResults: any = await ssdaPool.query(sql, [dataFileId]);
+    const rows = queryResults.rows;
+    if (!rows.length) {
       return res.status(404).send(notFound);
     }
 
-    const { path: filePath, publicFrom } = results[0][0];
+    const { path: filePath, data_release: publicFrom } = rows[0];
 
     // Check whether the data file is public or the user may access it
     // because they own the data or are an administrator.
