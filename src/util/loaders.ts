@@ -96,7 +96,7 @@ async function batchGetUsers(ids: number[]) {
 
   // Get the roles
   const rolesSQL = `
-  SELECT user_id, role.role
+  SELECT user_id, r.role
     FROM admin.user_role ur
     JOIN admin.role r ON ur.role_id = r.role_id
     WHERE user_id = ANY($1);
