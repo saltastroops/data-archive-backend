@@ -93,7 +93,9 @@ describe("User update", () => {
       );
       expect((ssdaPool.query as any).mock.calls[0][1]).toEqual([1]);
 
-      expect((ssdaPool.query as any).mock.calls[1][0]).toContain("SELECT role");
+      expect((ssdaPool.query as any).mock.calls[1][0]).toContain(
+        "SELECT r.role"
+      );
       expect((ssdaPool.query as any).mock.calls[1][0]).toContain(
         "WHERE user_id = $1"
       );
@@ -108,7 +110,9 @@ describe("User update", () => {
         "WHERE ssda_user_id = $1"
       );
       expect((ssdaPool.query as any).mock.calls[2][1]).toEqual([1]);
-      expect((ssdaPool.query as any).mock.calls[3][0]).toContain("SELECT role");
+      expect((ssdaPool.query as any).mock.calls[3][0]).toContain(
+        "SELECT r.role"
+      );
       expect((ssdaPool.query as any).mock.calls[3][0]).toContain(
         "WHERE user_id = $1"
       );
@@ -252,7 +256,9 @@ describe("User update", () => {
       );
       expect((ssdaPool.query as any).mock.calls[0][1]).toEqual([1]);
 
-      expect((ssdaPool.query as any).mock.calls[1][0]).toContain("SELECT role");
+      expect((ssdaPool.query as any).mock.calls[1][0]).toContain(
+        "SELECT r.role"
+      );
       expect((ssdaPool.query as any).mock.calls[1][0]).toContain(
         "WHERE user_id = $1"
       );
@@ -267,7 +273,9 @@ describe("User update", () => {
         "WHERE ssda_user_id = $1"
       );
       expect((ssdaPool.query as any).mock.calls[2][1]).toEqual([1]);
-      expect((ssdaPool.query as any).mock.calls[3][0]).toContain("SELECT role");
+      expect((ssdaPool.query as any).mock.calls[3][0]).toContain(
+        "SELECT r.role"
+      );
       expect((ssdaPool.query as any).mock.calls[3][0]).toContain(
         "WHERE user_id = $1"
       );
@@ -506,7 +514,9 @@ describe("User update", () => {
         "WHERE ssda_user_id = $1"
       );
       expect((ssdaPool.query as any).mock.calls[0][1]).toEqual([1]);
-      expect((ssdaPool.query as any).mock.calls[1][0]).toContain("SELECT role");
+      expect((ssdaPool.query as any).mock.calls[1][0]).toContain(
+        "SELECT r.role"
+      );
       expect((ssdaPool.query as any).mock.calls[1][0]).toContain(
         "WHERE user_id = $1"
       );
@@ -521,7 +531,9 @@ describe("User update", () => {
         "WHERE ssda_user_id = $1"
       );
       expect((ssdaPool.query as any).mock.calls[2][1]).toEqual([2]);
-      expect((ssdaPool.query as any).mock.calls[3][0]).toContain("SELECT role");
+      expect((ssdaPool.query as any).mock.calls[3][0]).toContain(
+        "SELECT r.role"
+      );
       expect((ssdaPool.query as any).mock.calls[3][0]).toContain(
         "WHERE user_id = $1"
       );
