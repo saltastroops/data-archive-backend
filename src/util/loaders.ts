@@ -46,7 +46,7 @@ async function batchGetDataRequests(ids: number[]) {
   return dataRequests.map(d => ({
     dataFiles: dataRequestArtifacts.get(d.data_request_id),
     id: d.data_request_id,
-    madeAt: d.made_at,
+    madeAt: d.made_at.toISOString(),
     status: d.status.toUpperCase(),
     uri: d.path,
     user: d.ssda_user_id
