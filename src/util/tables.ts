@@ -45,6 +45,18 @@ const filter = {
   rightOf: new Set(["instrument_setup"])
 };
 
+const hrs_mode = {
+  join: "hrs_setup.hrs_mode_id=hrs_mode.hrs_mode_id",
+  name: "hrs_mode",
+  rightOf: new Set(["hrs_setup"])
+};
+
+const hrs_setup = {
+  join: "instrument_setup.instrument_setup_id=hrs_setup.instrument_setup_id",
+  name: "hrs_setup",
+  rightOf: new Set(["instrument_setup"])
+};
+
 const institution = {
   join: "proposal.institution_id=institution.institution_id",
   name: "institution",
@@ -202,6 +214,8 @@ export const dataModel = new DatabaseModel(
     detector_mode,
     energy,
     filter,
+    hrs_mode,
+    hrs_setup,
     institution,
     instrument,
     instrument_keyword,
