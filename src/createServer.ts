@@ -20,6 +20,8 @@ import {
   mayViewDataFile,
   ownsDataRequest
 } from "./util/user";
+// tslint:disable-next-line
+const pgSession = require("connect-pg-simple")(session);
 
 // Set up Sentry
 if (process.env.NODE_ENV === "production") {
@@ -107,7 +109,14 @@ const createServer = async () => {
       rolling: false,
       saveUninitialized: true,
       secret: "" + process.env.SESSION_SECRET,
-      store: new session.MemoryStore(),
+      store:
+        process.env.NODE_ENV === "test"
+          ? new session.MemoryStore()
+          : new pgSession({
+              pool: ssdaPool,
+              schemaName: "admin",
+              tableName: "ssda_session"
+            }),
       unset: "keep"
     })
   );

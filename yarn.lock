@@ -392,6 +392,15 @@
   dependencies:
     "@types/node" "*"
 
+"@types/connect-pg-simple@^4.2.0":
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/@types/connect-pg-simple/-/connect-pg-simple-4.2.0.tgz#cb0d85701fa73d16be7a4050e4c95fe070a6df7f"
+  integrity sha512-Y+ptWW6q6Ll92Y0Zbqb+YiPIUd5ldNsovZJ22Oy5wc4tyl0QVqXPx+ksYCrMgUINXeBDQxJi7HcZ5iATZ62x8A==
+  dependencies:
+    "@types/express" "*"
+    "@types/express-session" "*"
+    "@types/pg" "*"
+
 "@types/connect@*":
   version "3.4.32"
   resolved "https://registry.yarnpkg.com/@types/connect/-/connect-3.4.32.tgz#aa0e9616b9435ccad02bc52b5b454ffc2c70ba28"
@@ -424,6 +433,14 @@
   dependencies:
     "@types/node" "*"
     "@types/range-parser" "*"
+
+"@types/express-session@*":
+  version "1.15.15"
+  resolved "https://registry.yarnpkg.com/@types/express-session/-/express-session-1.15.15.tgz#8e2e2b2ffd4e2ac62465a8ff78fff30ed81a8c8f"
+  integrity sha512-D75AXBID8QBz0faDgkZd71VY/X1dk7ow2OeQsef7D+dWDtvtWlGcTaD12NPttdNLKdXUDWvJ5hrE2vEfcUoJgQ==
+  dependencies:
+    "@types/express" "*"
+    "@types/node" "*"
 
 "@types/express-session@^1.15.11":
   version "1.15.11"
@@ -540,6 +557,14 @@
   integrity sha512-WdIiQmE347LGc1Vq3Ki8sk3iyCuLgnccqVzgxek6gEHp2H0p3MQ3jniIHt+bRODXKju4kNQ+mp53lmP5+/9moQ==
   dependencies:
     moment ">=2.14.0"
+
+"@types/pg@*":
+  version "7.11.2"
+  resolved "https://registry.yarnpkg.com/@types/pg/-/pg-7.11.2.tgz#199dec09426c9359574dedede37313805ba3fca2"
+  integrity sha512-4+rj7fnidA77jFURNanuPPc1HrQv+RkhI6s+K18G9zOKbOUUpChA/rbNMqFukNuZ89LoIt/I9dAlxf329TjCNw==
+  dependencies:
+    "@types/node" "*"
+    "@types/pg-types" "*"
 
 "@types/pg@^7.11.1":
   version "7.11.1"
@@ -1367,6 +1392,13 @@ configstore@^3.0.0:
     unique-string "^1.0.0"
     write-file-atomic "^2.0.0"
     xdg-basedir "^3.0.0"
+
+connect-pg-simple@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/connect-pg-simple/-/connect-pg-simple-5.0.0.tgz#f0304a1ee4e1e1a69e7783123cbcbf68d2155a19"
+  integrity sha512-WZ7xkN+qe5bbDLgZ1L9GxnSbr155cJHmfNRzVR5hBvqio7Pg/vuH7Cf8lPUSFClQjtybYSejUqyO54sYt4cg+w==
+  dependencies:
+    pg "^7.4.3"
 
 console-control-strings@^1.0.0, console-control-strings@~1.1.0:
   version "1.1.0"
@@ -4281,7 +4313,7 @@ pg-types@^2.1.0:
     postgres-date "~1.0.4"
     postgres-interval "^1.1.0"
 
-pg@^7.12.1:
+pg@^7.12.1, pg@^7.4.3:
   version "7.12.1"
   resolved "https://registry.yarnpkg.com/pg/-/pg-7.12.1.tgz#880636d46d2efbe0968e64e9fe0eeece8ef72a7e"
   integrity sha512-l1UuyfEvoswYfcUe6k+JaxiN+5vkOgYcVSbSuw3FvdLqDbaoa2RJo1zfJKfPsSYPFVERd4GHvX3s2PjG1asSDA==
