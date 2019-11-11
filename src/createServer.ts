@@ -109,11 +109,14 @@ const createServer = async () => {
       rolling: false,
       saveUninitialized: true,
       secret: "" + process.env.SESSION_SECRET,
-      store: process.env.NODE_ENV !== 'test' && new pgSession({
-        pool: ssdaPool,
-        schemaName: "admin",
-        tableName: "ssda_session"
-      }),
+      store:
+        process.env.NODE_ENV === "test"
+          ? new session.MemoryStore()
+          : new pgSession({
+              pool: ssdaPool,
+              schemaName: "admin",
+              tableName: "ssda_session"
+            }),
       unset: "keep"
     })
   );
