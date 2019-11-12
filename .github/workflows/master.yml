@@ -16,10 +16,10 @@ jobs:
 
     # The matrix strategy is used to specify the nodejs version to use for the node packages management.
     strategy:
-      # In this case, nodejs version 8.x and 10.x are used.
+      # In this case, nodejs version 10.x are used.
       # To include more versions, you can add them as follows: [8.x, 10.x, 12.x, ...].
       matrix:
-        node-version: [8.x, 10.x]
+        node-version: [10.x]
 
     # The steps to be executed for this job.
     steps:
@@ -64,7 +64,6 @@ jobs:
         # These parameters are secretly stored in GitHub secrete store.
         # In this case, the following parameters are supplied
         # key, the client ssh private key
-        # pass, the client password
         # host, the host to ssh into
         # user, the host username to ssh into
         # port, the host port to ssh into
