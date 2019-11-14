@@ -3,7 +3,7 @@ import moment from "moment";
 import * as Path from "path";
 import { ssdaPool } from "../db/postgresql_pool";
 import { dataRequestIdsByUserIds } from "../util/dataRequests";
-import { getUserById, getUserByToken, User } from "../util/user";
+import { getUserByToken, User } from "../util/user";
 import { queryDataFiles } from "./serchResults";
 
 // Defining the context interface
@@ -59,16 +59,20 @@ const Query = {
       throw new Error("You must be logged in");
     }
 
-    const dataRequestIds = await dataRequestIdsByUserIds([
-      parseInt(ctx.user.id, 10)
-    ]);
+    try {
+      const dataRequestIds = await dataRequestIdsByUserIds([
+        parseInt(ctx.user.id, 10)
+      ]);
 
-    const { loaders } = ctx;
-    const { dataRequestLoader } = loaders;
+      const { loaders } = ctx;
+      const { dataRequestLoader } = loaders;
 
-    const dataLoaderResults = await dataRequestLoader.loadMany(dataRequestIds);
-
-    return dataLoaderResults;
+      return await dataRequestLoader.loadMany(dataRequestIds);
+    } catch (e) {
+      throw new Error(
+        "Something went wrong while retrieving your data requests. Please try again later."
+      );
+    }
   },
 
   async passwordResetTokenStatus(root: any, { token }: any) {
