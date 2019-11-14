@@ -18,10 +18,10 @@ jobs:
 
     # The matrix strategy is used to specify the nodejs version to use for the node packages management.
     strategy:
-      # In this case, nodejs version 8.x and 10.x is used.
+      # In this case, nodejs version 10.x is used.
       # To include more versions, you add them as follows: [8.x, 10.x, 12.x, ...].
       matrix:
-        node-version: [8.x, 10.x]
+        node-version: [10.x]
 
     # The steps to be executed for this job.
     steps:
