@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/node";
 import bodyParser from "body-parser";
+import compression from "compression";
 import { Request, Response } from "express";
 import session from "express-session";
 import { GraphQLServer } from "graphql-yoga";
@@ -79,6 +80,20 @@ const createServer = async () => {
     resolvers,
     typeDefs: "./src/schema.graphql"
   });
+
+  // Compress the returned response.
+  server.express.use(
+    compression({
+      // Only compress what can be compressed.
+      filter: (req, res) => {
+        if (req.headers["x-no-compression"]) {
+          return false;
+        }
+        return compression.filter(req, res);
+      },
+      threshold: 0,
+    })
+  );
 
   // Enable CORS
   server.express.use((req, res, next) => {
