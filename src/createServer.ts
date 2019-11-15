@@ -90,7 +90,8 @@ const createServer = async () => {
           return false;
         }
         return compression.filter(req, res);
-      }
+      },
+      threshold: 0,
     })
   );
 
