@@ -1,11 +1,11 @@
 import * as Sentry from "@sentry/node";
 import bodyParser from "body-parser";
+import compression from "compression";
 import { Request, Response } from "express";
 import session from "express-session";
 import { GraphQLServer } from "graphql-yoga";
 import passport from "passport";
 import passportLocal from "passport-local";
-import compression from "compression";
 import * as path from "path";
 import { ssdaPool } from "./db/postgresql_pool";
 import { resolvers } from "./resolvers";
@@ -82,15 +82,17 @@ const createServer = async () => {
   });
 
   // Compress the returned response.
-  server.express.use(compression({
-    // Only compress what can be compressed.
-    filter: (req, res) => {
-      if (req.headers["x-no-compression"]) {
-        return false
+  server.express.use(
+    compression({
+      // Only compress what can be compressed.
+      filter: (req, res) => {
+        if (req.headers["x-no-compression"]) {
+          return false;
+        }
+        return compression.filter(req, res);
       }
-      return compression.filter(req, res)
-    }
-  }));
+    })
+  );
 
   // Enable CORS
   server.express.use((req, res, next) => {
