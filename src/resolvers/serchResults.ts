@@ -51,22 +51,15 @@ export const queryDataFiles = async (
   // All the data model tables need to make this query
   const sqlFrom = createFromExpression(allColumns, dataModel);
 
-  // First pass: Get the number of search results
-  const countSQL = `
-      SELECT COUNT(*) as items_total FROM ${sqlFrom} WHERE ${whereDetails.sql}
-      `;
-  const countResults: any = (await ssdaPool.query(countSQL, [
-    ...whereDetails.values
-  ])).rows;
-  const itemsTotal = countResults[0].items_total;
-
-  // Second pass: Get the data file details
+  // Get the data file details
   const fields = Array.from(allColumns).map(
     column => `${column} AS "${column}"`
   );
+
   const itemSQL = `
-      SELECT ${Array.from(fields).join(", ")}
-             FROM ${sqlFrom}
+      SELECT ${Array.from(fields).join(", ")},
+      COUNT(*) OVER() AS items_total
+      FROM ${sqlFrom}
       WHERE ${whereDetails.sql}
       ORDER BY observations.observation_time.start_time DESC
       LIMIT \$${whereDetails.values.length + 1} OFFSET \$${whereDetails.values
@@ -77,6 +70,9 @@ export const queryDataFiles = async (
     limit,
     startIndex
   ])).rows;
+
+  // Get the number of search results
+  const itemsTotal = itemResults[0].items_total;
 
   // Which of the files are owned by the user?
   const ids = itemResults.map((row: any) => row["artifact.artifact_id"]);
