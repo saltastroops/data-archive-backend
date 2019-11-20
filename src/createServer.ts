@@ -19,7 +19,7 @@ import {
   getUserById,
   isAdmin,
   mayViewDataFile,
-  ownsDataRequest
+  ownsDataRequest, User
 } from "./util/user";
 // tslint:disable-next-line
 const pgSession = require("connect-pg-simple")(session);
@@ -271,7 +271,7 @@ const createServer = async () => {
 
     // Check whether the data file is public or the user may access it
     // because they own the data or are an administrator.
-    if (!(await mayViewDataFile(req.user, dataFileId))) {
+    if (!(await mayViewDataFile(req.user as User, dataFileId))) {
       return res.status(403).send(proprietary);
     }
 
@@ -435,8 +435,8 @@ async function downloadDataRequest({
   // Check that the user may download content for the data request, either
   // because they own the request or because they are an administrator.
   const mayDownload =
-    ownsDataRequest({ user: { id: dataRequest.ssda_user_id } }, req.user) ||
-    isAdmin(req.user);
+    ownsDataRequest({ user: { id: dataRequest.ssda_user_id } }, req.user as User) ||
+    isAdmin(req.user as User);
 
   if (!mayDownload) {
     return res.status(403).send({
