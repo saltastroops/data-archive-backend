@@ -56,26 +56,33 @@ export const queryDataFiles = async (
     column => `${column} AS "${column}"`
   );
 
-  const itemSQL = `
-      SELECT ${Array.from(fields).join(", ")},
-      COUNT(*) OVER() AS items_total
-      FROM ${sqlFrom}
-      WHERE ${whereDetails.sql}
-      ORDER BY observations.observation_time.start_time DESC
-      LIMIT \$${whereDetails.values.length + 1} OFFSET \$${whereDetails.values
-    .length + 2}
-             `;
-  const itemResults: any = (await ssdaPool.query(itemSQL, [
+  const sql = `
+     WITH cte AS (
+       SELECT ${Array.from(fields).join(", ")}
+       FROM ${sqlFrom}
+       WHERE ${whereDetails.sql}
+     )
+     SELECT *
+     FROM (
+       TABLE cte
+       ORDER BY cte."observation_time.start_time" DESC
+       LIMIT \$${whereDetails.values.length + 1}
+       OFFSET \$${whereDetails.values.length + 2} 
+     ) sub
+     RIGHT JOIN (SELECT COUNT(*) FROM cte) c(items_total) ON true
+  `;
+
+  const results: any = (await ssdaPool.query(sql, [
     ...whereDetails.values,
     limit,
     startIndex
   ])).rows;
 
   // Get the number of search results
-  const itemsTotal = itemResults[0].items_total;
+  const itemsTotal = !results.length ? 0 : results[0].items_total;
 
   // Which of the files are owned by the user?
-  const ids = itemResults.map((row: any) => row["artifact.artifact_id"]);
+  const ids = results.map((row: any) => row["artifact.artifact_id"]);
   const userOwnedFileIds = await ownsOutOfDataFiles(user, ids);
 
   // Collect all the details
@@ -84,18 +91,26 @@ export const queryDataFiles = async (
     itemsTotal,
     startIndex
   };
-  const dataFiles = itemResults.map((row: any) => ({
-    id: row["artifact.artifact_id"],
-    metadata: [
-      ...Object.entries(row).map(entry => ({
-        name: entry[0],
-        value: entry[1]
-      }))
-    ],
-    name: row["artifact.name"],
-    ownedByUser: userOwnedFileIds.has(row["artifact.artifact_id"].toString()),
-    size: row["artifact.content_length"]
-  }));
+  const dataFiles =
+    results.length === 1 && results[0].items_total === "0"
+      ? []
+      : results.map((row: any) => {
+          delete row.items_total;
+          return {
+            id: row["artifact.artifact_id"],
+            metadata: [
+              ...Object.entries(row).map(entry => ({
+                name: entry[0],
+                value: entry[1]
+              }))
+            ],
+            name: row["artifact.name"],
+            ownedByUser: userOwnedFileIds.has(
+              row["artifact.artifact_id"].toString()
+            ),
+            size: row["artifact.content_length"]
+          };
+        });
 
   return {
     dataFiles,
