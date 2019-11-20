@@ -240,5 +240,5 @@ export const dataModel = new DatabaseModel(
     target,
     target_type,
     telescope
-  ])
+  ] as any)
 );
