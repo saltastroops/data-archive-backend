@@ -319,5 +319,5 @@ enum DataRequestStatus {
 # An enumeration of the user roles, which define the permissions a user has.
 enum Role {
   # Administrator with full power
-  ADMIN
+  Admin
 }

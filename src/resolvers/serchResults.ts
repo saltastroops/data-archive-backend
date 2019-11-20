@@ -57,19 +57,17 @@ export const queryDataFiles = async (
   );
 
   const sql = `
-     WITH cte AS (
-       SELECT ${Array.from(fields).join(", ")}
-       FROM ${sqlFrom}
-       WHERE ${whereDetails.sql}
-     )
-     SELECT *
-     FROM (
-       TABLE cte
-       ORDER BY cte."observation_time.start_time" DESC
-       LIMIT \$${whereDetails.values.length + 1}
-       OFFSET \$${whereDetails.values.length + 2} 
-     ) sub
-     RIGHT JOIN (SELECT COUNT(*) FROM cte) c(items_total) ON true
+    WITH content AS (
+      SELECT ${Array.from(fields).join(", ")}
+      FROM ${sqlFrom}
+    WHERE ${whereDetails.sql}
+    )
+    SELECT *
+    FROM content
+    RIGHT JOIN (SELECT COUNT(*) AS items_total FROM content) AS c ON true
+    ORDER BY content."observation_time.start_time" DESC
+    LIMIT $${whereDetails.values.length + 1}
+    OFFSET $${whereDetails.values.length + 2} 
   `;
 
   const results: any = (await ssdaPool.query(sql, [
@@ -78,8 +76,20 @@ export const queryDataFiles = async (
     startIndex
   ])).rows;
 
+  // Check if there are search results
+  if (results.length === 1 && results[0].items_total === "0") {
+    return {
+      dataFiles: [],
+      pageInfo: {
+        itemsPerPage: limit,
+        itemsTotal: 0,
+        startIndex
+      }
+    };
+  }
+
   // Get the number of search results
-  const itemsTotal = !results.length ? 0 : results[0].items_total;
+  const itemsTotal = results[0].items_total;
 
   // Which of the files are owned by the user?
   const ids = results.map((row: any) => row["artifact.artifact_id"]);
@@ -91,26 +101,23 @@ export const queryDataFiles = async (
     itemsTotal,
     startIndex
   };
-  const dataFiles =
-    results.length === 1 && results[0].items_total === "0"
-      ? []
-      : results.map((row: any) => {
-          delete row.items_total;
-          return {
-            id: row["artifact.artifact_id"],
-            metadata: [
-              ...Object.entries(row).map(entry => ({
-                name: entry[0],
-                value: entry[1]
-              }))
-            ],
-            name: row["artifact.name"],
-            ownedByUser: userOwnedFileIds.has(
-              row["artifact.artifact_id"].toString()
-            ),
-            size: row["artifact.content_length"]
-          };
-        });
+  const dataFiles = results.map((row: any) => ({
+    id: row["artifact.artifact_id"],
+    metadata: [
+      ...Object.entries(row)
+        .filter(
+          entry =>
+            !["artifact.name", "artifact.content_length"].includes(entry[0])
+        )
+        .map(entry => ({
+          name: entry[0],
+          value: entry[1]
+        }))
+    ],
+    name: row["artifact.name"],
+    ownedByUser: userOwnedFileIds.has(row["artifact.artifact_id"].toString()),
+    size: row["artifact.content_length"]
+  }));
 
   return {
     dataFiles,
