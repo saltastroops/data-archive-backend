@@ -57,17 +57,20 @@ export const queryDataFiles = async (
   );
 
   const sql = `
-    WITH content AS (
-      SELECT ${Array.from(fields).join(", ")}
-      FROM ${sqlFrom}
-      WHERE ${whereDetails.sql}
-    )
-    SELECT *
-    FROM content
-    RIGHT JOIN (SELECT COUNT(*) AS items_total FROM content) AS c ON true
-    ORDER BY content."observation_time.start_time" DESC
-    LIMIT $${whereDetails.values.length + 1}
-    OFFSET $${whereDetails.values.length + 2} 
+     WITH cte AS (
+       SELECT ${Array.from(fields).join(", ")}
+       FROM ${sqlFrom}
+       WHERE ${whereDetails.sql}
+     )
+     SELECT *
+     FROM (
+       TABLE cte
+       ORDER BY cte."observation_time.start_time" DESC
+       LIMIT \$${whereDetails.values.length + 1}
+       OFFSET \$${whereDetails.values.length + 2} 
+     ) sub
+     RIGHT JOIN (SELECT COUNT(*) FROM cte) c(items_total) ON true
+     ORDER BY "observation_time.start_time" DESC
   `;
 
   const results: any = (await ssdaPool.query(sql, [
@@ -77,7 +80,7 @@ export const queryDataFiles = async (
   ])).rows;
 
   // Due to the RIGHT JOIN in the SQL query, there is guaranteed to be at least one row.
-  if (results.length === 1 && results[0].items_total === "0") {
+  if (results[0].items_total === "0") {
     return {
       dataFiles: [],
       pageInfo: {
@@ -107,19 +110,14 @@ export const queryDataFiles = async (
     metadata: [
       ...Object.entries(row)
         .filter(
-          entry =>
-            !["artifact.name", "artifact.content_length, items_total"].includes(
-              entry[0]
-            )
+          entry => !["artifact.artifact_id, items_total"].includes(entry[0])
         )
         .map(entry => ({
           name: entry[0],
           value: entry[1]
         }))
     ],
-    name: row["artifact.name"],
-    ownedByUser: userOwnedFileIds.has(row["artifact.artifact_id"].toString()),
-    size: row["artifact.content_length"]
+    ownedByUser: userOwnedFileIds.has(row["artifact.artifact_id"].toString())
   }));
 
   return {
