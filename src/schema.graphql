@@ -285,12 +285,6 @@ type DataFile {
 
   #  Metadata for the data file.
   metadata: [MetadataItem!]!
-
-  #  Data file name
-  name: String!
-
-  # Data file size
-  size: Int!
 }
 
 # Details about a data request
