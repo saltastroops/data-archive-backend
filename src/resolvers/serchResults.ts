@@ -60,7 +60,7 @@ export const queryDataFiles = async (
     WITH content AS (
       SELECT ${Array.from(fields).join(", ")}
       FROM ${sqlFrom}
-    WHERE ${whereDetails.sql}
+      WHERE ${whereDetails.sql}
     )
     SELECT *
     FROM content
@@ -76,7 +76,7 @@ export const queryDataFiles = async (
     startIndex
   ])).rows;
 
-  // Check if there are search results
+  // Due to the RIGHT JOIN in the SQL query, there is guaranteed to be at least one row.
   if (results.length === 1 && results[0].items_total === "0") {
     return {
       dataFiles: [],
@@ -101,13 +101,16 @@ export const queryDataFiles = async (
     itemsTotal,
     startIndex
   };
+
   const dataFiles = results.map((row: any) => ({
     id: row["artifact.artifact_id"],
     metadata: [
       ...Object.entries(row)
         .filter(
           entry =>
-            !["artifact.name", "artifact.content_length"].includes(entry[0])
+            !["artifact.name", "artifact.content_length, items_total"].includes(
+              entry[0]
+            )
         )
         .map(entry => ({
           name: entry[0],
