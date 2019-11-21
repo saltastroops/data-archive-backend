@@ -71,13 +71,20 @@ async function batchGetDataFiles(user: User, ids: number[]) {
   const ownedArtifactIds = await ownsOutOfDataFiles(user, artifactIds);
 
   // return the data files
-  return artifacts.map(artifact => ({
+  const dataFiles = artifacts.map(artifact => ({
     id: artifact.artifact_id,
-    metadata: [],
-    name: artifact.name,
-    ownedByUser: ownedArtifactIds.has(artifact.artifact_id.toString()),
-    size: artifact.content_length
+    metadata: [
+      ...Object.entries(artifact)
+        .filter(entry => entry[0] !== "artifact.artifact_id")
+        .map(entry => ({
+          name: entry[0],
+          value: entry[1]
+        }))
+    ],
+    ownedByUser: ownedArtifactIds.has(artifact.artifact_id.toString())
   }));
+
+  return dataFiles;
 }
 
 /**
