@@ -68,8 +68,8 @@ export const queryDataFiles = async (
        ORDER BY cte."observation_time.start_time" DESC
        LIMIT \$${whereDetails.values.length + 1}
        OFFSET \$${whereDetails.values.length + 2} 
-     ) sub
-     RIGHT JOIN (SELECT COUNT(*) FROM cte) c(items_total) ON true
+     ) AS search_results
+     RIGHT JOIN (SELECT COUNT(*) FROM cte) AS search_results_count (items_total) ON true
      ORDER BY "observation_time.start_time" DESC
   `;
 
