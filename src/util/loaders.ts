@@ -73,12 +73,7 @@ async function batchGetDataFiles(user: User, ids: number[]) {
   // return the data files
   return artifacts.map(artifact => ({
     id: artifact.artifact_id,
-    metadata: [
-      {
-        name: "artifact.name",
-        value: artifact.name
-      }
-    ],
+    metadata: [{ name: "artifact.name", value: artifact.name }],
     ownedByUser: ownedArtifactIds.has(artifact.artifact_id.toString())
   }));
 }
