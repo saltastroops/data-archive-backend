@@ -285,12 +285,6 @@ type DataFile {
 
   #  Metadata for the data file.
   metadata: [MetadataItem!]!
-
-  #  Data file name
-  name: String!
-
-  # Data file size
-  size: Int!
 }
 
 # Details about a data request
@@ -319,5 +313,5 @@ enum DataRequestStatus {
 # An enumeration of the user roles, which define the permissions a user has.
 enum Role {
   # Administrator with full power
-  ADMIN
+  Admin
 }

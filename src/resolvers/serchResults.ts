@@ -51,35 +51,51 @@ export const queryDataFiles = async (
   // All the data model tables need to make this query
   const sqlFrom = createFromExpression(allColumns, dataModel);
 
-  // First pass: Get the number of search results
-  const countSQL = `
-      SELECT COUNT(*) as items_total FROM ${sqlFrom} WHERE ${whereDetails.sql}
-      `;
-  const countResults: any = (await ssdaPool.query(countSQL, [
-    ...whereDetails.values
-  ])).rows;
-  const itemsTotal = countResults[0].items_total;
-
-  // Second pass: Get the data file details
+  // Get the data file details
   const fields = Array.from(allColumns).map(
     column => `${column} AS "${column}"`
   );
-  const itemSQL = `
-      SELECT ${Array.from(fields).join(", ")}
-             FROM ${sqlFrom}
-      WHERE ${whereDetails.sql}
-      ORDER BY observations.observation_time.start_time DESC
-      LIMIT \$${whereDetails.values.length + 1} OFFSET \$${whereDetails.values
-    .length + 2}
-             `;
-  const itemResults: any = (await ssdaPool.query(itemSQL, [
+
+  const sql = `
+     WITH cte AS (
+       SELECT ${Array.from(fields).join(", ")}
+       FROM ${sqlFrom}
+       WHERE ${whereDetails.sql}
+     )
+     SELECT *
+     FROM (
+       TABLE cte
+       ORDER BY cte."observation_time.start_time" DESC
+       LIMIT \$${whereDetails.values.length + 1}
+       OFFSET \$${whereDetails.values.length + 2} 
+     ) AS search_results
+     RIGHT JOIN (SELECT COUNT(*) FROM cte) AS search_results_count (items_total) ON true
+     ORDER BY "observation_time.start_time" DESC
+  `;
+
+  const results: any = (await ssdaPool.query(sql, [
     ...whereDetails.values,
     limit,
     startIndex
   ])).rows;
 
+  // Due to the RIGHT JOIN in the SQL query, there is guaranteed to be at least one row.
+  if (results[0].items_total === "0") {
+    return {
+      dataFiles: [],
+      pageInfo: {
+        itemsPerPage: limit,
+        itemsTotal: 0,
+        startIndex
+      }
+    };
+  }
+
+  // Get the number of search results
+  const itemsTotal = results[0].items_total;
+
   // Which of the files are owned by the user?
-  const ids = itemResults.map((row: any) => row["artifact.artifact_id"]);
+  const ids = results.map((row: any) => row["artifact.artifact_id"]);
   const userOwnedFileIds = await ownsOutOfDataFiles(user, ids);
 
   // Collect all the details
@@ -88,17 +104,20 @@ export const queryDataFiles = async (
     itemsTotal,
     startIndex
   };
-  const dataFiles = itemResults.map((row: any) => ({
+
+  const dataFiles = results.map((row: any) => ({
     id: row["artifact.artifact_id"],
     metadata: [
-      ...Object.entries(row).map(entry => ({
-        name: entry[0],
-        value: entry[1]
-      }))
+      ...Object.entries(row)
+        .filter(
+          entry => !["artifact.artifact_id, items_total"].includes(entry[0])
+        )
+        .map(entry => ({
+          name: entry[0],
+          value: entry[1]
+        }))
     ],
-    name: row["artifact.name"],
-    ownedByUser: userOwnedFileIds.has(row["artifact.artifact_id"].toString()),
-    size: row["artifact.content_length"]
+    ownedByUser: userOwnedFileIds.has(row["artifact.artifact_id"].toString())
   }));
 
   return {
