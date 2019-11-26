@@ -245,7 +245,10 @@ const Mutation = {
    */
   createDataRequest: (
     root: any,
-    { dataFiles }: { dataFiles: [number] },
+    {
+      dataFiles,
+      includeCalibrationFiles
+    }: { dataFiles: [number]; includeCalibrationFiles: boolean },
     { user }: IContext
   ) => createDataRequest(dataFiles, user)
 };
