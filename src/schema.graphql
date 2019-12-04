@@ -184,7 +184,7 @@ type Mutation {
     dataFiles: [Int!]!
 
     """Whether to include calibration files along with the requested files."""
-    includeCalibrationFiles: Boolean!
+    includeCalibrations: Boolean!
   ): Status!
 }
 
