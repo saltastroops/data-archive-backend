@@ -108,10 +108,10 @@ WHERE o.observation_group_id IN (SELECT id FROM obs_groups)
 `;
   const client = await ssdaPool.connect();
   const res = await client.query(sql, [dataFiles]);
-  const calibrations = res.rows.map(row => parseInt(row.artifact_id));
+  const calibrations = res.rows.map(row => parseInt(row.artifact_id, 10));
 
   // Remove duplicates.
-  const all_files = new Set([...dataFiles, ...calibrations]);
+  const allFiles = new Set([...dataFiles, ...calibrations]);
 
-  return Array.from(all_files);
+  return Array.from(allFiles);
 }
