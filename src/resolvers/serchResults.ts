@@ -48,8 +48,22 @@ export const queryDataFiles = async (
   allColumns.add("observation_time.start_time");
   whereDetails.columns.forEach(column => allColumns.add(column));
 
-  // All the data model tables need to make this query
-  const sqlFrom = createFromExpression(allColumns, dataModel);
+  // Columns that are required for access control, but not necessarily for the
+  // search results
+  const accessControlColumns = ["observation.meta_release"];
+
+  // The FROM expression must cater for both search results and access control
+  // columns
+  const fromExpressionColumns = new Set(allColumns);
+  accessControlColumns.forEach(column => fromExpressionColumns.add(column));
+
+  // All the data model tables needed to make this query
+  const sqlFrom = createFromExpression(fromExpressionColumns, dataModel);
+
+  // Combine the search filters and access control conditions
+  const whereStatement = `((${
+    whereDetails.sql
+  }) AND (observation.meta_release < now()))`;
 
   // Get the data file details
   const fields = Array.from(allColumns).map(
@@ -60,7 +74,7 @@ export const queryDataFiles = async (
      WITH cte AS (
        SELECT ${Array.from(fields).join(", ")}
        FROM ${sqlFrom}
-       WHERE ${whereDetails.sql}
+       WHERE ${whereStatement}
      )
      SELECT *
      FROM (
