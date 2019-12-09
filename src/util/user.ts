@@ -6,6 +6,7 @@ import AuthProvider, {
   AuthProviderName,
   getAuthProvider
 } from "./authProvider";
+import { PoolClient } from "pg";
 
 export interface IAuthProviderUser {
   affiliation: string;
@@ -140,6 +141,7 @@ export const createUser = async (args: IUserCreateInput) => {
       RETURNING ssda_user_id
   `;
   const client = await ssdaPool.connect();
+  let error: Error | null = null;
   try {
     await client.query("BEGIN");
     const res: any = await client.query(userInsertSQL, [
@@ -164,12 +166,35 @@ export const createUser = async (args: IUserCreateInput) => {
       // Add the new user to the database
       await client.query(authInsertSQL, [userId, username, hashedPassword]);
     }
+
+    // If an auth provider other than SSDA is used, we should store the user's
+    // details for that institution
+    if (authProvider === "SSDA") {
+      // do nothing
+    } else if (authProvider === "SDB") {
+      createInstitutionUser(
+        client,
+        "Southern African Large Telescope",
+        authProviderUserId as string,
+        userId
+      );
+    } else {
+      // We'll have to re-throw the error later
+      error = new Error(`Not implemented for auth provider: ${authProvider}`);
+      throw error;
+    }
+
     await client.query("COMMIT");
   } catch (e) {
     await client.query("ROLLBACK");
     throw e;
   } finally {
     client.release();
+  }
+
+  // Re-throw error
+  if (error) {
+    throw error;
   }
 };
 
@@ -623,4 +648,20 @@ function checkPasswordStrength(password: string) {
   if (password.length < 7) {
     throw new Error(`The password must be at least 7 characters long.`);
   }
+}
+
+async function createInstitutionUser(
+  client: PoolClient,
+  institution: string,
+  institutionUserId: string,
+  ssdaUserId: string
+) {
+  const sql = `
+      WITH institution_id (id) AS (
+          SELECT institution_id FROM institution WHERE name=$1
+      )
+      INSERT INTO institution_user (institution_id, institution_user_id,  ssda_user_id)
+      VALUES ((SELECT id FROM institution_id), $2, $3)
+  `;
+  await client.query(sql, [institution, institutionUserId, ssdaUserId]);
 }
