@@ -679,8 +679,14 @@ async function createInstitutionUser(
       WITH institution_id (id) AS (
           SELECT institution_id FROM institution WHERE name=$1
       )
-      INSERT INTO institution_user (institution_id, institution_user_id,  ssda_user_id)
-      VALUES ((SELECT id FROM institution_id), $2, $3)
+      INSERT INTO institution_user (
+          institution_id,
+          institution_user_id,
+          ssda_user_id)
+      VALUES (
+          (SELECT id FROM institution_id),
+          $2,
+          $3)
   `;
   await client.query(sql, [institution, institutionUserId, ssdaUserId]);
 }
