@@ -50,7 +50,10 @@ export const queryDataFiles = async (
 
   // Columns that are required for access control, but not necessarily for the
   // search results
-  const accessControlColumns = ["observation.meta_release"];
+  const accessControlColumns = [
+    "observation.meta_release",
+    "proposal.proposal_id"
+  ];
 
   // The FROM expression must cater for both search results and access control
   // columns
@@ -61,17 +64,29 @@ export const queryDataFiles = async (
   const sqlFrom = createFromExpression(fromExpressionColumns, dataModel);
 
   // Combine the search filters and access control conditions
-  const whereStatement = `((${
-    whereDetails.sql
-  }) AND (observation.meta_release < now()))`;
+  const whereStatement = `((${whereDetails.sql}) AND
+         (observation.meta_release <= now()
+         OR proposal.proposal_id IN (SELECT id FROM owned_proposals)))`;
 
   // Get the data file details
   const fields = Array.from(allColumns).map(
     column => `${column} AS "${column}"`
   );
 
+  const userIdCondition = user
+    ? `iu.ssda_user_id='${parseInt(user.id, 10)}'`
+    : "1=0";
   const sql = `
-     WITH cte AS (
+     WITH owned_proposals (id) AS (
+          SELECT pi.proposal_id
+          FROM proposal_investigator pi
+               JOIN proposal p ON pi.proposal_id = p.proposal_id
+               JOIN institution_user iu
+                    ON p.institution_id = iu.institution_id
+                       AND pi.institution_user_id=iu.institution_user_id
+          WHERE ${userIdCondition}
+     ),
+          cte AS (
        SELECT ${Array.from(fields).join(", ")}
        FROM ${sqlFrom}
        WHERE ${whereStatement}
@@ -81,7 +96,7 @@ export const queryDataFiles = async (
        TABLE cte
        ORDER BY cte."observation_time.start_time" DESC
        LIMIT \$${whereDetails.values.length + 1}
-       OFFSET \$${whereDetails.values.length + 2} 
+       OFFSET \$${whereDetails.values.length + 2}
      ) AS search_results
      RIGHT JOIN (SELECT COUNT(*) FROM cte) AS search_results_count (items_total) ON true
      ORDER BY "observation_time.start_time" DESC
