@@ -1,12 +1,12 @@
 import bcrypt from "bcrypt";
 import { validate } from "isemail";
+import { PoolClient } from "pg";
 import { v4 as uuid } from "uuid";
 import { ssdaPool } from "../db/postgresql_pool";
 import AuthProvider, {
   AuthProviderName,
   getAuthProvider
 } from "./authProvider";
-import { PoolClient } from "pg";
 
 export interface IAuthProviderUser {
   affiliation: string;
