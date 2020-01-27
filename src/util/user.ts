@@ -181,7 +181,7 @@ export const createUser = async (args: IUserCreateInput) => {
         userId
       );
     } else {
-      // We'll have to re-throw the error later, but wqe first have to catch it
+      // We'll have to re-throw the error later, but we first have to catch it
       // to roll back the database transaction
       error = new Error(`Not implemented for auth provider: ${authProvider}`);
       throw error;
