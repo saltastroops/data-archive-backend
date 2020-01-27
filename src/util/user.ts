@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import { validate } from "isemail";
+import { PoolClient } from "pg";
 import { v4 as uuid } from "uuid";
 import { ssdaPool } from "../db/postgresql_pool";
 import AuthProvider, {
@@ -14,6 +15,8 @@ export interface IAuthProviderUser {
   email: string;
   familyName: string;
   givenName: string;
+  institutionId?: string;
+  institutionUserId?: string;
   password: string;
   username: string;
 }
@@ -140,6 +143,7 @@ export const createUser = async (args: IUserCreateInput) => {
       RETURNING ssda_user_id
   `;
   const client = await ssdaPool.connect();
+  let error: Error | null = null;
   try {
     await client.query("BEGIN");
     const res: any = await client.query(userInsertSQL, [
@@ -164,12 +168,36 @@ export const createUser = async (args: IUserCreateInput) => {
       // Add the new user to the database
       await client.query(authInsertSQL, [userId, username, hashedPassword]);
     }
+
+    // If an auth provider other than SSDA is used, we should store the user's
+    // details for that institution
+    if (authProvider === "SSDA") {
+      // do nothing
+    } else if (authProvider === "SDB") {
+      createInstitutionUser(
+        client,
+        "Southern African Large Telescope",
+        authProviderUserId as string,
+        userId
+      );
+    } else {
+      // We'll have to re-throw the error later, but we first have to catch it
+      // to roll back the database transaction
+      error = new Error(`Not implemented for auth provider: ${authProvider}`);
+      throw error;
+    }
+
     await client.query("COMMIT");
   } catch (e) {
     await client.query("ROLLBACK");
     throw e;
   } finally {
     client.release();
+  }
+
+  // Re-throw error
+  if (error) {
+    throw error;
   }
 };
 
@@ -204,7 +232,7 @@ export const getUserById = async (
 ): Promise<User | null> => {
   // Query for retrieving a user with the supplied id
   const sql = `
-      SELECT ssda_user_id AS id,
+      SELECT u.ssda_user_id AS id,
              affiliation,
              email,
              family_name,
@@ -212,11 +240,14 @@ export const getUserById = async (
              password,
              username,
              auth_provider,
-             auth_provider_user_id
+             auth_provider_user_id,
+             institution_id,
+             institution_user_id
       FROM admin.ssda_user AS u
                JOIN admin.auth_provider AS ap ON u.auth_provider_id = ap.auth_provider_id
-               LEFT JOIN admin.ssda_user_auth As ua ON ua.user_id = u.ssda_user_id
-      WHERE ssda_user_id = $1
+               LEFT JOIN admin.ssda_user_auth AS ua ON ua.user_id = u.ssda_user_id
+               LEFT JOIN admin.institution_user AS i ON u.ssda_user_id = i.ssda_user_id
+       WHERE u.ssda_user_id = $1
   `;
 
   // Querying the user
@@ -230,7 +261,7 @@ export const getUserByUsername = async (
 ): Promise<User | null> => {
   // Query for retrieving a user with the supplied username
   const sql = `
-      SELECT ssda_user_id AS id,
+      SELECT u.ssda_user_id AS id,
              affiliation,
              email,
              family_name,
@@ -238,10 +269,13 @@ export const getUserByUsername = async (
              password,
              username,
              auth_provider,
-             u.auth_provider_user_id
+             u.auth_provider_user_id,
+             institution_id,
+             institution_user_id
       FROM admin.ssda_user AS u
                JOIN admin.auth_provider AS ap ON u.auth_provider_id = ap.auth_provider_id
-               LEFT JOIN admin.ssda_user_auth As ua ON ua.user_id = u.ssda_user_id
+               LEFT JOIN admin.ssda_user_auth AS ua ON ua.user_id = u.ssda_user_id
+               LEFT JOIN admin.institution_user AS i ON u.ssda_user_id = i.ssda_user_id
       WHERE username = $1
   `;
 
@@ -257,7 +291,7 @@ export const getUserByEmail = async (
 ): Promise<User | null> => {
   // Query for retrieving a user with the supplied email
   const sql = `
-      SELECT ssda_user_id AS id,
+      SELECT u.ssda_user_id AS id,
              affiliation,
              email,
              family_name,
@@ -265,10 +299,13 @@ export const getUserByEmail = async (
              password,
              username,
              auth_provider,
-             auth_provider_user_id
+             auth_provider_user_id,
+             institution_id,
+             institution_user_id
       FROM admin.ssda_user AS u
                LEFT JOIN admin.ssda_user_auth AS ua ON ua.user_id = u.ssda_user_id
                JOIN admin.auth_provider AS ap USING (auth_provider_id)
+               LEFT JOIN admin.institution_user AS i ON u.ssda_user_id = i.ssda_user_id
       WHERE email = $1
         AND auth_provider = $2
   `;
@@ -285,7 +322,7 @@ export const getUserByAuthProviderDetails = async (
 ): Promise<User | null> => {
   // Query for retrieving a user with the supplied email
   const sql = `
-      SELECT ssda_user_id AS id,
+      SELECT u.ssda_user_id AS id,
              affiliation,
              email,
              family_name,
@@ -295,10 +332,13 @@ export const getUserByAuthProviderDetails = async (
              password_reset_token,
              password_reset_token_expiry,
              auth_provider,
-             auth_provider_user_id
+             auth_provider_user_id,
+             institution_id,
+             institution_user_id
       FROM admin.ssda_user AS u
                JOIN admin.auth_provider AS ap ON u.auth_provider_id = ap.auth_provider_id
                LEFT JOIN admin.ssda_user_auth As ua ON ua.user_id = u.ssda_user_id
+               LEFT JOIN admin.institution_user AS i ON u.ssda_user_id = i.ssda_user_id
       WHERE auth_provider = $1
         AND auth_provider_user_id = $2
   `;
@@ -317,7 +357,7 @@ export const getUserByToken = async (
 ): Promise<User | null> => {
   // Query for retrieving a user with the supplied email
   const sql = `
-      SELECT ssda_user_id AS id,
+      SELECT u.ssda_user_id AS id,
              affiliation,
              email,
              family_name,
@@ -327,10 +367,13 @@ export const getUserByToken = async (
              password_reset_token,
              password_reset_token_expiry,
              auth_provider,
-             auth_provider_user_id
+             auth_provider_user_id,
+             institution_id,
+             institution_user_id
       FROM admin.ssda_user AS u
                JOIN admin.auth_provider AS ap ON u.auth_provider_id = ap.auth_provider_id
                LEFT JOIN admin.ssda_user_auth As ua ON ua.user_id = u.ssda_user_id
+               LEFT JOIN admin.institution_user AS i ON u.ssda_user_id = i.ssda_user_id
       WHERE password_reset_token = $1
   `;
 
@@ -356,6 +399,8 @@ const userFromResult = async (result: any): Promise<User | null> => {
     familyName: user.family_name,
     givenName: user.given_name,
     id: user.id,
+    institutionId: user.institution_id || undefined,
+    institutionUserId: user.institution_user_id || undefined,
     password: user.password || "",
     passwordResetToken: user.password_reset_token,
     passwordResetTokenExpiry: user.password_reset_token_expiry,
@@ -600,7 +645,7 @@ JOIN observations.institution i ON p2.institution_id = i.institution_id
 WHERE pi.institution_user_id=$1 AND i.abbreviated_name=$2 AND a.artifact_id = ANY($3)
   `;
   const res: any = await ssdaPool.query(sql, [
-    user.authProviderUserId,
+    user.institutionUserId,
     institution,
     ids
   ]);
@@ -623,4 +668,26 @@ function checkPasswordStrength(password: string) {
   if (password.length < 7) {
     throw new Error(`The password must be at least 7 characters long.`);
   }
+}
+
+async function createInstitutionUser(
+  client: PoolClient,
+  institution: string,
+  institutionUserId: string,
+  ssdaUserId: string
+) {
+  const sql = `
+      WITH institution_id (id) AS (
+          SELECT institution_id FROM institution WHERE name=$1
+      )
+      INSERT INTO institution_user (
+          institution_id,
+          institution_user_id,
+          ssda_user_id)
+      VALUES (
+          (SELECT id FROM institution_id),
+          $2,
+          $3)
+  `;
+  await client.query(sql, [institution, institutionUserId, ssdaUserId]);
 }

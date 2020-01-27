@@ -86,10 +86,10 @@ describe("User update", () => {
       // Expect the first and second query to have been called
       // with the correct sql query and the suplied params
       expect((ssdaPool.query as any).mock.calls[0][0]).toContain(
-        "SELECT ssda_user_id AS id"
+        "SELECT u.ssda_user_id AS id"
       );
       expect((ssdaPool.query as any).mock.calls[0][0]).toContain(
-        "WHERE ssda_user_id = $1"
+        "WHERE u.ssda_user_id = $1"
       );
       expect((ssdaPool.query as any).mock.calls[0][1]).toEqual([1]);
 
@@ -104,10 +104,10 @@ describe("User update", () => {
       // Expect the third and forth query to have been called
       // with the correct sql query and the supplied params
       expect((ssdaPool.query as any).mock.calls[2][0]).toContain(
-        "SELECT ssda_user_id AS id"
+        "SELECT u.ssda_user_id AS id"
       );
       expect((ssdaPool.query as any).mock.calls[2][0]).toContain(
-        "WHERE ssda_user_id = $1"
+        "WHERE u.ssda_user_id = $1"
       );
       expect((ssdaPool.query as any).mock.calls[2][1]).toEqual([1]);
       expect((ssdaPool.query as any).mock.calls[3][0]).toContain(
@@ -121,7 +121,7 @@ describe("User update", () => {
       // Expect the fith query to have been called
       // with the correct sql query and the suplied params
       expect((ssdaPool.query as any).mock.calls[4][0]).toContain(
-        "SELECT ssda_user_id AS id"
+        "SELECT u.ssda_user_id AS id"
       );
       expect((ssdaPool.query as any).mock.calls[4][0]).toContain(
         "WHERE username = $1"
@@ -133,7 +133,7 @@ describe("User update", () => {
       // Expect the sixth query to have been called
       // with the correct sql query and the suplied params
       expect((ssdaPool.query as any).mock.calls[5][0]).toContain(
-        "SELECT ssda_user_id AS id"
+        "SELECT u.ssda_user_id AS id"
       );
       expect((ssdaPool.query as any).mock.calls[5][0]).toContain(
         "WHERE email = $1"
@@ -159,7 +159,7 @@ describe("User update", () => {
       // Expect the eighth query to have been called
       // with the correct sql query and the suplied params
       expect((ssdaPool.query as any).mock.calls[7][0]).toContain(
-        "WHERE ssda_user_id = $1"
+        "WHERE u.ssda_user_id = $1"
       );
       expect((ssdaPool.query as any).mock.calls[7][1]).toEqual([1]);
 
@@ -249,10 +249,10 @@ describe("User update", () => {
       // Expect the first and second query to have been called
       // with the correct sql query and the suplied params
       expect((ssdaPool.query as any).mock.calls[0][0]).toContain(
-        "SELECT ssda_user_id AS id"
+        "SELECT u.ssda_user_id AS id"
       );
       expect((ssdaPool.query as any).mock.calls[0][0]).toContain(
-        "WHERE ssda_user_id = $1"
+        "WHERE u.ssda_user_id = $1"
       );
       expect((ssdaPool.query as any).mock.calls[0][1]).toEqual([1]);
 
@@ -267,10 +267,10 @@ describe("User update", () => {
       // Expect the third and forth query to have been called
       // with the correct sql query and the suplied params
       expect((ssdaPool.query as any).mock.calls[2][0]).toContain(
-        "SELECT ssda_user_id AS id"
+        "SELECT u.ssda_user_id AS id"
       );
       expect((ssdaPool.query as any).mock.calls[2][0]).toContain(
-        "WHERE ssda_user_id = $1"
+        "WHERE u.ssda_user_id = $1"
       );
       expect((ssdaPool.query as any).mock.calls[2][1]).toEqual([1]);
       expect((ssdaPool.query as any).mock.calls[3][0]).toContain(
@@ -284,7 +284,7 @@ describe("User update", () => {
       // Expect the fith query to have been called
       // with the correct sql query and the suplied params
       expect((ssdaPool.query as any).mock.calls[4][0]).toContain(
-        "SELECT ssda_user_id AS id"
+        "SELECT u.ssda_user_id AS id"
       );
       expect((ssdaPool.query as any).mock.calls[4][0]).toContain(
         "WHERE username = $1"
@@ -294,7 +294,7 @@ describe("User update", () => {
       // Expect the sixth query to have been called
       // with the correct sql query and the suplied params
       expect((ssdaPool.query as any).mock.calls[5][0]).toContain(
-        "SELECT ssda_user_id AS id"
+        "SELECT u.ssda_user_id AS id"
       );
       expect((ssdaPool.query as any).mock.calls[5][0]).toContain(
         "WHERE email = $1"
@@ -320,7 +320,7 @@ describe("User update", () => {
       // Expect the eighth query to have been called
       // with the correct sql query and the suplied params
       expect((ssdaPool.query as any).mock.calls[7][0]).toContain(
-        " WHERE ssda_user_id = $1"
+        " WHERE u.ssda_user_id = $1"
       );
       expect((ssdaPool.query as any).mock.calls[7][1]).toEqual([1]);
 
@@ -508,10 +508,10 @@ describe("User update", () => {
       // Expect the first and second query to have been called
       // with the correct sql query and the suplied params
       expect((ssdaPool.query as any).mock.calls[0][0]).toContain(
-        "SELECT ssda_user_id AS id"
+        "SELECT u.ssda_user_id AS id"
       );
       expect((ssdaPool.query as any).mock.calls[0][0]).toContain(
-        "WHERE ssda_user_id = $1"
+        "WHERE u.ssda_user_id = $1"
       );
       expect((ssdaPool.query as any).mock.calls[0][1]).toEqual([1]);
       expect((ssdaPool.query as any).mock.calls[1][0]).toContain(
@@ -525,10 +525,10 @@ describe("User update", () => {
       // Expect the third and forth query to have been called
       // with the correct sql query and the suplied params
       expect((ssdaPool.query as any).mock.calls[2][0]).toContain(
-        "SELECT ssda_user_id AS id"
+        "SELECT u.ssda_user_id AS id"
       );
       expect((ssdaPool.query as any).mock.calls[2][0]).toContain(
-        "WHERE ssda_user_id = $1"
+        "WHERE u.ssda_user_id = $1"
       );
       expect((ssdaPool.query as any).mock.calls[2][1]).toEqual([2]);
       expect((ssdaPool.query as any).mock.calls[3][0]).toContain(
@@ -542,7 +542,7 @@ describe("User update", () => {
       // Expect the fith query to have been called
       // with the correct sql query and the suplied params
       expect((ssdaPool.query as any).mock.calls[4][0]).toContain(
-        "SELECT ssda_user_id AS id"
+        "SELECT u.ssda_user_id AS id"
       );
       expect((ssdaPool.query as any).mock.calls[4][0]).toContain(
         "WHERE username = $1"
@@ -554,7 +554,7 @@ describe("User update", () => {
       // Expect the sixth query to have been called
       // with the correct sql query and the suplied params
       expect((ssdaPool.query as any).mock.calls[5][0]).toContain(
-        "SELECT ssda_user_id AS id"
+        "SELECT u.ssda_user_id AS id"
       );
       expect((ssdaPool.query as any).mock.calls[5][0]).toContain(
         "WHERE email = $1"
@@ -580,7 +580,7 @@ describe("User update", () => {
       // Expect the eighth query to have been called
       // with the correct sql query and the suplied params
       expect((ssdaPool.query as any).mock.calls[7][0]).toContain(
-        "WHERE ssda_user_id = $1"
+        "WHERE u.ssda_user_id = $1"
       );
       expect((ssdaPool.query as any).mock.calls[7][1]).toEqual([2]);
 
