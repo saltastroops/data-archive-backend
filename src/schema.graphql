@@ -179,7 +179,13 @@ type Mutation {
   ): User!
 
   # Create a data request
-  createDataRequest(dataFiles: [Int!]!): Status!
+  createDataRequest(
+    """Requested data files."""
+    dataFiles: [Int!]!
+
+    """Whether to include calibration files along with the requested files."""
+    includeCalibrations: Boolean!
+  ): Status!
 }
 
 # A data archive user.
