@@ -234,20 +234,16 @@ const Mutation = {
   },
 
   /**
-   * Reset a user's password.
-   *
-   * The following arguments must be supplied.
-   *
-   * password:
-   *     The new password.
-   * token:
-   *     The unique token identifying the user.
+   * Create a data request.
    */
   createDataRequest: (
     root: any,
-    { dataFiles }: { dataFiles: [number] },
+    {
+      dataFiles,
+      includeCalibrations
+    }: { dataFiles: [number]; includeCalibrations: boolean },
     { user }: IContext
-  ) => createDataRequest(dataFiles, user)
+  ) => createDataRequest(dataFiles, includeCalibrations, user)
 };
 
 export { Mutation };
