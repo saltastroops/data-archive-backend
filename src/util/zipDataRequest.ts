@@ -79,6 +79,7 @@ export const zipDataRequest = async (
     if (err.code === "ENOENT") {
       // Update data request table with fail
       await failToZipDataRequest(dataRequestId);
+      throw new Error("The requested data file is missing on the server.");
     } else {
       // Update data request table with fail
       await failToZipDataRequest(dataRequestId);
