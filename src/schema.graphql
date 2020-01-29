@@ -224,6 +224,11 @@ type User {
   User roles, which defines the user's permissions.
   """
   roles: [Role!]!
+
+  """
+  Authentication provider.
+  """
+  authProvider: AuthProvider!
 }
 
 type Status {
@@ -321,3 +326,19 @@ enum Role {
   # Administrator with full power
   Admin
 }
+
+"""
+  Enumeration of the supported authentication providers.
+  """
+  enum AuthProvider {
+    """
+    This data archive.
+    """
+    SSDA
+
+    """
+    The SALT Science Database.
+    """
+    SDB
+  }
+
