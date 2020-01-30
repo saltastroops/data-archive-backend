@@ -180,10 +180,14 @@ type Mutation {
 
   # Create a data request
   createDataRequest(
-    """Requested data files."""
+    """
+    Requested data files.
+    """
     dataFiles: [Int!]!
 
-    """Whether to include calibration files along with the requested files."""
+    """
+    Whether to include calibration files along with the requested files.
+    """
     includeCalibrations: Boolean!
   ): Status!
 }
@@ -224,6 +228,11 @@ type User {
   User roles, which defines the user's permissions.
   """
   roles: [Role!]!
+
+  """
+  Authentication provider.
+  """
+  authProvider: AuthProvider!
 }
 
 type Status {
@@ -320,4 +329,19 @@ enum DataRequestStatus {
 enum Role {
   # Administrator with full power
   Admin
+}
+
+"""
+Enumeration of the supported authentication providers.
+"""
+enum AuthProvider {
+  """
+  This data archive.
+  """
+  SSDA
+
+  """
+  The SALT Science Database.
+  """
+  SDB
 }
