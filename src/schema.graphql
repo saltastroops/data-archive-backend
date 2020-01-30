@@ -313,9 +313,18 @@ type DataRequest {
   # The date a data request was made
   madeAt: String!
   # The requested data files
-  dataFiles: [DataFile!]!
+  dataFiles: [DataRequestFile!]!
   # The status of the data request
   status: DataRequestStatus!
+}
+
+# A requested data file
+type DataRequestFile {
+  #  Id of the data file.
+  id: ID!
+
+  # Filename
+  name: String!
 }
 
 # The data request status
