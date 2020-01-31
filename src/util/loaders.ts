@@ -73,8 +73,7 @@ async function batchGetDataFiles(user: User, ids: number[]) {
   // return the data files
   return artifacts.map(artifact => ({
     id: artifact.artifact_id,
-    metadata: [{ name: "artifact.name", value: artifact.name }],
-    ownedByUser: ownedArtifactIds.has(artifact.artifact_id.toString())
+    name: artifact.name
   }));
 }
 
@@ -84,9 +83,10 @@ async function batchGetDataFiles(user: User, ids: number[]) {
 async function batchGetUsers(ids: number[]) {
   // Get the users
   const usersSQL = `
-  SELECT u.ssda_user_id, family_name, given_name, email, affiliation, username
+  SELECT u.ssda_user_id, family_name, given_name, email, affiliation, username, auth_provider
   FROM admin.ssda_user u
   LEFT JOIN admin.ssda_user_auth ua ON u.ssda_user_id = ua.user_id
+  JOIN admin.auth_provider AS ap ON u.auth_provider_id = ap.auth_provider_id
   WHERE u.ssda_user_id = ANY($1)
   `;
   const usersRes = await ssdaPool.query(usersSQL, [ids]);
@@ -114,6 +114,7 @@ async function batchGetUsers(ids: number[]) {
   // Return the users
   return users.map(user => ({
     affiliation: user.affiliation,
+    authProvider: user.auth_provider,
     email: user.email,
     familyName: user.family_name,
     givenName: user.given_name,
