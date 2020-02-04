@@ -112,8 +112,8 @@ export const zipDataRequest = async (
     ...dataFiles.map((file: { type: string }) => file.type.length)
   );
 
-  // Table formatter
-  const tableFormat = `
+  // Table row separator
+  const rowBorder = `
 +-${"-".repeat(nameStrLength)}-+-${"-".repeat(typeStrLength)}-+`;
 
   // Table content of the table header
@@ -123,7 +123,7 @@ export const zipDataRequest = async (
   )} |`;
 
   // The header of the table
-  const tableHeader = tableFormat + tableHeaderContent + tableFormat;
+  const tableHeader = rowBorder + tableHeaderContent + rowBorder;
 
   // The body of the table
   let tableBody = ``;
@@ -133,7 +133,7 @@ export const zipDataRequest = async (
 | ${file.name}${" ".repeat(nameStrLength - file.name.length)} | ${
       file.type
     }${" ".repeat(typeStrLength - file.type.length)} |\r`;
-    tableBody = tableBody + tableBodyContent + tableFormat;
+    tableBody = tableBody + tableBodyContent + rowBorder;
   });
 
   // The title of the table
