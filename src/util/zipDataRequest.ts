@@ -73,18 +73,20 @@ export const zipDataRequest = async (
     gzip: true,
     zlib: { level: 9 } // Sets the compression level.
   });
+  let hasError = false;
 
   // case archive raise a warning
   archive.on("warning", async (err: any) => {
     if (err.code === "ENOENT") {
       // Update data request table with fail
       await failToZipDataRequest(dataRequestId);
-      throw new Error("The requested data file is missing on the server.");
+      // Record that there has been a problem
+      hasError = true;
     } else {
       // Update data request table with fail
       await failToZipDataRequest(dataRequestId);
-      // throw error
-      throw err;
+      // Record that there has been a problem
+      hasError = true;
     }
   });
 
@@ -92,13 +94,16 @@ export const zipDataRequest = async (
   archive.on("error", async (err: any) => {
     // Update data request table with fail
     await failToZipDataRequest(dataRequestId);
-    throw err;
+    hasError = true;
   });
 
   // when archive successfully run
   output.on("finish", async () => {
-    // Update data request table with success
-    await successfullyZipDataRequest(dataRequestId);
+    // Update data request table with success (but only if there hasn't been an
+    // error!)
+    if (!hasError) {
+      await successfullyZipDataRequest(dataRequestId);
+    }
   });
 
   // pipe archive data to the output file
