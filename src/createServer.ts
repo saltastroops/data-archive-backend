@@ -458,10 +458,7 @@ async function downloadDataRequest({
     return;
   }
 
-  filename =
-    process.env.NODE_ENV === "test"
-      ? "data-file-request.zip"
-      : `${moment().format("Y-MM-DD_HH:mm:ss")}.zip`;
+  filename = `${moment().format("Y-MM-DD_HH:mm:ss")}.zip`;
 
   // Download the data request file
   res.download(uri, filename, err => {

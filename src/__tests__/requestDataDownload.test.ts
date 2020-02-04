@@ -6,6 +6,7 @@ jest.mock("../db/postgresql_pool.ts");
 jest.mock("bcrypt");
 
 import bcrypt from "bcrypt";
+import moment from "moment";
 import request from "supertest";
 import createServer from "../createServer";
 import { ssdaPool } from "../db/postgresql_pool";
@@ -72,7 +73,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
 
     // Expect the disposition to use "data-file-request.zip" as filename
     expect(response.header["content-disposition"]).toContain(
-      "data-file-request.zip"
+      `${moment().format("Y-MM-DD_HH:mm:ss")}.zip`
     );
 
     // Expect that the correct file content has been returned
@@ -119,7 +120,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
 
     // Expect the disposition to use "data-file-request.zip" as filename
     expect(response.header["content-disposition"]).toContain(
-      "data-file-request.zip"
+      `${moment().format("Y-MM-DD_HH:mm:ss")}.zip`
     );
 
     // Expect that the correct file content has been returned
