@@ -26,11 +26,9 @@ async function createAuthenticatedAgent(
   return authenticatedAgent;
 }
 
-// A helper function to check the correct date format zip filename.
+// A helper function to check the correct data request filename format.
 function matchDateFormatFilename(date: string) {
-  return !!date.match(
-    /([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])\.(zip))/g
-  );
+  return !!date.match(/DataRequest-\d{4}-\d{2}-\d{2}.zip/g);
 }
 
 afterEach(() => {
