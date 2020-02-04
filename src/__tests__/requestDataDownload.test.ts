@@ -6,6 +6,7 @@ jest.mock("../db/postgresql_pool.ts");
 jest.mock("bcrypt");
 
 import bcrypt from "bcrypt";
+import moment from "moment";
 import request from "supertest";
 import createServer from "../createServer";
 import { ssdaPool } from "../db/postgresql_pool";
@@ -23,6 +24,11 @@ async function createAuthenticatedAgent(
     .send({ username, password, authProvider });
 
   return authenticatedAgent;
+}
+
+// A helper function to check the correct data request filename format.
+function matchFilenameFormat(filename: string) {
+  return !!filename.match(/DataRequest-\d{4}-\d{2}-\d{2}.zip/);
 }
 
 afterEach(() => {
@@ -70,10 +76,10 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
     // Expect the content type of the downloaded file to be application/zip
     expect(response.header["content-type"]).toEqual("application/zip");
 
-    // Expect the disposition to use "data-file-request.zip" as filename
-    expect(response.header["content-disposition"]).toContain(
-      "data-file-request.zip"
-    );
+    // Expect the disposition to use the correct format "Y-MM-DD.zip" as filename
+    expect(
+      matchFilenameFormat(response.header["content-disposition"])
+    ).toBeTruthy();
 
     // Expect that the correct file content has been returned
     expect(response.text).toEqual("This pretends to be a zip file.");
@@ -117,10 +123,10 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
     // Expect the content type of the downloaded file to be application/zip
     expect(response.header["content-type"]).toEqual("application/zip");
 
-    // Expect the disposition to use "data-file-request.zip" as filename
-    expect(response.header["content-disposition"]).toContain(
-      "data-file-request.zip"
-    );
+    // Expect the disposition to use the correct format "Y-MM-DD.zip" as filename
+    expect(
+      matchFilenameFormat(response.header["content-disposition"])
+    ).toBeTruthy();
 
     // Expect that the correct file content has been returned
     expect(response.text).toEqual("This pretends to be a zip file.");

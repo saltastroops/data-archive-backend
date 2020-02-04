@@ -4,6 +4,7 @@ import compression from "compression";
 import { Request, Response } from "express";
 import session from "express-session";
 import { GraphQLServer } from "graphql-yoga";
+import moment from "moment";
 import passport from "passport";
 import passportLocal from "passport-local";
 import * as path from "path";
@@ -456,6 +457,8 @@ async function downloadDataRequest({
     res.status(404).send(notFound);
     return;
   }
+
+  filename = `DataRequest-${moment().format("Y-MM-DD")}.zip`;
 
   // Download the data request file
   res.download(uri, filename, err => {
