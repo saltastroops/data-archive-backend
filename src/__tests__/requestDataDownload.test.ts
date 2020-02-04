@@ -78,7 +78,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
 
     // Expect the disposition to use the correct format "Y-MM-DD.zip" as filename
     expect(
-      matchDateFormatFilename(response.header["content-disposition"])
+      matchFilenameFormat(response.header["content-disposition"])
     ).toBeTruthy();
 
     // Expect that the correct file content has been returned
@@ -125,7 +125,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
 
     // Expect the disposition to use the correct format "Y-MM-DD.zip" as filename
     expect(
-      matchDateFormatFilename(response.header["content-disposition"])
+      matchFilenameFormat(response.header["content-disposition"])
     ).toBeTruthy();
 
     // Expect that the correct file content has been returned
