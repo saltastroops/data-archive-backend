@@ -27,8 +27,8 @@ async function createAuthenticatedAgent(
 }
 
 // A helper function to check the correct data request filename format.
-function matchDateFormatFilename(date: string) {
-  return !!date.match(/DataRequest-\d{4}-\d{2}-\d{2}.zip/);
+function matchFilenameFormat(filename: string) {
+  return !!filename.match(/DataRequest-\d{4}-\d{2}-\d{2}.zip/);
 }
 
 afterEach(() => {
