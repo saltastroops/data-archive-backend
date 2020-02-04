@@ -26,6 +26,13 @@ async function createAuthenticatedAgent(
   return authenticatedAgent;
 }
 
+// A helper function to check the correct date format zip filename.
+function matchDateFormatFilename(date: string) {
+  return !!date.match(
+    /([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])\.(zip))/g
+  );
+}
+
 afterEach(() => {
   // Cleaning up
   (ssdaPool.query as any).mockReset();
@@ -73,7 +80,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
 
     // Expect the disposition to use the correct format "Y-MM-DD.zip" as filename
     expect(
-      moment(response.header["content-disposition"], "Y-MM-DD")
+      matchDateFormatFilename(response.header["content-disposition"])
     ).toBeTruthy();
 
     // Expect that the correct file content has been returned
@@ -120,7 +127,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
 
     // Expect the disposition to use the correct format "Y-MM-DD.zip" as filename
     expect(
-      moment(response.header["content-disposition"], "Y-MM-DD")
+      matchDateFormatFilename(response.header["content-disposition"])
     ).toBeTruthy();
 
     // Expect that the correct file content has been returned
