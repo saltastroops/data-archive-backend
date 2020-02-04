@@ -458,7 +458,7 @@ async function downloadDataRequest({
     return;
   }
 
-  filename = `${moment().format("Y-MM-DD_HH:mm:ss")}.zip`;
+  filename = `${moment().format("Y-MM-DD")}.zip`;
 
   // Download the data request file
   res.download(uri, filename, err => {
