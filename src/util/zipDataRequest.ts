@@ -112,28 +112,28 @@ export const zipDataRequest = async (
     ...dataFiles.map((file: { type: string }) => file.type.length)
   );
 
-  // Table formatter
-  const tableFormat = `
-+${"-".repeat(nameStrLength)}+${"-".repeat(typeStrLength)}+`;
+  // Table row separator
+  const rowBorder = `
++-${"-".repeat(nameStrLength)}-+-${"-".repeat(typeStrLength)}-+`;
 
   // Table content of the table header
   const tableHeaderContent = `
-|File name${" ".repeat(nameStrLength - "File name".length)}|Type${" ".repeat(
+| File name${" ".repeat(nameStrLength - "File name".length)} | Type${" ".repeat(
     typeStrLength - "Type".length
-  )}|`;
+  )} |`;
 
   // The header of the table
-  const tableHeader = tableFormat + tableHeaderContent + tableFormat;
+  const tableHeader = rowBorder + tableHeaderContent + rowBorder;
 
   // The body of the table
   let tableBody = ``;
   dataFiles.forEach((file: { name: string; type: string }) => {
     // The content of the table body
     const tableBodyContent = `
-|${file.name}${" ".repeat(nameStrLength - file.name.length)}|${
+| ${file.name}${" ".repeat(nameStrLength - file.name.length)} | ${
       file.type
-    }${" ".repeat(typeStrLength - file.type.length)}|\r\n`;
-    tableBody = tableBody + tableBodyContent;
+    }${" ".repeat(typeStrLength - file.type.length)} |\r`;
+    tableBody = tableBody + tableBodyContent + rowBorder;
   });
 
   // The title of the table
