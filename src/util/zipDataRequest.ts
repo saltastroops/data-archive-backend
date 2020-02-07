@@ -4,9 +4,7 @@ import { ssdaPool } from "../db/postgresql_pool";
 
 const successfullyZipDataRequest = async (dataRequestId: string) => {
   // update data request with success status and download path
-  const path = `${
-    process.env.DATA_REQUEST_BASE_DIR
-  }/${dataRequestId.toString()}.zip`;
+  const path = `/${dataRequestId.toString()}.zip`;
   const sql = `
   WITH success_status (id) AS (
       SELECT data_request_status_id
@@ -38,14 +36,11 @@ const failToZipDataRequest = async (dataRequestId: string) => {
   await ssdaPool.query(sql, [dataRequestId]);
 
   // // delete file created by fs
-  fs.unlink(
-    `${process.env.DATA_REQUEST_BASE_DIR}/${dataRequestId.toString()}.zip`,
-    err => {
-      if (err) {
-        // do nothing if file not created
-      }
+  fs.unlink(`/${dataRequestId.toString()}.zip`, err => {
+    if (err) {
+      // do nothing if file not created
     }
-  );
+  });
 };
 
 export const zipDataRequest = async (

@@ -458,10 +458,16 @@ async function downloadDataRequest({
     return;
   }
 
+  // Get the data request base path if exist
+  const dataRequestBasePath = process.env.DATA_REQUEST_BASE_DIR || "";
+
+  // Form a full path for the data request location
+  const dataRequestFullPath = path.join(dataRequestBasePath, uri);
+
   filename = `DataRequest-${moment().format("Y-MM-DD")}.zip`;
 
   // Download the data request file
-  res.download(uri, filename, err => {
+  res.download(dataRequestFullPath, filename, err => {
     if (err) {
       if (!res.headersSent) {
         res.status(404).send(notFound);
