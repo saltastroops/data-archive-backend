@@ -413,7 +413,7 @@ async function downloadDataRequest({
   // If not, raise an internal server error.
   if (!process.env.DATA_REQUEST_BASE_DIR) {
     res.status(500).send({
-      message: "A base directory for the data request is not defined.",
+      message: "A data request base directory, 'DATA_REQUEST_BASE_DIR', is not defined.",
       success: false
     });
     return;

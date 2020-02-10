@@ -6,7 +6,6 @@ jest.mock("../db/postgresql_pool.ts");
 jest.mock("bcrypt");
 
 import bcrypt from "bcrypt";
-import moment from "moment";
 import request from "supertest";
 import createServer from "../createServer";
 import { ssdaPool } from "../db/postgresql_pool";
@@ -54,7 +53,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
       .mockResolvedValueOnce({
         rows: [
           {
-            path: "/src/__tests__/data/data-file-request.zip",
+            path: "src/__tests__/data/data-file-request.zip",
             ssda_user_id: 1
           }
         ]
@@ -101,7 +100,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
       .mockResolvedValueOnce({
         rows: [
           {
-            path: "/src/__tests__/data/data-file-request.zip",
+            path: "src/__tests__/data/data-file-request.zip",
             ssda_user_id: 2
           }
         ]
@@ -183,7 +182,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
       .mockResolvedValueOnce({ rows: [{ id: 1 }] })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({
-        rows: [{ userId: 2, path: "/src/__tests__/data/data-file-request.zip" }]
+        rows: [{ userId: 2, path: "src/__tests__/data/data-file-request.zip" }]
       });
 
     // Mock the bcrypt password comparison to return true.
