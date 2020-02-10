@@ -117,6 +117,9 @@
       "jsx",
       "json",
       "node"
+    ],
+    "setupFiles": [
+      "<rootDir>/jest/setEnvVars.js"
     ]
   }
 }
