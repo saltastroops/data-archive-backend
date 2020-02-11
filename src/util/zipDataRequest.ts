@@ -4,9 +4,7 @@ import { ssdaPool } from "../db/postgresql_pool";
 
 const successfullyZipDataRequest = async (dataRequestId: string) => {
   // update data request with success status and download path
-  const path = `${
-    process.env.DATA_REQUEST_BASE_DIR
-  }/${dataRequestId.toString()}.zip`;
+  const path = `${dataRequestId.toString()}.zip`;
   const sql = `
   WITH success_status (id) AS (
       SELECT data_request_status_id
