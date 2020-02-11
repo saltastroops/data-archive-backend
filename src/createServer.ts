@@ -413,7 +413,7 @@ async function downloadDataRequest({
   // If not, raise an internal server error.
   if (!process.env.DATA_REQUEST_BASE_DIR) {
     res.status(500).send({
-      message: "A data request base directory, 'DATA_REQUEST_BASE_DIR', is not defined.",
+      message: "The environment variable DATA_REQUEST_BASE_DIR for the data request base directory has not been set.",
       success: false
     });
     return;
