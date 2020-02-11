@@ -1,6 +1,7 @@
 import { ssdaPool } from "../db/postgresql_pool";
 import { mayViewAllOfDataFiles } from "../util/user";
 import { zipDataRequest } from "../util/zipDataRequest";
+import { CalibrationLevel } from "./Mutation";
 
 async function asyncForEach(array: any, callback: any) {
   for (let index = 0; index < array.length; index++) {
@@ -24,6 +25,7 @@ const groupByObservation = (dataFiles: [any]) => {
 export const createDataRequest = async (
   dataFiles: number[],
   includeCalibrations: boolean,
+  includedCalibrationLevels: CalibrationLevel[],
   user: any
 ) => {
   // check if user is logged in
@@ -72,7 +74,7 @@ export const createDataRequest = async (
 
     await client.query("COMMIT");
 
-    zipDataRequest(dataFileIdStrings, dataRequestId);
+    zipDataRequest(dataFileIdStrings, dataRequestId, includedCalibrationLevels);
 
     return {
       message: "The data request was successfully requested",

@@ -189,6 +189,11 @@ type Mutation {
     Whether to include calibration files along with the requested files.
     """
     includeCalibrations: Boolean!
+
+    """
+    By default reduced callibration level are included.
+    """
+    includedCalibrationLevels: [CalibrationLevel!]!
   ): Status!
 }
 
@@ -353,4 +358,9 @@ enum AuthProvider {
   The SALT Science Database.
   """
   SDB
+}
+
+enum CalibrationLevel {
+  REDUCED
+  RAW
 }

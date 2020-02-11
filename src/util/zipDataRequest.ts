@@ -1,6 +1,7 @@
 import archiver from "archiver";
 import fs from "fs";
 import { ssdaPool } from "../db/postgresql_pool";
+import { CalibrationLevel } from "../resolvers/Mutation";
 
 const successfullyZipDataRequest = async (dataRequestId: string) => {
   // update data request with success status and download path
@@ -48,7 +49,8 @@ const failToZipDataRequest = async (dataRequestId: string) => {
 
 export const zipDataRequest = async (
   fileIds: string[],
-  dataRequestId: string
+  dataRequestId: string,
+  includedCalibrationLevels: CalibrationLevel[]
 ) => {
   // collect the files
   const sql = `
@@ -189,9 +191,24 @@ SPIE Astronomical Instrumentation, 7737-82\r\n\n`;
 
   // save files
   dataFiles.forEach((file: { path: string; name: string }) => {
-    archive.file(`${process.env.FITS_BASE_DIR}/${file.path}`, {
-      name: file.name
-    });
+    if (includedCalibrationLevels.includes("REDUCED")) {
+      archive.file(`${process.env.FITS_BASE_DIR}/${file.path}`, {
+        name: file.name
+      });
+    }
+
+    if (includedCalibrationLevels.includes("RAW")) {
+      const matchRawFileName = file.name.match(/(H|P|S)\d{12}\.(fits)/);
+      const rawName =
+        matchRawFileName && matchRawFileName.length ? matchRawFileName[0] : "";
+      const rawPath = file.path.replace(
+        /product\/[a-zA-Z]*\d{12}\.(fits)/,
+        `raw/${rawName}`
+      );
+      archive.file(`${process.env.FITS_BASE_DIR}/${rawPath}`, {
+        name: rawName
+      });
+    }
   });
 
   await archive.finalize();

@@ -19,6 +19,9 @@ interface IContext {
   user: { id: string | number; authProvider: AuthProviderName }; // TODO user interface
 }
 
+// Calibration level types
+export type CalibrationLevel = "REDUCED" | "RAW";
+
 // Check whether a password is sufficiently strong.
 function checkPasswordStrength(password: string) {
   if (password.length < 7) {
@@ -240,10 +243,21 @@ const Mutation = {
     root: any,
     {
       dataFiles,
-      includeCalibrations
-    }: { dataFiles: [number]; includeCalibrations: boolean },
+      includeCalibrations,
+      includedCalibrationLevels
+    }: {
+      dataFiles: [number];
+      includeCalibrations: boolean;
+      includedCalibrationLevels: CalibrationLevel[];
+    },
     { user }: IContext
-  ) => createDataRequest(dataFiles, includeCalibrations, user)
+  ) =>
+    createDataRequest(
+      dataFiles,
+      includeCalibrations,
+      includedCalibrationLevels,
+      user
+    )
 };
 
 export { Mutation };
