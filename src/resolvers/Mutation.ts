@@ -255,7 +255,7 @@ const Mutation = {
     createDataRequest(
       dataFiles,
       includeCalibrations,
-      includedCalibrationLevels,
+      new Set(includedCalibrationLevels),
       user
     )
 };

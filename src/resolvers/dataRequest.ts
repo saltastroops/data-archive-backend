@@ -25,7 +25,7 @@ const groupByObservation = (dataFiles: [any]) => {
 export const createDataRequest = async (
   dataFiles: number[],
   includeCalibrations: boolean,
-  includedCalibrationLevels: CalibrationLevel[],
+  includedCalibrationLevels: Set<CalibrationLevel>,
   user: any
 ) => {
   // check if user is logged in
@@ -36,6 +36,17 @@ export const createDataRequest = async (
   // add calibrations, if requested
   if (includeCalibrations) {
     dataFiles = await addCalibrations(dataFiles);
+  }
+
+  // Add specified calibration levels
+  if (
+    includedCalibrationLevels.has("REDUCED") ||
+    includedCalibrationLevels.has("RAW")
+  ) {
+    dataFiles = await calibrationLevelToInclude(
+      dataFiles,
+      includedCalibrationLevels
+    );
   }
 
   const dataFileIdStrings = dataFiles.map(id => id.toString());
@@ -74,7 +85,7 @@ export const createDataRequest = async (
 
     await client.query("COMMIT");
 
-    zipDataRequest(dataFileIdStrings, dataRequestId, includedCalibrationLevels);
+    zipDataRequest(dataFileIdStrings, dataRequestId);
 
     return {
       message: "The data request was successfully requested",
@@ -114,6 +125,39 @@ WHERE o.observation_group_id IN (SELECT id FROM obs_groups)
 
   // Remove duplicates.
   const allFiles = new Set([...dataFiles, ...calibrations]);
+
+  return Array.from(allFiles);
+}
+
+async function calibrationLevelToInclude(
+  dataFiles: number[],
+  includeCalibrationLevels: Set<CalibrationLevel>
+): Promise<number[]> {
+  const sql = `
+  WITH calibration_level_plane (id) AS (
+    SELECT p.plane_id
+    FROM observations.plane p
+    JOIN observations.artifact a ON p.plane_id = a.plane_id
+    WHERE a.artifact_id = ANY($1)
+  )
+  SELECT a.artifact_id
+  FROM observations.artifact a
+  JOIN observations.calibration_level cl ON a.calibration_level_id = cl.calibration_level_id
+  JOIN observations.plane p ON a.plane_id = p.plane_id
+  WHERE a.plane_id = ANY(SELECT id FROM calibration_level_plane) AND cl.calibration_level = ANY($2)
+  `;
+
+  const client = await ssdaPool.connect();
+  const res = await client.query(sql, [
+    dataFiles,
+    Array.from(includeCalibrationLevels)
+  ]);
+  const calibrationLevelsIds = res.rows.map(row =>
+    parseInt(row.artifact_id, 10)
+  );
+
+  // Remove duplicates.
+  const allFiles = new Set([...dataFiles, ...calibrationLevelsIds]);
 
   return Array.from(allFiles);
 }
