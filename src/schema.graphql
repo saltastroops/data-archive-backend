@@ -191,9 +191,9 @@ type Mutation {
     includeCalibrations: Boolean!
 
     """
-    By default reduced callibration level are included.
+    Included callibration levels.
     """
-    includedCalibrationLevels: [CalibrationLevel!]!
+    includedCalibrationLevels: [CalibrationLevel]
   ): Status!
 }
 
