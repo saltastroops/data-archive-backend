@@ -432,7 +432,8 @@ enum CalibrationType {
   BIAS
   DARK
   FLAT
-  SCIENCE
+  RADIAL_VELECITY_STANDARD
+  SPECTROPHOTOMETRIC_STANDARD
 }
 
 enum CalibrationLevel {
