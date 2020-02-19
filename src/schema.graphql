@@ -328,15 +328,19 @@ type DataRequest {
   # The date a data request was made
   madeAt: String!
   # The requested data files
-  dataFiles: [DataRequestFile!]!
+  artifact: [DataRequestArtifact!]!
   # The status of the data request
   status: DataRequestStatus!
+  #
+  calibrationTypes: [CalibrationType!]
+  #
+  calibrationLevels: [CalibrationLevel!]!
 }
 
 """
 A requested data file.
 """
-type DataRequestFile {
+type DataRequestArtifact {
   #  Id of the data file.
   id: ID!
 
@@ -385,4 +389,9 @@ enum CalibrationType {
   DARK
   FLAT
   SCIENCE
+}
+
+enum CalibrationLevel {
+  RAW
+  REDUSED
 }
