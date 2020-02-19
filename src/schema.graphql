@@ -34,13 +34,13 @@ type Query {
     """
     Data file ID.
     """
-    dataFileId: ID!
+    artifactId: ID!
   ): DataPreview!
 
   """
   Data files with data matching a filter condition.
   """
-  dataFiles(
+  artifacts(
     """
     Filter condition for the database query.
     """
@@ -314,7 +314,7 @@ type DataFileConnection {
   """
   List of data files.
   """
-  dataFiles: [DataFile!]!
+  artifacts: [Artifact!]!
 
   """
   Search page details.
@@ -325,7 +325,7 @@ type DataFileConnection {
 """
 Details about a data file.
 """
-type DataFile {
+type Artifact {
   """
   Id of the data file.
   """
@@ -365,7 +365,7 @@ type DataRequest {
   """
   The requested data files
   """
-  artifact: [DataRequestArtifact!]!
+  artifacts: [DataRequestArtifact!]!
   """
   The status of the data request
   """
