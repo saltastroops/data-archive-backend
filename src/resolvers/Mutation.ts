@@ -240,10 +240,10 @@ const Mutation = {
     root: any,
     {
       dataFiles,
-      requestedCalibrations
-    }: { dataFiles: [number]; requestedCalibrations: [string] },
+      requestedCalibrationTypes
+    }: { dataFiles: [number]; requestedCalibrationTypes: [string] },
     { user }: IContext
-  ) => createDataRequest(dataFiles, requestedCalibrations, user)
+  ) => createDataRequest(dataFiles, requestedCalibrationTypes, user)
 };
 
 export { Mutation };

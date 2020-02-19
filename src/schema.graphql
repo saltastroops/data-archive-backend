@@ -178,7 +178,9 @@ type Mutation {
     email: String!
   ): User!
 
-  # Create a data request
+  """
+  Create a data request
+  """
   createDataRequest(
     """
     Requested data files.
@@ -186,13 +188,15 @@ type Mutation {
     dataFiles: [Int!]!
 
     """
-    Calibration files to inclunde along with the requested files.
+    Calibration files to include along with the requested files.
     """
-    requestedCalibrations: [ProductType!]
+    requestedCalibrations: [CalibrationType!]
   ): Status!
 }
 
-# A data archive user.
+"""
+A data archive user.
+"""
 type User {
   """
   User id.
@@ -243,8 +247,9 @@ type Status {
   message: String
 }
 
-# Data preview.
-
+"""
+Data preview.
+"""
 type DataPreview {
   """
   URIs for the data preview images.
@@ -257,7 +262,9 @@ type DataPreview {
   fitsHeader: String!
 }
 
-#  Information about a search results page.
+"""
+Information about a search results page.
+"""
 type PageInfo {
   #  The index of the first search result on the page. An index offset of 0 is assumed. So, for example, if the start index
   #  is 100, the first 100 search results have been skipped and 101st result is the first result included in the page's
@@ -272,7 +279,9 @@ type PageInfo {
   itemsTotal: Int!
 }
 
-#  A metadata item.
+"""
+A metadata item.
+"""
 type MetadataItem {
   #  Name of the metadata item.
   name: String!
@@ -281,7 +290,9 @@ type MetadataItem {
   value: String
 }
 
-#  Results for a data file query.
+"""
+Results for a data file query.
+"""
 type DataFileConnection {
   #  List of data files.
   dataFiles: [DataFile!]!
@@ -290,7 +301,9 @@ type DataFileConnection {
   pageInfo: PageInfo!
 }
 
-#  Details about a data file.
+"""
+Details about a data file.
+"""
 type DataFile {
   #  Id of the data file.
   id: ID!
@@ -302,7 +315,9 @@ type DataFile {
   metadata: [MetadataItem!]!
 }
 
-# Details about a data request
+"""
+Details about a data request.
+"""
 type DataRequest {
   # Id of the data request
   id: ID!
@@ -318,7 +333,9 @@ type DataRequest {
   status: DataRequestStatus!
 }
 
-# A requested data file
+"""
+A requested data file.
+"""
 type DataRequestFile {
   #  Id of the data file.
   id: ID!
@@ -327,14 +344,18 @@ type DataRequestFile {
   name: String!
 }
 
-# The data request status
+"""
+The data request status
+"""
 enum DataRequestStatus {
   PENDING
   FAILED
   SUCCESSFUL
 }
 
-# An enumeration of the user roles, which define the permissions a user has.
+"""
+An enumeration of the user roles, which define the permissions a user has.
+"""
 enum Role {
   # Administrator with full power
   Admin
@@ -355,18 +376,13 @@ enum AuthProvider {
   SDB
 }
 
-# An enumeration of the product tpyes that are supported.
-enum ProductType {
+"""
+An enumeration of the product tpyes that are supported.
+"""
+enum CalibrationType {
   ARC
-  AUXILIARY
   BIAS
-  CALIBRATION
   DARK
   FLAT
-  INFO
-  NOISE
-  PREVIEW
   SCIENCE
-  THUMBNAIL
-  WEIGHT
 }
