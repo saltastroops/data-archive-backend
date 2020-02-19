@@ -240,10 +240,14 @@ type User {
 }
 
 type Status {
-  # Success status.
+  """
+  Success status.
+  """
   status: Boolean!
 
-  # Message is ever the status has one.
+  """
+  Message is ever the status has one.
+  """
   message: String
 }
 
@@ -266,16 +270,21 @@ type DataPreview {
 Information about a search results page.
 """
 type PageInfo {
-  #  The index of the first search result on the page. An index offset of 0 is assumed. So, for example, if the start index
-  #  is 100, the first 100 search results have been skipped and 101st result is the first result included in the page's
-  #  items.
+  """
+  The index of the first search result on the page. An index offset of 0 is assumed. So, for example, if the start index
+  is 100, the first 100 search results have been skipped and 101st result is the first result included in the page's
+  items.
+  """
   startIndex: Int!
-
-  #  The (maximum) number of results included on a page. Depending on the values of the start index and the items total
-  #  the actual number returned may be smaller.
+  """
+  The (maximum) number of results included on a page. Depending on the values of the start index and the items total
+  the actual number returned may be smaller.
+  """
   itemsPerPage: Int!
 
-  #  The total number of search results.
+  """
+  The total number of search results.
+  """
   itemsTotal: Int!
 }
 
@@ -283,10 +292,14 @@ type PageInfo {
 A metadata item.
 """
 type MetadataItem {
-  #  Name of the metadata item.
+  """
+  Name of the metadata item.
+  """
   name: String!
 
-  #  Value of the metadata item.
+  """
+  Value of the metadata item.
+  """
   value: String
 }
 
@@ -294,10 +307,14 @@ type MetadataItem {
 Results for a data file query.
 """
 type DataFileConnection {
-  #  List of data files.
+  """
+  List of data files.
+  """
   dataFiles: [DataFile!]!
 
-  #  Search page details.
+  """
+  Search page details.
+  """
   pageInfo: PageInfo!
 }
 
@@ -305,13 +322,19 @@ type DataFileConnection {
 Details about a data file.
 """
 type DataFile {
-  #  Id of the data file.
+  """
+  Id of the data file.
+  """
   id: ID!
 
-  #  Whether the currently logged in user owns the data in the file, and hence may access it even if it proprietary.
+  """
+  Whether the currently logged in user owns the data in the file, and hence may access it even if it proprietary.
+  """
   ownedByUser: Boolean!
 
-  #  Metadata for the data file.
+  """
+  Metadata for the data file.
+  """
   metadata: [MetadataItem!]!
 }
 
@@ -319,21 +342,37 @@ type DataFile {
 Details about a data request.
 """
 type DataRequest {
-  # Id of the data request
+  """
+  Id of the data request
+  """
   id: ID!
-  # User who owns the data request
+  """
+  User who owns the data request
+  """
   user: User!
-  # file location fro download
+  """
+  file location fro download
+  """
   uri: String
-  # The date a data request was made
+  """
+  The date a data request was made
+  """
   madeAt: String!
-  # The requested data files
+  """
+  The requested data files
+  """
   artifact: [DataRequestArtifact!]!
-  # The status of the data request
+  """
+  The status of the data request
+  """
   status: DataRequestStatus!
-  #
+  """
+  The calibration type
+  """
   calibrationTypes: [CalibrationType!]
-  #
+  """
+  The calibration level such as: Is data Raw or Reduced
+  """
   calibrationLevels: [CalibrationLevel!]!
 }
 
@@ -341,10 +380,13 @@ type DataRequest {
 A requested data file.
 """
 type DataRequestArtifact {
-  #  Id of the data file.
+  """
+  Id of the data file.
+  """
   id: ID!
-
-  # Filename
+  """
+  Filename
+  """
   name: String!
 }
 
@@ -361,7 +403,9 @@ enum DataRequestStatus {
 An enumeration of the user roles, which define the permissions a user has.
 """
 enum Role {
-  # Administrator with full power
+  """
+  Administrator with full power
+  """
   Admin
 }
 
