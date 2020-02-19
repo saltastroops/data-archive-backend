@@ -185,12 +185,16 @@ type Mutation {
     """
     Requested data files.
     """
-    dataFiles: [Int!]!
+    artifacts: [Int!]!
 
     """
-    Calibration files to include along with the requested files.
+    the calibration types to include along with the requested files.
     """
-    requestedCalibrations: [CalibrationType!]
+    requestedCalibrationsTypes: [CalibrationType!]
+    """
+    the calibration levels to include along with the requested files.
+    """
+    requestedCalibrationsLevels: [CalibrationLevel!]
   ): Status!
 }
 
