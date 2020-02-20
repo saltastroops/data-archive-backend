@@ -256,7 +256,7 @@ const createServer = async () => {
 
     // Query for retrieving the FITS file
     const sql = `
-        SELECT (paths).reduced, data_release
+        SELECT (paths).reduced as path, data_release
         FROM observations.artifact AS a
         JOIN observations.plane AS p ON a.plane_id = p.plane_id
         JOIN observations.observation AS o ON p.observation_id = o.observation_id
@@ -269,7 +269,7 @@ const createServer = async () => {
       return res.status(404).send(notFound);
     }
     
-    const {reduced: reducedPath, data_release: publicFrom } = rows[0];
+    const {path: filePath, data_release: publicFrom } = rows[0];
 
     // Check whether the data file is public or the user may access it
     // because they own the data or are an administrator.
@@ -280,9 +280,8 @@ const createServer = async () => {
     // Get the base path
     const basePath = process.env.FITS_BASE_DIR || "";
 
-    // Form a full path for the FITS file location
-    // By default a reduced calibration level file location is formed
-    const fullPath = path.join(basePath, reducedPath);
+    // Form a full path for the FITS file location.
+    const fullPath = path.join(basePath, filePath);
 
     // Download the FITS header file
     res.type("application/fits");
