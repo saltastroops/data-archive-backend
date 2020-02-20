@@ -254,7 +254,8 @@ const createServer = async () => {
     // Get all the params from the request
     const { dataFileId, dataFilename } = req.params;
 
-    // Query for retrieving the FITS file
+    // Query for retrieving the FITS file.
+    // The path of the reduced data file is retrieved.
     const sql = `
         SELECT (paths).reduced as path, data_release
         FROM observations.artifact AS a
