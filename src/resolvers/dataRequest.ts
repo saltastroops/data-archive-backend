@@ -23,7 +23,7 @@ const groupByObservation = (dataFiles: [any]) => {
 
 export const createDataRequest = async (
   dataFiles: number[],
-  includeCalibrations: boolean,
+  requestedCalibrations: string[],
   user: any
 ) => {
   // check if user is logged in
@@ -32,8 +32,8 @@ export const createDataRequest = async (
   }
 
   // add calibrations, if requested
-  if (includeCalibrations) {
-    dataFiles = await addCalibrations(dataFiles);
+  if (requestedCalibrations.length) {
+    dataFiles = await addCalibrations(dataFiles, requestedCalibrations);
   }
 
   const dataFileIdStrings = dataFiles.map(id => id.toString());
@@ -86,7 +86,10 @@ export const createDataRequest = async (
   }
 };
 
-async function addCalibrations(dataFiles: number[]): Promise<number[]> {
+async function addCalibrations(
+  dataFiles: number[],
+  requestedCalibrations: string[]
+): Promise<number[]> {
   // Find all non-science data files which belong to one of the observation
   // groups of the given data files are and which are not science files.
   const sql = `
@@ -104,10 +107,10 @@ FROM observations.artifact a
      JOIN observations.observation o ON p.observation_id = o.observation_id
      JOIN observations.product_type pt ON a.product_type_id=pt.product_type_id
 WHERE o.observation_group_id IN (SELECT id FROM obs_groups)
-      AND pt.product_type!='Science'
+      AND pt.product_type IN $2
 `;
   const client = await ssdaPool.connect();
-  const res = await client.query(sql, [dataFiles]);
+  const res = await client.query(sql, [dataFiles, requestedCalibrations]);
   const calibrations = res.rows.map(row => parseInt(row.artifact_id, 10));
 
   // Remove duplicates.

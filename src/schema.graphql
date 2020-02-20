@@ -178,7 +178,9 @@ type Mutation {
     email: String!
   ): User!
 
-  # Create a data request
+  """
+  Create a data request.
+  """
   createDataRequest(
     """
     Requested data files.
@@ -186,13 +188,19 @@ type Mutation {
     dataFiles: [Int!]!
 
     """
-    Whether to include calibration files along with the requested files.
+    The calibration types to include along with the requested files.
     """
-    includeCalibrations: Boolean!
+    requestedCalibrationTypes: [CalibrationType!]
+    """
+    The calibration levels to include along with the requested files.
+    """
+    requestedCalibrationLevels: [CalibrationLevel!]!
   ): Status!
 }
 
-# A data archive user.
+"""
+A data archive user.
+"""
 type User {
   """
   User id.
@@ -236,15 +244,20 @@ type User {
 }
 
 type Status {
-  # Success status.
+  """
+  Success status.
+  """
   status: Boolean!
 
-  # Message is ever the status has one.
+  """
+  Status message.
+  """
   message: String
 }
 
-# Data preview.
-
+"""
+Data preview.
+"""
 type DataPreview {
   """
   URIs for the data preview images.
@@ -257,86 +270,146 @@ type DataPreview {
   fitsHeader: String!
 }
 
-#  Information about a search results page.
+"""
+Information about a search results page.
+"""
 type PageInfo {
-  #  The index of the first search result on the page. An index offset of 0 is assumed. So, for example, if the start index
-  #  is 100, the first 100 search results have been skipped and 101st result is the first result included in the page's
-  #  items.
+  """
+  The index of the first search result on the page. An index offset of 0 is assumed. So, for example, if the start index
+  is 100, the first 100 search results have been skipped and 101st result is the first result included in the page's
+  items.
+  """
   startIndex: Int!
-
-  #  The (maximum) number of results included on a page. Depending on the values of the start index and the items total
-  #  the actual number returned may be smaller.
+  """
+  The (maximum) number of results included on a page. Depending on the values of the start index and the items total
+  the actual number returned may be smaller.
+  """
   itemsPerPage: Int!
 
-  #  The total number of search results.
+  """
+  The total number of search results.
+  """
   itemsTotal: Int!
 }
 
-#  A metadata item.
+"""
+A metadata item.
+"""
 type MetadataItem {
-  #  Name of the metadata item.
+  """
+  Name of the metadata item.
+  """
   name: String!
 
-  #  Value of the metadata item.
+  """
+  Value of the metadata item.
+  """
   value: String
 }
 
-#  Results for a data file query.
+"""
+Results for a data file query.
+"""
 type DataFileConnection {
-  #  List of data files.
+  """
+  List of data files.
+  """
   dataFiles: [DataFile!]!
 
-  #  Search page details.
+  """
+  Search page details.
+  """
   pageInfo: PageInfo!
 }
 
-#  Details about a data file.
+"""
+Details about a data file.
+"""
 type DataFile {
-  #  Id of the data file.
+  """
+  Id of the data file.
+  """
   id: ID!
 
-  #  Whether the currently logged in user owns the data in the file, and hence may access it even if it proprietary.
+  """
+  Whether the currently logged in user owns the data in the file, and hence may access it even if it proprietary.
+  """
   ownedByUser: Boolean!
 
-  #  Metadata for the data file.
+  """
+  Metadata for the data file.
+  """
   metadata: [MetadataItem!]!
 }
 
-# Details about a data request
+"""
+Details about a data request.
+"""
 type DataRequest {
-  # Id of the data request
+  """
+  Id of the data request.
+  """
   id: ID!
-  # User who owns the data request
+  """
+  User who owns the data request.
+  """
   user: User!
-  # file location fro download
+  """
+  file location fro download.
+  """
   uri: String
-  # The date a data request was made
+  """
+  The date and time when the data request was made.
+  """
   madeAt: String!
-  # The requested data files
-  dataFiles: [DataRequestFile!]!
-  # The status of the data request
+  """
+  The requested data files.
+  """
+  dataFiles: [DataRequestDataFile!]!
+  """
+  The status of the data request.
+  """
   status: DataRequestStatus!
+  """
+  The calibration type.
+  """
+  calibrationTypes: [CalibrationType!]
+  """
+  The calibration level such as: Is data Raw or Reduced.
+  """
+  calibrationLevels: [CalibrationLevel!]!
 }
 
-# A requested data file
-type DataRequestFile {
-  #  Id of the data file.
+"""
+A requested data file.
+"""
+type DataRequestDataFile {
+  """
+  Id of the data file.
+  """
   id: ID!
-
-  # Filename
+  """
+  Filename.
+  """
   name: String!
 }
 
-# The data request status
+"""
+The data request status.
+"""
 enum DataRequestStatus {
   PENDING
   FAILED
   SUCCESSFUL
 }
 
-# An enumeration of the user roles, which define the permissions a user has.
+"""
+An enumeration of the user roles, which define the permissions a user has.
+"""
 enum Role {
-  # Administrator with full power
+  """
+  Administrator with full power.
+  """
   Admin
 }
 
@@ -353,4 +426,21 @@ enum AuthProvider {
   The SALT Science Database.
   """
   SDB
+}
+
+"""
+An enumeration of the calibration tpyes that are supported.
+"""
+enum CalibrationType {
+  ARC
+  BIAS
+  DARK
+  FLAT
+  RADIAL_VELECITY_STANDARD
+  SPECTROPHOTOMETRIC_STANDARD
+}
+
+enum CalibrationLevel {
+  RAW
+  REDUCED
 }
