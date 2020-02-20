@@ -4,9 +4,7 @@ import { ssdaPool } from "../db/postgresql_pool";
 
 const successfullyZipDataRequest = async (dataRequestId: string) => {
   // update data request with success status and download path
-  const path = `${
-    process.env.DATA_REQUEST_BASE_DIR
-  }/${dataRequestId.toString()}.zip`;
+  const path = `${dataRequestId.toString()}.zip`;
   const sql = `
   WITH success_status (id) AS (
       SELECT data_request_status_id
@@ -73,18 +71,20 @@ export const zipDataRequest = async (
     gzip: true,
     zlib: { level: 9 } // Sets the compression level.
   });
+  let hasError = false;
 
   // case archive raise a warning
   archive.on("warning", async (err: any) => {
     if (err.code === "ENOENT") {
       // Update data request table with fail
       await failToZipDataRequest(dataRequestId);
-      throw new Error("The requested data file is missing on the server.");
+      // Record that there has been a problem
+      hasError = true;
     } else {
       // Update data request table with fail
       await failToZipDataRequest(dataRequestId);
-      // throw error
-      throw err;
+      // Record that there has been a problem
+      hasError = true;
     }
   });
 
@@ -92,13 +92,16 @@ export const zipDataRequest = async (
   archive.on("error", async (err: any) => {
     // Update data request table with fail
     await failToZipDataRequest(dataRequestId);
-    throw err;
+    hasError = true;
   });
 
   // when archive successfully run
   output.on("finish", async () => {
-    // Update data request table with success
-    await successfullyZipDataRequest(dataRequestId);
+    // Update data request table with success (but only if there hasn't been an
+    // error!)
+    if (!hasError) {
+      await successfullyZipDataRequest(dataRequestId);
+    }
   });
 
   // pipe archive data to the output file
@@ -112,28 +115,28 @@ export const zipDataRequest = async (
     ...dataFiles.map((file: { type: string }) => file.type.length)
   );
 
-  // Table formatter
-  const tableFormat = `
-+${"-".repeat(nameStrLength)}+${"-".repeat(typeStrLength)}+`;
+  // Table row separator
+  const rowBorder = `
++-${"-".repeat(nameStrLength)}-+-${"-".repeat(typeStrLength)}-+`;
 
   // Table content of the table header
   const tableHeaderContent = `
-|File name${" ".repeat(nameStrLength - "File name".length)}|Type${" ".repeat(
+| File name${" ".repeat(nameStrLength - "File name".length)} | Type${" ".repeat(
     typeStrLength - "Type".length
-  )}|`;
+  )} |`;
 
   // The header of the table
-  const tableHeader = tableFormat + tableHeaderContent + tableFormat;
+  const tableHeader = rowBorder + tableHeaderContent + rowBorder;
 
   // The body of the table
   let tableBody = ``;
   dataFiles.forEach((file: { name: string; type: string }) => {
     // The content of the table body
     const tableBodyContent = `
-|${file.name}${" ".repeat(nameStrLength - file.name.length)}|${
+| ${file.name}${" ".repeat(nameStrLength - file.name.length)} | ${
       file.type
-    }${" ".repeat(typeStrLength - file.type.length)}|\r\n`;
-    tableBody = tableBody + tableBodyContent;
+    }${" ".repeat(typeStrLength - file.type.length)} |\r`;
+    tableBody = tableBody + tableBodyContent + rowBorder;
   });
 
   // The title of the table

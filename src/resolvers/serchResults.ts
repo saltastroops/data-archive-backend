@@ -134,20 +134,22 @@ export const queryDataFiles = async (
     startIndex
   };
 
-  const dataFiles = results.map((row: any) => ({
-    id: row["artifact.artifact_id"],
-    metadata: [
-      ...Object.entries(row)
-        .filter(
-          entry => !["artifact.artifact_id, items_total"].includes(entry[0])
-        )
-        .map(entry => ({
-          name: entry[0],
-          value: entry[1]
-        }))
-    ],
-    ownedByUser: userOwnedFileIds.has(row["artifact.artifact_id"].toString())
-  }));
+  const dataFiles = results
+    .filter((row: any) => !!row["artifact.artifact_id"])
+    .map((row: any) => ({
+      id: row["artifact.artifact_id"],
+      metadata: [
+        ...Object.entries(row)
+          .filter(
+            entry => !["artifact.artifact_id, items_total"].includes(entry[0])
+          )
+          .map(entry => ({
+            name: entry[0],
+            value: entry[1]
+          }))
+      ],
+      ownedByUser: userOwnedFileIds.has(row["artifact.artifact_id"].toString())
+    }));
 
   return {
     dataFiles,

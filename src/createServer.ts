@@ -4,6 +4,7 @@ import compression from "compression";
 import { Request, Response } from "express";
 import session from "express-session";
 import { GraphQLServer } from "graphql-yoga";
+import moment from "moment";
 import passport from "passport";
 import passportLocal from "passport-local";
 import * as path from "path";
@@ -408,6 +409,16 @@ async function downloadDataRequest({
   req,
   res
 }: IDataRequestDownloadParameters) {
+  // Get the data request base path if it exists
+  // If not, raise an internal server error.
+  if (!process.env.DATA_REQUEST_BASE_DIR) {
+    res.status(500).send({
+      message: "The environment variable DATA_REQUEST_BASE_DIR for the data request base directory has not been set.",
+      success: false
+    });
+    return;
+  }
+
   // Get the data request
   const notFound = {
     message: "The requested file does not exist.",
@@ -449,16 +460,23 @@ async function downloadDataRequest({
   }
 
   // Get the download URI
-  const uri = dataRequest.path;
+  const relativePath = dataRequest.path;
 
   // Handle a missing path
-  if (!uri) {
+  if (!relativePath) {
     res.status(404).send(notFound);
     return;
   }
 
+  const basePath = process.env.DATA_REQUEST_BASE_DIR;
+
+  // Form a full path for the data request location
+  const fullPath = path.join(basePath, relativePath);
+
+  filename = `DataRequest-${moment().format("Y-MM-DD")}.zip`;
+
   // Download the data request file
-  res.download(uri, filename, err => {
+  res.download(fullPath, filename, err => {
     if (err) {
       if (!res.headersSent) {
         res.status(404).send(notFound);
