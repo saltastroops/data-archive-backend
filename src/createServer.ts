@@ -254,9 +254,10 @@ const createServer = async () => {
     // Get all the params from the request
     const { dataFileId, dataFilename } = req.params;
 
-    // Query for retrieving the FITS file
+    // Query for retrieving the FITS file.
+    // The path of the reduced data file is retrieved.
     const sql = `
-        SELECT path, data_release
+        SELECT (paths).reduced as path, data_release
         FROM observations.artifact AS a
         JOIN observations.plane AS p ON a.plane_id = p.plane_id
         JOIN observations.observation AS o ON p.observation_id = o.observation_id
@@ -268,8 +269,8 @@ const createServer = async () => {
     if (!rows.length) {
       return res.status(404).send(notFound);
     }
-
-    const { path: filePath, data_release: publicFrom } = rows[0];
+    
+    const {path: filePath, data_release: publicFrom } = rows[0];
 
     // Check whether the data file is public or the user may access it
     // because they own the data or are an administrator.
@@ -280,7 +281,7 @@ const createServer = async () => {
     // Get the base path
     const basePath = process.env.FITS_BASE_DIR || "";
 
-    // Form a full path for the FITS file location
+    // Form a full path for the FITS file location.
     const fullPath = path.join(basePath, filePath);
 
     // Download the FITS header file
