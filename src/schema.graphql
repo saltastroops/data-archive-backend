@@ -34,13 +34,13 @@ type Query {
     """
     Data file ID.
     """
-    artifactId: ID!
+    dataFileId: ID!
   ): DataPreview!
 
   """
   Data files with data matching a filter condition.
   """
-  artifacts(
+  dataFiles(
     """
     Filter condition for the database query.
     """
@@ -179,22 +179,22 @@ type Mutation {
   ): User!
 
   """
-  Create a data request
+  Create a data request.
   """
   createDataRequest(
     """
     Requested data files.
     """
-    artifacts: [Int!]!
+    dataFiles: [Int!]!
 
     """
-    the calibration types to include along with the requested files.
+    The calibration types to include along with the requested files.
     """
-    requestedCalibrationsTypes: [CalibrationType!]
+    requestedCalibrationTypes: [CalibrationType!]
     """
-    the calibration levels to include along with the requested files.
+    The calibration levels to include along with the requested files.
     """
-    requestedCalibrationsLevels: [CalibrationLevel!]
+    requestedCalibrationLevels: [CalibrationLevel!]!
   ): Status!
 }
 
@@ -250,7 +250,7 @@ type Status {
   status: Boolean!
 
   """
-  Message is ever the status has one.
+  Status message.
   """
   message: String
 }
@@ -314,7 +314,7 @@ type DataFileConnection {
   """
   List of data files.
   """
-  artifacts: [Artifact!]!
+  dataFiles: [DataFile!]!
 
   """
   Search page details.
@@ -325,7 +325,7 @@ type DataFileConnection {
 """
 Details about a data file.
 """
-type Artifact {
+type DataFile {
   """
   Id of the data file.
   """
@@ -347,35 +347,35 @@ Details about a data request.
 """
 type DataRequest {
   """
-  Id of the data request
+  Id of the data request.
   """
   id: ID!
   """
-  User who owns the data request
+  User who owns the data request.
   """
   user: User!
   """
-  file location fro download
+  file location fro download.
   """
   uri: String
   """
-  The date a data request was made
+  The date and time when the data request was made.
   """
   madeAt: String!
   """
-  The requested data files
+  The requested data files.
   """
-  artifacts: [DataRequestArtifact!]!
+  dataFiles: [DataRequestDataFile!]!
   """
-  The status of the data request
+  The status of the data request.
   """
   status: DataRequestStatus!
   """
-  The calibration type
+  The calibration type.
   """
   calibrationTypes: [CalibrationType!]
   """
-  The calibration level such as: Is data Raw or Reduced
+  The calibration level such as: Is data Raw or Reduced.
   """
   calibrationLevels: [CalibrationLevel!]!
 }
@@ -383,19 +383,19 @@ type DataRequest {
 """
 A requested data file.
 """
-type DataRequestArtifact {
+type DataRequestDataFile {
   """
   Id of the data file.
   """
   id: ID!
   """
-  Filename
+  Filename.
   """
   name: String!
 }
 
 """
-The data request status
+The data request status.
 """
 enum DataRequestStatus {
   PENDING
@@ -408,7 +408,7 @@ An enumeration of the user roles, which define the permissions a user has.
 """
 enum Role {
   """
-  Administrator with full power
+  Administrator with full power.
   """
   Admin
 }
@@ -429,7 +429,7 @@ enum AuthProvider {
 }
 
 """
-An enumeration of the product tpyes that are supported.
+An enumeration of the calibration tpyes that are supported.
 """
 enum CalibrationType {
   ARC
@@ -442,5 +442,5 @@ enum CalibrationType {
 
 enum CalibrationLevel {
   RAW
-  REDUSED
+  REDUCED
 }
