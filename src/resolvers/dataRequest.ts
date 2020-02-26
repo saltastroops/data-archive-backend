@@ -24,7 +24,7 @@ const groupByObservation = (dataFiles: [any]) => {
 
 export const createDataRequest = async (
   dataFiles: number[],
-  includeCalibrations: boolean,
+  requestedCalibrations: string[],
   user: any
 ) => {
   // check if user is logged in
@@ -33,8 +33,8 @@ export const createDataRequest = async (
   }
 
   // add calibrations, if requested
-  if (includeCalibrations) {
-    dataFiles = await addCalibrations(dataFiles);
+  if (requestedCalibrations.length) {
+    dataFiles = await addCalibrations(dataFiles, requestedCalibrations);
   }
   throw new Error("BOOOOOMMMMMMMMM!!!!!!!!!!!");
 
