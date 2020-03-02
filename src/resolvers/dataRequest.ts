@@ -34,7 +34,7 @@ export const createDataRequest = async (
 
   // add calibrations, if requested
   if (requestedCalibrations.length) {
-    dataFiles = await addCalibrations(dataFiles, requestedCalibrations);
+    dataFiles = await addCalibrations(dataFiles);
   }
   throw new Error("BOOOOOMMMMMMMMM!!!!!!!!!!!");
 

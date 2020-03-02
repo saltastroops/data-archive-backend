@@ -243,7 +243,9 @@ const Mutation = {
       requestedCalibrationTypes
     }: { dataFiles: [number]; requestedCalibrationTypes: [string] },
     { user }: IContext
-  ) => createDataRequest(dataFiles, requestedCalibrationTypes, user)
+  ) => {
+    createDataRequest(dataFiles, requestedCalibrationTypes, user);
+  }
 };
 
 export { Mutation };

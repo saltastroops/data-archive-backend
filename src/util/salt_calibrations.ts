@@ -6,7 +6,7 @@ import { CalibrationType } from "./calibrations";
 export async function saltCalibrations(
   artifactId: number
 ): Promise<Set<number>> {
-  const res = await rssCalibrations(artifactId, new Set());
+  const res = await salticamCalibrations(artifactId, new Set());
   console.log({ res });
   return res;
 }
@@ -23,7 +23,52 @@ async function salticamCalibrations(
   artifactId: number,
   calibrationTypes: Set<CalibrationType>
 ): Promise<Set<number>> {
-  // no additional calibrations
+  const fileDataId = await findFileId(artifactId);
+  return salticamBiases(fileDataId, 9000);
+}
+
+async function salticamBiases(
+  fileDataId: number,
+  period: number
+): Promise<Set<number>> {
+  // Find the relevant setup details
+  const setup = await findSetupDetails(fileDataId, "FitsHeaderRss");
+
+  // Find bias files with the same setup details
+  const biasesSQL = `
+  SELECT fd.FileData_Id
+  FROM FileData fd
+           LEFT JOIN FitsHeaderImage USING (FileData_Id)
+           LEFT JOIN FitsHeaderSalticam USING (FileData_Id)
+           LEFT JOIN ProposalCode USING (ProposalCode_Id)
+  WHERE CCDSUM=? AND GAINSET=? AND ROSPEED=?
+        AND FileName LIKE 'S2%'
+        AND Proposal_Code='CAL_BIAS'
+        AND DATE_ADD(?, INTERVAL ? DAY) <= UTStart
+        AND DATE_ADD(?, INTERVAL ? DAY) >= UTStart
+  ORDER BY ABS(TIMESTAMPDIFF(SECOND, ?, UTStart))  
+  `;
+  const biasesRes: any = await sdbPool.query(biasesSQL, [
+    setup.CCDSUM,
+    setup.GAINSET,
+    setup.ROSPEED,
+    setup.UTStart,
+    -period,
+    setup.UTStart,
+    period,
+    setup.UTStart
+  ]);
+  if (biasesRes[0].length > 0) {
+    return new Set([biasesRes[0][0].FileData_Id]);
+  }
+
+  return new Set();
+}
+
+async function salticamFlats(
+  artifactId: number,
+  period: number
+): Promise<Set<number>> {
   return new Set();
 }
 
@@ -33,7 +78,7 @@ async function rssCalibrations(
 ): Promise<Set<number>> {
   // Find the spectrophotometric standards
   const fileDataId = await findFileId(artifactId);
-  return rssBiases(fileDataId, 300);
+  return rssFlats(fileDataId, 300);
 }
 
 async function rssBiases(
@@ -74,6 +119,52 @@ async function rssBiases(
   return new Set();
 }
 
+async function rssFlats(
+  fileDataId: number,
+  period: number
+): Promise<Set<number>> {
+  // Find the relevant setup details
+  const setup = await findSetupDetails(fileDataId, "FitsHeaderRss");
+
+  // Find the flats
+  const sql = `
+  SELECT fd.FileData_Id
+  FROM FileData fd
+           LEFT JOIN ProposalCode USING (ProposalCode_Id)
+           LEFT JOIN FitsHeaderImage USING (FileData_Id)
+           LEFT JOIN FitsHeaderRss USING (FileData_Id)
+  WHERE CCDTYPE=? AND fd.DETMODE=? AND fd.OBSMODE=? AND CCDSUM=? AND GAINSET=? AND ROSPEED=? AND FILTER=? AND GRATING=? AND GRTILT=? AND AR_STA=? AND MASKID=?
+      AND FileName LIKE 'P2%'
+        AND Proposal_Code IN ('CAL_FLAT', 'CAL_SKYFLAT')
+        AND DATE_ADD(?, INTERVAL ? DAY) <= UTStart
+        AND DATE_ADD(?, INTERVAL ? DAY) >= UTStart
+  ORDER BY ABS(TIMESTAMPDIFF(SECOND, ?, UTStart))    
+  `;
+  const res: any = await sdbPool.query(sql, [
+    setup.CCDTYPE,
+    setup.DETMODE,
+    setup.OBSMODE,
+    setup.CCDSUM,
+    setup.GAINSET,
+    setup.ROSPEED,
+    setup.FILTER,
+    setup.GRATING,
+    setup.GRTILT,
+    setup.AR_STA,
+    setup.MASKID,
+    setup.UTStart,
+    -period,
+    setup.UTStart,
+    period,
+    setup.UTStart
+  ]);
+  if (res[0].length > 0) {
+    return new Set([res[0][0].FileData_Id]);
+  }
+
+  return new Set();
+}
+
 async function rssSpectrophotometricStandards(
   fileDataId: number,
   period: number
@@ -108,6 +199,47 @@ async function rssSpectrophotometricStandards(
   ]);
   if (standardsRes[0].length > 0) {
     return new Set([standardsRes[0][0].FileData_Id]);
+  }
+
+  return new Set();
+}
+
+async function hrsBiases(
+  fileDataId: number,
+  period: number
+): Promise<Set<number>> {
+  // Find the relevant setup details
+  const setup = await findSetupDetails(fileDataId, "FitsHeaderRss");
+
+  // Use the same detector arm as for the setup considered
+  const filenamePattern = setup.FileName + "2%";
+
+  // Find bias files with the same setup details
+  const biasesSQL = `
+  SELECT fd.FileData_Id
+  FROM FileData fd
+           LEFT JOIN FitsHeaderImage USING (FileData_Id)
+           LEFT JOIN FitsHeaderHrs USING (FileData_Id)
+           LEFT JOIN ProposalCode USING (ProposalCode_Id)
+  WHERE CCDSUM=? AND GAINSET=? AND ROSPEED=?
+        AND FileName LIKE ${filenamePattern}
+        AND Proposal_Code='CAL_BIAS'
+        AND DATE_ADD(?, INTERVAL ? DAY) <= UTStart
+        AND DATE_ADD(?, INTERVAL ? DAY) >= UTStart
+  ORDER BY ABS(TIMESTAMPDIFF(SECOND, ?, UTStart))  
+  `;
+  const biasesRes: any = await sdbPool.query(biasesSQL, [
+    setup.CCDSUM,
+    setup.GAINSET,
+    setup.ROSPEED,
+    setup.UTStart,
+    -period,
+    setup.UTStart,
+    period,
+    setup.UTStart
+  ]);
+  if (biasesRes[0].length > 0) {
+    return new Set([biasesRes[0][0].FileData_Id]);
   }
 
   return new Set();
