@@ -1,4 +1,5 @@
 import { ssdaPool } from "../db/postgresql_pool";
+import { capitalizeFirstCharacter } from "../util/dataRequests";
 import { mayViewAllOfDataFiles } from "../util/user";
 import { zipDataRequest } from "../util/zipDataRequest";
 
@@ -8,22 +9,10 @@ async function asyncForEach(array: any, callback: any) {
   }
 }
 
-const groupByObservation = (dataFiles: [any]) => {
-  const groups = new Map<string, any>();
-  dataFiles.forEach(file => {
-    const key = file.telescopeName + " #" + file.telescopeObservationId || "";
-    if (!groups.has(key)) {
-      groups.set(key, []);
-    }
-    (groups.get(key) as any[]).push(file);
-  });
-
-  return groups;
-};
-
 export const createDataRequest = async (
   dataFiles: number[],
-  requestedCalibrations: string[],
+  requestedCalibrationLevels: string[],
+  requestedCalibrationTypes: string[],
   user: any
 ) => {
   // check if user is logged in
@@ -31,10 +20,11 @@ export const createDataRequest = async (
     throw new Error("You must be logged in to create a data request");
   }
 
+  // TODO Christian is working on this part
   // add calibrations, if requested
-  if (requestedCalibrations.length) {
-    dataFiles = await addCalibrations(dataFiles, requestedCalibrations);
-  }
+  // if (requestedCalibrationTypes.length) {
+  //   dataFiles = await addCalibrations(dataFiles, requestedCalibrationTypes);
+  // }
 
   const dataFileIdStrings = dataFiles.map(id => id.toString());
   const mayRequest = await mayViewAllOfDataFiles(user, dataFileIdStrings);
@@ -70,9 +60,45 @@ export const createDataRequest = async (
       await client.query(dataRequestArtifactSQL, [dataRequestId, dataFileId]);
     });
 
+    const dataRequestCalibrationLevelSQL = `
+      WITH level_id (id) AS (
+        SELECT calibration_level_id
+        FROM admin.calibration_level
+        WHERE calibration_level=$2
+      )
+    INSERT INTO admin.data_request_calibration_level (data_request_id, calibration_level_id)
+    VALUES ($1, (SELECT id FROM level_id))
+    `;
+    requestedCalibrationLevels.map(async CalibrationLevel => {
+      await client.query(dataRequestCalibrationLevelSQL, [
+        dataRequestId,
+        capitalizeFirstCharacter(CalibrationLevel)
+      ]);
+    });
+
+    const dataRequestCalibrationTypeSQL = `
+      WITH type_id (id) AS (
+        SELECT calibration_type_id
+        FROM admin.calibration_type
+        WHERE calibration_type=$2
+      )
+    INSERT INTO admin.data_request_calibration_type (data_request_id, calibration_type_id)
+    VALUES ($1, (SELECT id FROM type_id))
+    `;
+    requestedCalibrationTypes.map(async CalibrationType => {
+      await client.query(dataRequestCalibrationTypeSQL, [
+        dataRequestId,
+        capitalizeFirstCharacter(CalibrationType)
+      ]);
+    });
+
     await client.query("COMMIT");
 
-    zipDataRequest(dataFileIdStrings, dataRequestId);
+    zipDataRequest(
+      dataFileIdStrings,
+      dataRequestId,
+      requestedCalibrationLevels
+    );
 
     return {
       message: "The data request was successfully requested",

@@ -48,11 +48,12 @@ const failToZipDataRequest = async (dataRequestId: string) => {
 
 export const zipDataRequest = async (
   fileIds: string[],
-  dataRequestId: string
+  dataRequestId: string,
+  requestedCalibrationLevels: string[]
 ) => {
   // collect the files
   const sql = `
-    SELECT path, name as name, product_type as type
+    SELECT (paths).raw, (paths).reduced, name as name, product_type as type
     FROM observations.artifact  atf
     JOIN observations.product_type pt ON atf.product_type_id = pt.product_type_id
     WHERE artifact_id = ANY($1)
@@ -72,7 +73,6 @@ export const zipDataRequest = async (
     zlib: { level: 9 } // Sets the compression level.
   });
   let hasError = false;
-
   // case archive raise a warning
   archive.on("warning", async (err: any) => {
     if (err.code === "ENOENT") {
@@ -186,12 +186,24 @@ SPIE Astronomical Instrumentation, 7737-82\r\n\n`;
 
   // append a file from string
   archive.append(readMeFileContent, { name: "README.txt" });
-
+  const reducedRequested = requestedCalibrationLevels.some(
+    (level: string) => level.toUpperCase() === "REDUCED"
+  );
+  const rawRequested = requestedCalibrationLevels.some(
+    (level: string) => level.toUpperCase() === "RAW"
+  );
   // save files
-  dataFiles.forEach((file: { path: string; name: string }) => {
-    archive.file(`${process.env.FITS_BASE_DIR}/${file.path}`, {
-      name: file.name
-    });
+  dataFiles.forEach((file: { reduced: string; raw: string; name: string }) => {
+    if (reducedRequested) {
+      archive.file(`${process.env.FITS_BASE_DIR}/${file.reduced}`, {
+        name: file.name
+      });
+    }
+    if (rawRequested) {
+      archive.file(`${process.env.FITS_BASE_DIR}/${file.raw}`, {
+        name: file.name
+      });
+    }
   });
 
   await archive.finalize();

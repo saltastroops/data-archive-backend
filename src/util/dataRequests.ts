@@ -19,3 +19,8 @@ export const dataRequestIdsByUserIds = async (
 
   return res.rows.map((row: any) => parseInt(row.data_request_id, 10));
 };
+
+export const capitalizeFirstCharacter = (s: string) => {
+  s.toLocaleLowerCase();
+  return s.charAt(0).toUpperCase() + s.slice(1);
+};
