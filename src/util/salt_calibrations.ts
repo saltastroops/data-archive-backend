@@ -62,6 +62,8 @@ export async function additionalSaltCalibrations(
   return calibrationArtifactIds;
 }
 
+// Salticam calibrations
+
 /**
  * Find the non-charged Salticam calibrations to include with file data.
  *
@@ -84,6 +86,8 @@ async function salticamCalibrations(
 ): Promise<Set<number>> {
   return new Set();
 }
+
+// RSS calibrations
 
 /**
  * Find the non-charged RSS calibrations to include with file data.
@@ -167,6 +171,8 @@ async function rssSpectrophotometricStandards(
 
   return new Set();
 }
+
+// HRS calibrations
 
 /**
  * Find the non-charged HRS calibrations to include with file data.
@@ -318,6 +324,8 @@ async function hrsRadialVelocityStandards(
   return new Set();
 }
 
+// BCAM calibratioons
+
 /**
  * Find the non-charged BCAM calibrations to include with file data.
  *
@@ -365,6 +373,8 @@ async function findInstrument(artifactId: number): Promise<string> {
   assert(instrumentRes.rowCount === 1);
   return instrumentRes.rows[0].name;
 }
+
+// Helper functions
 
 /**
  * Find the (SDB) file data id for an artifact.
