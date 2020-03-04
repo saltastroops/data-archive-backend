@@ -13,6 +13,7 @@ import {
 } from "../util/user";
 import { createDataRequest } from "./dataRequest";
 import { requestPasswordReset, resetPassword } from "./resetPassword";
+import { CalibrationType } from "../util/calibrations";
 
 // Defining the context interface
 interface IContext {
@@ -244,7 +245,11 @@ const Mutation = {
     }: { dataFiles: [number]; requestedCalibrationTypes: [string] },
     { user }: IContext
   ) => {
-    createDataRequest(dataFiles, requestedCalibrationTypes, user);
+    createDataRequest(
+      dataFiles,
+      new Set(requestedCalibrationTypes as CalibrationType[]),
+      user
+    );
   }
 };
 

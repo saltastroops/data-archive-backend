@@ -1,7 +1,7 @@
 import { sdbPool } from "../db/mysql_pool";
 import { ssdaPool } from "../db/postgresql_pool";
 import * as salt_calibs from "./salt_calibrations";
-import { saltCalibrations } from "./salt_calibrations";
+import { additionalSaltCalibrations } from "./salt_calibrations";
 
 /**
  *
@@ -18,7 +18,7 @@ import { saltCalibrations } from "./salt_calibrations";
  */
 export async function calibrations(
   artifactIds: number[],
-  calibrationTypes: CalibrationType[]
+  calibrationTypes: Set<CalibrationType>
 ): Promise<Set<number>> {
   const calibrationIds = new Set<number>();
 
@@ -28,29 +28,47 @@ export async function calibrations(
     calibrationTypes
   );
   obsCalibrations.forEach((id: number) => calibrationIds.add(id));
-  console.log({ obsCalibrations });
 
   // Find the additional calibrations based on the telescope used.
   for (let artifactId of artifactIds) {
     const tel = await telescope(artifactId);
     const instr = await instrument(artifactId);
+    let additionalCalibrationIds: Set<number>;
     if (tel == "SALT") {
-      saltCalibrations(artifactId);
+      additionalCalibrationIds = await additionalSaltCalibrations(
+        artifactId,
+        calibrationTypes
+      );
     } else {
       throw new Error(`Unsupported telescope: ${tel}`);
     }
+    additionalCalibrationIds.forEach(id => calibrationIds.add(id));
   }
 
   return calibrationIds;
 }
 
 /**
+ * Return the calibrations taken as part of a any of a set of observations.
  *
+ * Parameters
+ * ----------
+ * artifact_ids
+ *     Artifact ids.
+ * calibration_types
+ *     Calibration types to search for.
+ *
+ * Returns
+ * -------
+ * The artifact ids of the calibrations.
  */
 async function observation_calibrations(
   artifactIds: number[],
-  calibrationTypes: CalibrationType[]
-): Promise<number[]> {
+  calibrationTypes: Set<CalibrationType>
+): Promise<Set<number>> {
+  // The SSDA expects names that differ from those for the CalibvrationType type
+  const _ssdaCalibrationTypes = ssdaCalibrationTypes(calibrationTypes);
+
   // Find all non-science data files which belong to one of the observation
   // groups of the given data files are and which are not science files.
   const sql = `
@@ -71,13 +89,14 @@ WHERE o.observation_group_id IN (SELECT id FROM obs_groups)
       AND pt.product_type = ANY($2)
 `;
   const client = await ssdaPool.connect();
-  const res = await client.query(sql, [artifactIds, calibrationTypes]);
+  const res = await client.query(sql, [
+    artifactIds,
+    Array.from(_ssdaCalibrationTypes)
+  ]);
   const calibrations = res.rows.map(row => parseInt(row.artifact_id, 10));
 
   // Remove duplicates.
-  const calibrations_set = new Set([...calibrations]);
-
-  return Array.from(calibrations_set);
+  return new Set([...calibrations]);
 }
 
 /**
@@ -132,4 +151,45 @@ async function instrument(artifact_id: number): Promise<string> {
   return res.rows.length > 0 ? res.rows[0].name : null;
 }
 
-export type CalibrationType = "Arc" | "Bias" | "Flat";
+/**
+ * The calibration types in the SSDA corresponding to a set of calibration
+ * types.
+ *
+ * Parameters
+ * ----------
+ * calibrationTypes
+ *     Calibration types.
+ *
+ * Returns
+ * -------
+ * Calibration types in the SSDA.
+ */
+function ssdaCalibrationTypes(
+  calibrationTypes: Set<CalibrationType>
+): Set<string> {
+  const _ssdaCalibrationTypes = new Set<string>();
+  for (let calibrationType of Array.from(calibrationTypes)) {
+    if (calibrationType === "ARC") {
+      _ssdaCalibrationTypes.add("Arc");
+    } else if (calibrationType === "BIAS") {
+      _ssdaCalibrationTypes.add("Bias");
+    } else if (calibrationType === "FLAT") {
+      _ssdaCalibrationTypes.add("Flat");
+    } else if (calibrationType === "RADIAL_VELOCITY_STANDARD") {
+      _ssdaCalibrationTypes.add("Radial Velocity Standard");
+    } else if (calibrationType === "SPECTROPHOTOMETRIC_STANDARD") {
+      _ssdaCalibrationTypes.add("Spectrophotometric Standard");
+    } else {
+      throw new Error(`Unsupported calibration type: ${calibrationType}`);
+    }
+  }
+
+  return _ssdaCalibrationTypes;
+}
+
+export type CalibrationType =
+  | "ARC"
+  | "BIAS"
+  | "FLAT"
+  | "RADIAL_VELOCITY_STANDARD"
+  | "SPECTROPHOTOMETRIC_STANDARD";

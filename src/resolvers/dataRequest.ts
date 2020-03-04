@@ -1,7 +1,7 @@
 import { ssdaPool } from "../db/postgresql_pool";
 import { mayViewAllOfDataFiles } from "../util/user";
 import { zipDataRequest } from "../util/zipDataRequest";
-import { calibrations } from "../util/calibrations";
+import { calibrations, CalibrationType } from "../util/calibrations";
 
 async function asyncForEach(array: any, callback: any) {
   for (let index = 0; index < array.length; index++) {
@@ -24,7 +24,7 @@ const groupByObservation = (dataFiles: [any]) => {
 
 export const createDataRequest = async (
   dataFiles: number[],
-  requestedCalibrations: string[],
+  requestedCalibrationTypes: Set<CalibrationType>,
   user: any
 ) => {
   // check if user is logged in
@@ -33,10 +33,9 @@ export const createDataRequest = async (
   }
 
   // add calibrations, if requested
-  if (requestedCalibrations.length) {
-    dataFiles = await addCalibrations(dataFiles);
+  if (requestedCalibrationTypes.size) {
+    dataFiles = await addCalibrations(dataFiles, requestedCalibrationTypes);
   }
-  throw new Error("BOOOOOMMMMMMMMM!!!!!!!!!!!");
 
   const dataFileIdStrings = dataFiles.map(id => id.toString());
   const mayRequest = await mayViewAllOfDataFiles(user, dataFileIdStrings);
@@ -88,7 +87,13 @@ export const createDataRequest = async (
   }
 };
 
-async function addCalibrations(dataFiles: number[]): Promise<number[]> {
-  const calibrationIds = await calibrations(dataFiles, ["Flat"]);
+async function addCalibrations(
+  dataFiles: number[],
+  requestedCalibrationTypes: Set<CalibrationType>
+): Promise<number[]> {
+  const calibrationIds = await calibrations(
+    dataFiles,
+    requestedCalibrationTypes
+  );
   return [...dataFiles, ...Array.from(calibrationIds)];
 }
