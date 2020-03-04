@@ -152,6 +152,12 @@ const position = {
   rightOf: new Set(["plane"])
 };
 
+const product_category = {
+  join: "product_type.product_category_id=product_category.product_category_id",
+  name: "product_category",
+  rightOf: new Set(["product_type"])
+};
+
 const product_type = {
   join: "artifact.product_type_id=product_type.product_type_id",
   name: "product_type",
@@ -231,6 +237,7 @@ export const dataModel = new DatabaseModel(
     polarization,
     polarization_mode,
     position,
+    product_category,
     product_type,
     proposal,
     rss_fabry_perot_mode,
