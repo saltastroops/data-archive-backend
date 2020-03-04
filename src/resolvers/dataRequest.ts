@@ -1,5 +1,5 @@
 import { ssdaPool } from "../db/postgresql_pool";
-import { capitalizeFirstCharacter } from "../util/dataRequests";
+import { toTitleCase } from "../util/dataRequests";
 import { mayViewAllOfDataFiles } from "../util/user";
 import { zipDataRequest } from "../util/zipDataRequest";
 
@@ -69,10 +69,10 @@ export const createDataRequest = async (
     INSERT INTO admin.data_request_calibration_level (data_request_id, calibration_level_id)
     VALUES ($1, (SELECT id FROM level_id))
     `;
-    requestedCalibrationLevels.map(async CalibrationLevel => {
+    requestedCalibrationLevels.map(async calibrationLevel => {
       await client.query(dataRequestCalibrationLevelSQL, [
         dataRequestId,
-        capitalizeFirstCharacter(CalibrationLevel)
+        toTitleCase(calibrationLevel)
       ]);
     });
 
@@ -85,10 +85,10 @@ export const createDataRequest = async (
     INSERT INTO admin.data_request_calibration_type (data_request_id, calibration_type_id)
     VALUES ($1, (SELECT id FROM type_id))
     `;
-    requestedCalibrationTypes.map(async CalibrationType => {
+    requestedCalibrationTypes.map(async calibrationType => {
       await client.query(dataRequestCalibrationTypeSQL, [
         dataRequestId,
-        capitalizeFirstCharacter(CalibrationType)
+        toTitleCase(calibrationType)
       ]);
     });
 
