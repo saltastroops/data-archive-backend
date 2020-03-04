@@ -1,7 +1,7 @@
 import { ssdaPool } from "../db/postgresql_pool";
+import { calibrations, CalibrationType } from "../util/calibrations";
 import { mayViewAllOfDataFiles } from "../util/user";
 import { zipDataRequest } from "../util/zipDataRequest";
-import { calibrations, CalibrationType } from "../util/calibrations";
 
 async function asyncForEach(array: any, callback: any) {
   for (let index = 0; index < array.length; index++) {

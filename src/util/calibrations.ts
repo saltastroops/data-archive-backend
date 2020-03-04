@@ -1,7 +1,5 @@
-import { sdbPool } from "../db/mysql_pool";
 import { ssdaPool } from "../db/postgresql_pool";
-import * as salt_calibs from "./salt_calibrations";
-import { additionalSaltCalibrations } from "./salt_calibrations";
+import { additionalSaltCalibrations } from "./saltCalibrations";
 
 /**
  *
@@ -30,11 +28,11 @@ export async function calibrations(
   obsCalibrations.forEach((id: number) => calibrationIds.add(id));
 
   // Find the additional calibrations based on the telescope used.
-  for (let artifactId of artifactIds) {
+  for (const artifactId of artifactIds) {
     const tel = await telescope(artifactId);
     const instr = await instrument(artifactId);
     let additionalCalibrationIds: Set<number>;
-    if (tel == "SALT") {
+    if (tel === "SALT") {
       additionalCalibrationIds = await additionalSaltCalibrations(
         artifactId,
         calibrationTypes
@@ -67,7 +65,7 @@ async function observation_calibrations(
   calibrationTypes: Set<CalibrationType>
 ): Promise<Set<number>> {
   // The SSDA expects names that differ from those for the CalibvrationType type
-  const _ssdaCalibrationTypes = ssdaCalibrationTypes(calibrationTypes);
+  const ssdaTypes = ssdaCalibrationTypes(calibrationTypes);
 
   // Find all non-science data files which belong to one of the observation
   // groups of the given data files are and which are not science files.
@@ -89,14 +87,11 @@ WHERE o.observation_group_id IN (SELECT id FROM obs_groups)
       AND pt.product_type = ANY($2)
 `;
   const client = await ssdaPool.connect();
-  const res = await client.query(sql, [
-    artifactIds,
-    Array.from(_ssdaCalibrationTypes)
-  ]);
-  const calibrations = res.rows.map(row => parseInt(row.artifact_id, 10));
+  const res = await client.query(sql, [artifactIds, Array.from(ssdaTypes)]);
+  const calibrationIds = res.rows.map(row => parseInt(row.artifact_id, 10));
 
   // Remove duplicates.
-  return new Set([...calibrations]);
+  return new Set([...calibrationIds]);
 }
 
 /**
@@ -104,14 +99,14 @@ WHERE o.observation_group_id IN (SELECT id FROM obs_groups)
  *
  * Parameters
  * ----------
- * artifact_id
+ * artifactId
  *     Artifact id.
  *
  * Returns
  * -------
  * The name of the telescope.
  */
-async function telescope(artifact_id: number): Promise<string> {
+async function telescope(artifactId: number): Promise<string> {
   const sql = `
       SELECT t.name
       FROM artifact a
@@ -121,7 +116,7 @@ async function telescope(artifact_id: number): Promise<string> {
       WHERE a.artifact_id=$1
   `;
 
-  const res: any = await ssdaPool.query(sql, [artifact_id]);
+  const res: any = await ssdaPool.query(sql, [artifactId]);
   return res.rows.length > 0 ? res.rows[0].name : null;
 }
 
@@ -130,14 +125,14 @@ async function telescope(artifact_id: number): Promise<string> {
  *
  * Parameters
  * ----------
- * artifact_id
+ * artifactId
  *     Artifact id.
  *
  * Returns
  * -------
  * The name of the telescope.
  */
-async function instrument(artifact_id: number): Promise<string> {
+async function instrument(artifactId: number): Promise<string> {
   const sql = `
   SELECT i.name
   FROM artifact a
@@ -147,7 +142,7 @@ async function instrument(artifact_id: number): Promise<string> {
   WHERE a.artifact_id=$1
   `;
 
-  const res: any = await ssdaPool.query(sql, [artifact_id]);
+  const res: any = await ssdaPool.query(sql, [artifactId]);
   return res.rows.length > 0 ? res.rows[0].name : null;
 }
 
@@ -167,24 +162,24 @@ async function instrument(artifact_id: number): Promise<string> {
 function ssdaCalibrationTypes(
   calibrationTypes: Set<CalibrationType>
 ): Set<string> {
-  const _ssdaCalibrationTypes = new Set<string>();
-  for (let calibrationType of Array.from(calibrationTypes)) {
+  const ssdaTypes = new Set<string>();
+  for (const calibrationType of Array.from(calibrationTypes)) {
     if (calibrationType === "ARC") {
-      _ssdaCalibrationTypes.add("Arc");
+      ssdaTypes.add("Arc");
     } else if (calibrationType === "BIAS") {
-      _ssdaCalibrationTypes.add("Bias");
+      ssdaTypes.add("Bias");
     } else if (calibrationType === "FLAT") {
-      _ssdaCalibrationTypes.add("Flat");
+      ssdaTypes.add("Flat");
     } else if (calibrationType === "RADIAL_VELOCITY_STANDARD") {
-      _ssdaCalibrationTypes.add("Radial Velocity Standard");
+      ssdaTypes.add("Radial Velocity Standard");
     } else if (calibrationType === "SPECTROPHOTOMETRIC_STANDARD") {
-      _ssdaCalibrationTypes.add("Spectrophotometric Standard");
+      ssdaTypes.add("Spectrophotometric Standard");
     } else {
       throw new Error(`Unsupported calibration type: ${calibrationType}`);
     }
   }
 
-  return _ssdaCalibrationTypes;
+  return ssdaTypes;
 }
 
 export type CalibrationType =

@@ -55,9 +55,9 @@ export async function additionalSaltCalibrations(
 
   // Get the corresponding artifact ids
   const calibrationArtifactIds = new Set<number>();
-  for (let fileDataId of Array.from(calibrationFileDataIds)) {
-    const artifactId = await findArtifactId(fileDataId);
-    calibrationArtifactIds.add(artifactId);
+  for (const fid of Array.from(calibrationFileDataIds)) {
+    const aid = await findArtifactId(fid);
+    calibrationArtifactIds.add(aid);
   }
   return calibrationArtifactIds;
 }
@@ -403,7 +403,7 @@ async function findFileDataId(artifactId: number): Promise<number> {
   `;
   const fileDataIdRes: any = await sdbPool.query(fileIdSQL, [name]);
   assert(fileDataIdRes[0].length === 1 && fileDataIdRes[0][0].FileData_Id);
-  return parseInt(fileDataIdRes[0][0].FileData_Id);
+  return parseInt(fileDataIdRes[0][0].FileData_Id, 10);
 }
 
 /**
@@ -424,7 +424,7 @@ async function findArtifactId(fileDataId: number): Promise<number> {
   SELECT FileName FROM FileData WHERE FileData_Id=?
   `;
   const fileNameRes: any = await sdbPool.query(fileNameSQL, [fileDataId]);
-  assert(fileNameRes[0].length == 1 && fileNameRes[0][0].FileName);
+  assert(fileNameRes[0].length === 1 && fileNameRes[0][0].FileName);
   const filename = fileNameRes[0][0].FileName;
 
   // Find the artifact id for that file name.
@@ -437,7 +437,7 @@ async function findArtifactId(fileDataId: number): Promise<number> {
   `;
   const artifactIdRes = await ssdaPool.query(artifactIdSQL, [filename]);
   assert(artifactIdRes.rowCount === 1);
-  return parseInt(artifactIdRes.rows[0].artifact_id);
+  return parseInt(artifactIdRes.rows[0].artifact_id, 10);
 }
 
 /**
