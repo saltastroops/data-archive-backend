@@ -1,5 +1,5 @@
 import { ssdaPool } from "../db/postgresql_pool";
-import { capitalizeFirstCharacter } from "../util/dataRequests";
+import { toTitleCase } from "../util/dataRequests";
 import { mayViewAllOfDataFiles } from "../util/user";
 import { zipDataRequest } from "../util/zipDataRequest";
 
@@ -72,10 +72,9 @@ export const createDataRequest = async (
     requestedCalibrationLevels.map(async CalibrationLevel => {
       await client.query(dataRequestCalibrationLevelSQL, [
         dataRequestId,
-        capitalizeFirstCharacter(CalibrationLevel)
+        toTitleCase(CalibrationLevel)
       ]);
     });
-
     const dataRequestCalibrationTypeSQL = `
       WITH type_id (id) AS (
         SELECT calibration_type_id
@@ -88,7 +87,7 @@ export const createDataRequest = async (
     requestedCalibrationTypes.map(async CalibrationType => {
       await client.query(dataRequestCalibrationTypeSQL, [
         dataRequestId,
-        capitalizeFirstCharacter(CalibrationType)
+        toTitleCase(CalibrationType)
       ]);
     });
 
