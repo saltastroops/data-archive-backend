@@ -79,18 +79,16 @@ async function batchGetDataRequests(ids: number[]) {
   }
 
   // Return the data requests
-  return dataRequests.map(d => {
-    return {
-      calibrationLevels: dataRequestCalibrationLevels.get(d.data_request_id),
-      calibrationTypes: dataRequestCalibrationTypes.get(d.data_request_id),
-      dataFiles: dataRequestArtifacts.get(d.data_request_id),
-      id: d.data_request_id,
-      madeAt: d.made_at.toISOString(),
-      status: d.status.toUpperCase(),
-      uri: d.path,
-      user: d.ssda_user_id
-    };
-  });
+  return dataRequests.map(d => ({
+    calibrationLevels: dataRequestCalibrationLevels.get(d.data_request_id),
+    calibrationTypes: dataRequestCalibrationTypes.get(d.data_request_id),
+    dataFiles: dataRequestArtifacts.get(d.data_request_id),
+    id: d.data_request_id,
+    madeAt: d.made_at.toISOString(),
+    status: d.status.toUpperCase(),
+    uri: d.path,
+    user: d.ssda_user_id
+  }));
 }
 
 /**

@@ -1,5 +1,5 @@
+import { titleCase } from "title-case";
 import { ssdaPool } from "../db/postgresql_pool";
-import { toTitleCase } from "../util/dataRequests";
 import { mayViewAllOfDataFiles } from "../util/user";
 import { zipDataRequest } from "../util/zipDataRequest";
 
@@ -72,7 +72,7 @@ export const createDataRequest = async (
     requestedCalibrationLevels.map(async CalibrationLevel => {
       await client.query(dataRequestCalibrationLevelSQL, [
         dataRequestId,
-        toTitleCase(CalibrationLevel)
+        titleCase(CalibrationLevel.toLowerCase().replace(/_/g, " "))
       ]);
     });
     const dataRequestCalibrationTypeSQL = `
@@ -87,7 +87,7 @@ export const createDataRequest = async (
     requestedCalibrationTypes.map(async CalibrationType => {
       await client.query(dataRequestCalibrationTypeSQL, [
         dataRequestId,
-        toTitleCase(CalibrationType)
+        titleCase(CalibrationType.toLowerCase().replace(/_/g, " "))
       ]);
     });
 
@@ -136,7 +136,9 @@ WHERE o.observation_group_id IN (SELECT id FROM obs_groups)
 `;
   const client = await ssdaPool.connect();
   const res = await client.query(sql, [dataFiles, requestedCalibrations]);
-  const calibrations = res.rows.map(row => parseInt(row.artifact_id, 10));
+  const calibrations = res.rows.map((row: any) =>
+    parseInt(row.artifact_id, 10)
+  );
 
   // Remove duplicates.
   const allFiles = new Set([...dataFiles, ...calibrations]);
