@@ -77,7 +77,7 @@ export const createDataRequest = async (
       async (calibrationLevel: CalibrationLevel) => {
         await client.query(dataRequestCalibrationLevelSQL, [
           dataRequestId,
-          titleCase(calibrationLevel.toLowerCase().replace(/_/g, " "))
+          titleCase(calibrationLevel.toLowerCase())
         ]);
       }
     );
