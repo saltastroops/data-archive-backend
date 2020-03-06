@@ -1,5 +1,10 @@
 import { titleCase } from "title-case";
 import { ssdaPool } from "../db/postgresql_pool";
+import {
+  CalibrationLevel,
+  calibrations,
+  CalibrationType
+} from "../util/calibrations";
 import { mayViewAllOfDataFiles } from "../util/user";
 import { zipDataRequest } from "../util/zipDataRequest";
 
@@ -11,8 +16,8 @@ async function asyncForEach(array: any, callback: any) {
 
 export const createDataRequest = async (
   dataFiles: number[],
-  requestedCalibrationLevels: string[],
-  requestedCalibrationTypes: string[],
+  requestedCalibrationLevels: Set<CalibrationLevel>,
+  requestedCalibrationTypes: Set<CalibrationType>,
   user: any
 ) => {
   // check if user is logged in
@@ -20,11 +25,10 @@ export const createDataRequest = async (
     throw new Error("You must be logged in to create a data request");
   }
 
-  // TODO Christian is working on this part
   // add calibrations, if requested
-  // if (requestedCalibrationTypes.length) {
-  //   dataFiles = await addCalibrations(dataFiles, requestedCalibrationTypes);
-  // }
+  if (requestedCalibrationTypes.size) {
+    dataFiles = await addCalibrations(dataFiles, requestedCalibrationTypes);
+  }
 
   const dataFileIdStrings = dataFiles.map(id => id.toString());
   const mayRequest = await mayViewAllOfDataFiles(user, dataFileIdStrings);
@@ -69,12 +73,14 @@ export const createDataRequest = async (
     INSERT INTO admin.data_request_calibration_level (data_request_id, calibration_level_id)
     VALUES ($1, (SELECT id FROM level_id))
     `;
-    requestedCalibrationLevels.map(async CalibrationLevel => {
-      await client.query(dataRequestCalibrationLevelSQL, [
-        dataRequestId,
-        titleCase(CalibrationLevel.toLowerCase().replace(/_/g, " "))
-      ]);
-    });
+    Array.from(requestedCalibrationLevels).map(
+      async (calibrationLevel: CalibrationLevel) => {
+        await client.query(dataRequestCalibrationLevelSQL, [
+          dataRequestId,
+          titleCase(calibrationLevel.toLowerCase().replace(/_/g, " "))
+        ]);
+      }
+    );
     const dataRequestCalibrationTypeSQL = `
       WITH type_id (id) AS (
         SELECT calibration_type_id
@@ -84,12 +90,14 @@ export const createDataRequest = async (
     INSERT INTO admin.data_request_calibration_type (data_request_id, calibration_type_id)
     VALUES ($1, (SELECT id FROM type_id))
     `;
-    requestedCalibrationTypes.map(async CalibrationType => {
-      await client.query(dataRequestCalibrationTypeSQL, [
-        dataRequestId,
-        titleCase(CalibrationType.toLowerCase().replace(/_/g, " "))
-      ]);
-    });
+    Array.from(requestedCalibrationTypes).map(
+      async (calibrationType: CalibrationType) => {
+        await client.query(dataRequestCalibrationTypeSQL, [
+          dataRequestId,
+          titleCase(calibrationType.toLowerCase().replace(/_/g, " "))
+        ]);
+      }
+    );
 
     await client.query("COMMIT");
 
@@ -111,37 +119,26 @@ export const createDataRequest = async (
   }
 };
 
+const groupByObservation = (dataFiles: [any]) => {
+  const groups = new Map<string, any>();
+  dataFiles.forEach(file => {
+    const key = file.telescopeName + " #" + file.telescopeObservationId || "";
+    if (!groups.has(key)) {
+      groups.set(key, []);
+    }
+    (groups.get(key) as any[]).push(file);
+  });
+
+  return groups;
+};
+
 async function addCalibrations(
   dataFiles: number[],
-  requestedCalibrations: string[]
+  requestedCalibrationTypes: Set<CalibrationType>
 ): Promise<number[]> {
-  // Find all non-science data files which belong to one of the observation
-  // groups of the given data files are and which are not science files.
-  const sql = `
-WITH obs_groups (id) AS (
-    SELECT DISTINCT og.observation_group_id
-    FROM observations.observation_group og
-             JOIN observations.observation o ON og.observation_group_id = o.observation_group_id
-             JOIN observations.plane p ON o.observation_id = p.observation_id
-             JOIN observations.artifact a ON p.plane_id = a.plane_id
-    WHERE artifact_id = ANY($1)
-)
-SELECT a.artifact_id
-FROM observations.artifact a
-     JOIN observations.plane p ON a.plane_id = p.plane_id
-     JOIN observations.observation o ON p.observation_id = o.observation_id
-     JOIN observations.product_type pt ON a.product_type_id=pt.product_type_id
-WHERE o.observation_group_id IN (SELECT id FROM obs_groups)
-      AND pt.product_type IN $2
-`;
-  const client = await ssdaPool.connect();
-  const res = await client.query(sql, [dataFiles, requestedCalibrations]);
-  const calibrations = res.rows.map((row: any) =>
-    parseInt(row.artifact_id, 10)
+  const calibrationIds = await calibrations(
+    dataFiles,
+    requestedCalibrationTypes
   );
-
-  // Remove duplicates.
-  const allFiles = new Set([...dataFiles, ...calibrations]);
-
-  return Array.from(allFiles);
+  return [...dataFiles, ...Array.from(calibrationIds)];
 }

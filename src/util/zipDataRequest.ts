@@ -1,6 +1,7 @@
 import archiver from "archiver";
 import fs from "fs";
 import { ssdaPool } from "../db/postgresql_pool";
+import { CalibrationLevel } from "./calibrations";
 
 const successfullyZipDataRequest = async (dataRequestId: string) => {
   // update data request with success status and download path
@@ -49,7 +50,7 @@ const failToZipDataRequest = async (dataRequestId: string) => {
 export const zipDataRequest = async (
   fileIds: string[],
   dataRequestId: string,
-  requestedCalibrationLevels: string[]
+  requestedCalibrationLevels: Set<CalibrationLevel>
 ) => {
   // collect the files
   const sql = `
@@ -186,21 +187,17 @@ SPIE Astronomical Instrumentation, 7737-82\r\n\n`;
 
   // append a file from string
   archive.append(readMeFileContent, { name: "README.txt" });
-  const reducedRequested = requestedCalibrationLevels.some(
-    (level: string) => level.toUpperCase() === "REDUCED"
-  );
-  const rawRequested = requestedCalibrationLevels.some(
-    (level: string) => level.toUpperCase() === "RAW"
-  );
+  const rawRequested = requestedCalibrationLevels.has("RAW");
+  const reducedRequested = requestedCalibrationLevels.has("REDUCED");
   // save files
   dataFiles.forEach((file: { reduced: string; raw: string; name: string }) => {
-    if (reducedRequested) {
-      archive.file(`${process.env.FITS_BASE_DIR}/${file.reduced}`, {
+    if (rawRequested) {
+      archive.file(`${process.env.FITS_BASE_DIR}/${file.raw}`, {
         name: file.name
       });
     }
-    if (rawRequested) {
-      archive.file(`${process.env.FITS_BASE_DIR}/${file.raw}`, {
+    if (reducedRequested) {
+      archive.file(`${process.env.FITS_BASE_DIR}/${file.reduced}`, {
         name: file.name
       });
     }
