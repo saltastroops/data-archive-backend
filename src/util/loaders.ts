@@ -56,6 +56,7 @@ async function batchGetDataRequests(ids: number[]) {
   const calibrationLevelsRes = await ssdaPool.query(calibrationLevelsSQL, [
     ids
   ]);
+  // Group the calibration levels by data request
   const calibrationLevels = calibrationLevelsRes.rows;
   for (const row of calibrationLevels) {
     (dataRequestCalibrationLevels.get(row.data_request_id) as any).push(
@@ -63,14 +64,15 @@ async function batchGetDataRequests(ids: number[]) {
     );
   }
 
-  // Get the calibration levels
+  // Calibration types query
   const calibrationTypesSQL = `
   SELECT data_request_id, calibration_type
-  FROM admin.data_request_calibration_type AS drcl
-  JOIN admin.calibration_type AS cl ON drcl.calibration_type_id = cl.calibration_type_id
+  FROM admin.data_request_calibration_type AS drct
+  JOIN admin.calibration_type AS ct ON drct.calibration_type_id = ct.calibration_type_id
        WHERE data_request_id = ANY($1)
   `;
   const calibrationTypesRes = await ssdaPool.query(calibrationTypesSQL, [ids]);
+  // Group the calibration types by data request
   const calibrationTypes = calibrationTypesRes.rows;
   for (const row of calibrationTypes) {
     (dataRequestCalibrationTypes.get(row.data_request_id) as any).push(
@@ -79,7 +81,7 @@ async function batchGetDataRequests(ids: number[]) {
   }
 
   // Return the data requests
-  return dataRequests.map(d => ({
+  return dataRequests.map((d: any) => ({
     calibrationLevels: dataRequestCalibrationLevels.get(d.data_request_id),
     calibrationTypes: dataRequestCalibrationTypes.get(d.data_request_id),
     dataFiles: dataRequestArtifacts.get(d.data_request_id),
