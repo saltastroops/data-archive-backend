@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import { validate } from "isemail";
 import { AuthProviderName } from "../util/authProvider";
+import { CalibrationType } from "../util/calibrations";
 import {
   createUser,
   getUserByEmail,
@@ -243,7 +244,13 @@ const Mutation = {
       requestedCalibrationTypes
     }: { dataFiles: [number]; requestedCalibrationTypes: [string] },
     { user }: IContext
-  ) => createDataRequest(dataFiles, requestedCalibrationTypes, user)
+  ) => {
+    createDataRequest(
+      dataFiles,
+      new Set(requestedCalibrationTypes as CalibrationType[]),
+      user
+    );
+  }
 };
 
 export { Mutation };

@@ -1,4 +1,5 @@
 import { ssdaPool } from "../db/postgresql_pool";
+import { calibrations, CalibrationType } from "../util/calibrations";
 import { mayViewAllOfDataFiles } from "../util/user";
 import { zipDataRequest } from "../util/zipDataRequest";
 
@@ -23,7 +24,7 @@ const groupByObservation = (dataFiles: [any]) => {
 
 export const createDataRequest = async (
   dataFiles: number[],
-  requestedCalibrations: string[],
+  requestedCalibrationTypes: Set<CalibrationType>,
   user: any
 ) => {
   // check if user is logged in
@@ -32,8 +33,8 @@ export const createDataRequest = async (
   }
 
   // add calibrations, if requested
-  if (requestedCalibrations.length) {
-    dataFiles = await addCalibrations(dataFiles, requestedCalibrations);
+  if (requestedCalibrationTypes.size) {
+    dataFiles = await addCalibrations(dataFiles, requestedCalibrationTypes);
   }
 
   const dataFileIdStrings = dataFiles.map(id => id.toString());
@@ -88,33 +89,11 @@ export const createDataRequest = async (
 
 async function addCalibrations(
   dataFiles: number[],
-  requestedCalibrations: string[]
+  requestedCalibrationTypes: Set<CalibrationType>
 ): Promise<number[]> {
-  // Find all non-science data files which belong to one of the observation
-  // groups of the given data files are and which are not science files.
-  const sql = `
-WITH obs_groups (id) AS (
-    SELECT DISTINCT og.observation_group_id
-    FROM observations.observation_group og
-             JOIN observations.observation o ON og.observation_group_id = o.observation_group_id
-             JOIN observations.plane p ON o.observation_id = p.observation_id
-             JOIN observations.artifact a ON p.plane_id = a.plane_id
-    WHERE artifact_id = ANY($1)
-)
-SELECT a.artifact_id
-FROM observations.artifact a
-     JOIN observations.plane p ON a.plane_id = p.plane_id
-     JOIN observations.observation o ON p.observation_id = o.observation_id
-     JOIN observations.product_type pt ON a.product_type_id=pt.product_type_id
-WHERE o.observation_group_id IN (SELECT id FROM obs_groups)
-      AND pt.product_type IN $2
-`;
-  const client = await ssdaPool.connect();
-  const res = await client.query(sql, [dataFiles, requestedCalibrations]);
-  const calibrations = res.rows.map(row => parseInt(row.artifact_id, 10));
-
-  // Remove duplicates.
-  const allFiles = new Set([...dataFiles, ...calibrations]);
-
-  return Array.from(allFiles);
+  const calibrationIds = await calibrations(
+    dataFiles,
+    requestedCalibrationTypes
+  );
+  return [...dataFiles, ...Array.from(calibrationIds)];
 }
