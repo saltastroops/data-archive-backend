@@ -119,19 +119,6 @@ export const createDataRequest = async (
   }
 };
 
-const groupByObservation = (dataFiles: [any]) => {
-  const groups = new Map<string, any>();
-  dataFiles.forEach(file => {
-    const key = file.telescopeName + " #" + file.telescopeObservationId || "";
-    if (!groups.has(key)) {
-      groups.set(key, []);
-    }
-    (groups.get(key) as any[]).push(file);
-  });
-
-  return groups;
-};
-
 async function addCalibrations(
   dataFiles: number[],
   requestedCalibrationTypes: Set<CalibrationType>

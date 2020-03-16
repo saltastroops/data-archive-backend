@@ -64,7 +64,7 @@ async function batchGetDataRequests(ids: number[]) {
     );
   }
 
-  // Calibration types query
+  // Get the calibration types
   const calibrationTypesSQL = `
   SELECT data_request_id, calibration_type
   FROM admin.data_request_calibration_type AS drct
