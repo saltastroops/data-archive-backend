@@ -32,8 +32,6 @@ beforeEach(() => {
   // Cleaning up
   (ssdaPool.query as any).mockReset();
   (ssdaPool.connect as any).mockReset();
-  (sdbPool.query as any).mockReset();
-  (sdbPool.getConnection as any).mockReset();
 });
 
 describe("/auth/login", () => {
