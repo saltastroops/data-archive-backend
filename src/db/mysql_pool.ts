@@ -34,7 +34,12 @@ const sdbConfig = {
   user: process.env.SDB_DATABASE_USER
 };
 
-// Creating poos of database connections
-const sdbPool = createPool(sdbConfig);
+// Creating pool of database connections.
+// It seems that this code is called even when mocking, hence we must explicitly
+// prevent creating a real pool in testing node.
+let sdbPool = {};
+if (process.env.NODE_ENV !== "test") {
+  sdbPool = createPool(sdbConfig);
+}
 
 export { sdbPool };
