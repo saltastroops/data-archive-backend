@@ -1,5 +1,6 @@
 import archiver from "archiver";
 import fs from "fs";
+import moment from "moment";
 import { ssdaPool } from "../db/postgresql_pool";
 
 const successfullyZipDataRequest = async (dataRequestId: string) => {
@@ -51,11 +52,20 @@ export const zipDataRequest = async (
   dataRequestId: string
 ) => {
   // collect the files
-  const sql = `
-    SELECT path, name as name, product_type as type
-    FROM observations.artifact  atf
-    JOIN observations.product_type pt ON atf.product_type_id = pt.product_type_id
-    WHERE artifact_id = ANY($1)
+  const sql = `SELECT paths, atf.name AS file_name, product_type AS type, proposal_code AS proposal_code,
+                       observation_group_id AS block_id, ins.name AS instrument_name, 
+                       calibration_level_id, night AS date 
+               FROM admin.data_request dr
+               LEFT OUTER JOIN admin.data_request_artifact dra on dra.data_request_id = dr.data_request_id
+               LEFT OUTER JOIN observations.artifact atf on atf.artifact_id = dra.artifact_id
+               LEFT OUTER JOIN admin.data_request_calibration_level drl on drl.data_request_id = dr.data_request_id
+               LEFT OUTER JOIN observations.plane p ON p.plane_id = atf.plane_id
+               LEFT OUTER JOIN observations.observation_time obs_time ON obs_time.plane_id = p.plane_id    
+               LEFT OUTER JOIN observations.observation obs ON p.observation_id = obs.observation_id
+               LEFT OUTER JOIN observations.product_type pt ON atf.product_type_id = pt.product_type_id
+               LEFT OUTER JOIN observations.proposal obsp ON obs.proposal_id = obsp.proposal_id
+               LEFT OUTER JOIN observations.instrument ins on obs.instrument_id = ins.instrument_id
+               WHERE dra.artifact_id = ANY($1)
   `;
   const res = await ssdaPool.query(sql, [fileIds]);
   const dataFiles = res.rows;
@@ -109,36 +119,105 @@ export const zipDataRequest = async (
 
   // Get the maximum length of the name and type strings
   const nameStrLength = Math.max(
-    ...dataFiles.map((file: { name: string }) => file.name.length)
+    ...dataFiles.map((file: { file_name: string }) => file.file_name.length)
   );
   const typeStrLength = Math.max(
     ...dataFiles.map((file: { type: string }) => file.type.length)
   );
-
+  const observationNightStrLength = Math.max(
+    ...dataFiles.map(
+      (file: { night: string }) =>
+        moment(file.night).format("YYYY-MM-DD").length
+    )
+  );
+  let proposalStrLength = 0;
+  let BlockIdStrLength = 0;
+  // let FileDescription = 0;
+  const getProposalCodeAndBlockIdLength = dataFiles.map(data => {
+    proposalStrLength =
+      data.proposal_code === null
+        ? Math.max("proposal_code ".length)
+        : Math.max(
+            ...dataFiles.map(
+              (file: { proposal_code: string }) => file.proposal_code.length
+            )
+          );
+    BlockIdStrLength =
+      data.block_id === null
+        ? Math.max("block_id  ".length)
+        : Math.max(
+            ...dataFiles.map(
+              (file: { block_id: string }) => file.block_id.length
+            )
+          );
+    return [proposalStrLength, BlockIdStrLength];
+  });
+  let FileDescription = "";
+  const getFileDescription = dataFiles.map(data => {
+    if (data.calibration_level_id === 1) {
+      FileDescription = `Raw ${data.instrument_name} data`;
+    }
+    if (data.calibration_level_id === 2) {
+      FileDescription = `Reduced ${data.instrument_name} data`;
+    }
+    return FileDescription;
+  });
+  // tslint:disable-next-line:no-console
+  console.log(getFileDescription);
+  // FileDescription = Math.max("File description".length);
   // Table row separator
   const rowBorder = `
-+-${"-".repeat(nameStrLength)}-+-${"-".repeat(typeStrLength)}-+`;
-
++-${"-".repeat(nameStrLength)}-+-${"-".repeat(typeStrLength)}-+-${"-".repeat(
+    getProposalCodeAndBlockIdLength[0][0]
+  )}-+-${"-".repeat(getProposalCodeAndBlockIdLength[0][1])}-+-${"-".repeat(
+    observationNightStrLength
+  )}-+`;
   // Table content of the table header
   const tableHeaderContent = `
 | File name${" ".repeat(nameStrLength - "File name".length)} | Type${" ".repeat(
     typeStrLength - "Type".length
-  )} |`;
-
+  )} | Proposal code${" ".repeat(
+    getProposalCodeAndBlockIdLength[0][0] - "Proposal code".length
+  )} | Block id${" ".repeat(
+    getProposalCodeAndBlockIdLength[0][1] - "Block id".length
+  )} | Date${" ".repeat(observationNightStrLength - "Date".length)} |`;
   // The header of the table
   const tableHeader = rowBorder + tableHeaderContent + rowBorder;
 
   // The body of the table
   let tableBody = ``;
-  dataFiles.forEach((file: { name: string; type: string }) => {
-    // The content of the table body
-    const tableBodyContent = `
-| ${file.name}${" ".repeat(nameStrLength - file.name.length)} | ${
-      file.type
-    }${" ".repeat(typeStrLength - file.type.length)} |\r`;
-    tableBody = tableBody + tableBodyContent + rowBorder;
-  });
-
+  dataFiles.forEach(
+    (file: {
+      file_name: string;
+      type: string;
+      proposal_code: string;
+      block_id: string;
+      date: string;
+    }) => {
+      // The content of the table body
+      const tableBodyContent = `
+| ${file.file_name}${" ".repeat(nameStrLength - file.file_name.length)} | ${
+        file.type
+      }${" ".repeat(typeStrLength - file.type.length)} | ${
+        file.proposal_code
+          ? file.proposal_code
+          : " ".repeat(getProposalCodeAndBlockIdLength[0][0])
+      } | ${
+        file.block_id
+          ? file.block_id +
+            " ".repeat(Math.max("block_id  ".length) - file.block_id.length)
+          : " ".repeat(getProposalCodeAndBlockIdLength[0][1])
+      } | ${moment(file.date).format("YYYY-MM-DD")}${" ".repeat(
+        observationNightStrLength -
+          moment(file.date).format("YYYY-MM-DD").length
+      )} |\r`;
+      tableBody = tableBody + tableBodyContent + rowBorder;
+    }
+  );
+  const calibrationsMessage = `
+  The additional calibrations are charged calibrations. Spectrophotometric
+   and Radial Velocity Standards are nearest to the observation 
+  `;
   // The title of the table
   const tableTitle = `The requested files\r\n===================\r\n`;
 
