@@ -1,16 +1,10 @@
-// tslint:disable-next-line:no-submodule-imports
-import * as iconv from "mysql2/node_modules/iconv-lite";
-iconv.encodingExists("cesu8");
-
 jest.mock("../db/postgresql_pool.ts");
-jest.mock("../db/mysql_pool.ts");
 jest.mock("uuid");
 jest.mock("bcrypt");
 
 import bcrypt from "bcrypt";
 import request from "supertest";
 import createServer from "../createServer";
-import { sdbPool } from "../db/mysql_pool";
 import { ssdaPool } from "../db/postgresql_pool";
 
 // Creating an authenticated agent for making subsequent requests
@@ -32,8 +26,6 @@ beforeEach(() => {
   // Cleaning up
   (ssdaPool.query as any).mockReset();
   (ssdaPool.connect as any).mockReset();
-  (sdbPool.query as any).mockReset();
-  (sdbPool.getConnection as any).mockReset();
 });
 
 describe("/auth/login", () => {

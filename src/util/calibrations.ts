@@ -188,3 +188,5 @@ export type CalibrationType =
   | "FLAT"
   | "RADIAL_VELOCITY_STANDARD"
   | "SPECTROPHOTOMETRIC_STANDARD";
+
+export type CalibrationLevel = "RAW" | "REDUCED";

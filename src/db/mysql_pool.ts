@@ -1,4 +1,4 @@
-import mysql from "mysql2/promise";
+import mysql, { Pool } from "mysql2/promise";
 
 const createPool = (config: any) => {
   // Creating a pool of database connections
@@ -34,7 +34,10 @@ const sdbConfig = {
   user: process.env.SDB_DATABASE_USER
 };
 
-// Creating poos of database connections
-const sdbPool = createPool(sdbConfig);
+// Creating pool of database connections.
+// It seems that this code is called even when mocking, hence we must explicitly
+// prevent creating a real pool in testing node.
+const sdbPool: Pool =
+  process.env.NODE_ENV !== "test" ? createPool(sdbConfig) : ({} as any);
 
 export { sdbPool };

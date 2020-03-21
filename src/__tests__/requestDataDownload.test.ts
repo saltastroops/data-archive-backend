@@ -3,6 +3,7 @@ import * as iconv from "mysql2/node_modules/iconv-lite";
 iconv.encodingExists("cesu8");
 
 jest.mock("../db/postgresql_pool.ts");
+jest.mock("../db/mysql_pool.ts");
 jest.mock("bcrypt");
 
 import bcrypt from "bcrypt";

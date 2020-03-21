@@ -33,8 +33,12 @@ async function batchGetDataRequests(ids: number[]) {
 
   // Group the artifacts by data requests
   const dataRequestArtifacts = new Map<number, number[]>();
+  const dataRequestCalibrationLevels = new Map<number, string[]>();
+  const dataRequestCalibrationTypes = new Map<number, string[]>();
   for (const id of ids) {
     dataRequestArtifacts.set(id, []);
+    dataRequestCalibrationLevels.set(id, []);
+    dataRequestCalibrationTypes.set(id, []);
   }
   for (const row of artifacts) {
     (dataRequestArtifacts.get(row.data_request_id) as any).push(
@@ -42,8 +46,44 @@ async function batchGetDataRequests(ids: number[]) {
     );
   }
 
+  // Get the calibration levels
+  const calibrationLevelsSQL = `
+  SELECT data_request_id, calibration_level
+  FROM admin.data_request_calibration_level AS drcl
+  JOIN admin.calibration_level AS cl ON drcl.calibration_level_id = cl.calibration_level_id
+       WHERE data_request_id = ANY($1)
+  `;
+  const calibrationLevelsRes = await ssdaPool.query(calibrationLevelsSQL, [
+    ids
+  ]);
+  // Group the calibration levels by data request
+  const calibrationLevels = calibrationLevelsRes.rows;
+  for (const row of calibrationLevels) {
+    (dataRequestCalibrationLevels.get(row.data_request_id) as any).push(
+      row.calibration_level.toUpperCase()
+    );
+  }
+
+  // Get the calibration types
+  const calibrationTypesSQL = `
+  SELECT data_request_id, calibration_type
+  FROM admin.data_request_calibration_type AS drct
+  JOIN admin.calibration_type AS ct ON drct.calibration_type_id = ct.calibration_type_id
+       WHERE data_request_id = ANY($1)
+  `;
+  const calibrationTypesRes = await ssdaPool.query(calibrationTypesSQL, [ids]);
+  // Group the calibration types by data request
+  const calibrationTypes = calibrationTypesRes.rows;
+  for (const row of calibrationTypes) {
+    (dataRequestCalibrationTypes.get(row.data_request_id) as any).push(
+      row.calibration_type.toUpperCase().replace(/ /g, "_")
+    );
+  }
+
   // Return the data requests
-  return dataRequests.map(d => ({
+  return dataRequests.map((d: any) => ({
+    calibrationLevels: dataRequestCalibrationLevels.get(d.data_request_id),
+    calibrationTypes: dataRequestCalibrationTypes.get(d.data_request_id),
     dataFiles: dataRequestArtifacts.get(d.data_request_id),
     id: d.data_request_id,
     madeAt: d.made_at.toISOString(),

@@ -1,5 +1,10 @@
+import { titleCase } from "title-case";
 import { ssdaPool } from "../db/postgresql_pool";
-import { calibrations, CalibrationType } from "../util/calibrations";
+import {
+  CalibrationLevel,
+  calibrations,
+  CalibrationType
+} from "../util/calibrations";
 import { mayViewAllOfDataFiles } from "../util/user";
 import { zipDataRequest } from "../util/zipDataRequest";
 
@@ -9,21 +14,9 @@ async function asyncForEach(array: any, callback: any) {
   }
 }
 
-const groupByObservation = (dataFiles: [any]) => {
-  const groups = new Map<string, any>();
-  dataFiles.forEach(file => {
-    const key = file.telescopeName + " #" + file.telescopeObservationId || "";
-    if (!groups.has(key)) {
-      groups.set(key, []);
-    }
-    (groups.get(key) as any[]).push(file);
-  });
-
-  return groups;
-};
-
 export const createDataRequest = async (
   dataFiles: number[],
+  requestedCalibrationLevels: Set<CalibrationLevel>,
   requestedCalibrationTypes: Set<CalibrationType>,
   user: any
 ) => {
@@ -71,9 +64,48 @@ export const createDataRequest = async (
       await client.query(dataRequestArtifactSQL, [dataRequestId, dataFileId]);
     });
 
+    const dataRequestCalibrationLevelSQL = `
+      WITH level_id (id) AS (
+        SELECT calibration_level_id
+        FROM admin.calibration_level
+        WHERE calibration_level=$2
+      )
+    INSERT INTO admin.data_request_calibration_level (data_request_id, calibration_level_id)
+    VALUES ($1, (SELECT id FROM level_id))
+    `;
+    Array.from(requestedCalibrationLevels).map(
+      async (calibrationLevel: CalibrationLevel) => {
+        await client.query(dataRequestCalibrationLevelSQL, [
+          dataRequestId,
+          titleCase(calibrationLevel.toLowerCase())
+        ]);
+      }
+    );
+    const dataRequestCalibrationTypeSQL = `
+      WITH type_id (id) AS (
+        SELECT calibration_type_id
+        FROM admin.calibration_type
+        WHERE calibration_type=$2
+      )
+    INSERT INTO admin.data_request_calibration_type (data_request_id, calibration_type_id)
+    VALUES ($1, (SELECT id FROM type_id))
+    `;
+    Array.from(requestedCalibrationTypes).map(
+      async (calibrationType: CalibrationType) => {
+        await client.query(dataRequestCalibrationTypeSQL, [
+          dataRequestId,
+          titleCase(calibrationType.toLowerCase().replace(/_/g, " "))
+        ]);
+      }
+    );
+
     await client.query("COMMIT");
 
-    zipDataRequest(dataFileIdStrings, dataRequestId);
+    zipDataRequest(
+      dataFileIdStrings,
+      dataRequestId,
+      requestedCalibrationLevels
+    );
 
     return {
       message: "The data request was successfully requested",
