@@ -53,84 +53,102 @@ export const zipDataRequest = async (
   requestedCalibrationLevels: Set<CalibrationLevel>
 ) => {
   // collect the files
-  const sql = `SELECT (paths).raw,
-                      (paths).reduced,  
-                      product_type AS type,
-                      proposal_code AS proposal_code,
-                      observation_group_id AS block_id,
-                      ins.name AS instrument_name, 
-                      calibration_level,
-                      night AS date 
-              FROM admin.data_request dr
-              LEFT OUTER JOIN admin.data_request_artifact dra on dra.data_request_id = dr.data_request_id
-              LEFT OUTER JOIN observations.artifact atf on atf.artifact_id = dra.artifact_id
-              LEFT OUTER JOIN admin.data_request_calibration_level drl on drl.data_request_id = dr.data_request_id
-              LEFT OUTER JOIN observations.plane p ON p.plane_id = atf.plane_id
-              LEFT OUTER JOIN observations.observation_time obs_time ON obs_time.plane_id = p.plane_id    
-              LEFT OUTER JOIN observations.observation obs ON p.observation_id = obs.observation_id
-              LEFT OUTER JOIN observations.product_type pt ON atf.product_type_id = pt.product_type_id
-              LEFT OUTER JOIN observations.proposal obsp ON obs.proposal_id = obsp.proposal_id
-              LEFT OUTER JOIN observations.instrument ins on obs.instrument_id = ins.instrument_id
-              WHERE dra.artifact_id = ANY($1)
+  const sql = `SELECT         
+                              (paths).raw,
+                              (paths).reduced,
+                              product_type AS type,
+                              proposal_code AS proposal_code,
+                              observation_group_id AS block_id,
+                              ins.name AS instrument_name,
+                              calibration_level,
+                              night AS date
+                FROM admin.data_request dr
+                LEFT OUTER JOIN admin.data_request_artifact dra on dra.data_request_id = dr.data_request_id
+                LEFT OUTER JOIN observations.artifact atf on atf.artifact_id = dra.artifact_id
+                LEFT OUTER JOIN admin.data_request_calibration_level drl on drl.data_request_id = dr.data_request_id
+                LEFT OUTER JOIN admin.calibration_level ac on ac.calibration_level_id = drl.calibration_level_id
+                LEFT OUTER JOIN observations.plane p ON p.plane_id = atf.plane_id
+                LEFT OUTER JOIN observations.observation_time obs_time ON obs_time.plane_id = p.plane_id
+                LEFT OUTER JOIN observations.observation obs ON p.observation_id = obs.observation_id
+                LEFT OUTER JOIN observations.product_type pt ON atf.product_type_id = pt.product_type_id
+                LEFT OUTER JOIN observations.proposal obsp ON obs.proposal_id = obsp.proposal_id
+                LEFT OUTER JOIN observations.instrument ins on obs.instrument_id = ins.instrument_id
+                WHERE dra.artifact_id = ANY($1)
+
   `;
   const res = await ssdaPool.query(sql, [fileIds]);
   const dataFiles = res.rows;
-  // tslint:disable-next-line:no-console
-  console.log(dataFiles);
 
-  //   // zip files
-  //   if (!process.env.DATA_REQUEST_BASE_DIR) {
-  //     throw new Error("The DATA_REQUEST_BASE_DIR has not been set.");
-  //   }
-  //   const output = fs.createWriteStream(
-  //     `${process.env.DATA_REQUEST_BASE_DIR}/${dataRequestId.toString()}.zip`
-  //   );
-  //   const archive = archiver("zip", {
-  //     gzip: true,
-  //     zlib: { level: 9 } // Sets the compression level.
-  //   });
-  //   let hasError = false;
-  //   // case archive raise a warning
-  //   archive.on("warning", async (err: any) => {
-  //     if (err.code === "ENOENT") {
-  //       // Update data request table with fail
-  //       await failToZipDataRequest(dataRequestId);
-  //       // Record that there has been a problem
-  //       hasError = true;
-  //     } else {
-  //       // Update data request table with fail
-  //       await failToZipDataRequest(dataRequestId);
-  //       // Record that there has been a problem
-  //       hasError = true;
-  //     }
-  //   });
-  //
-  //   // If ever there is an error raise it
-  //   archive.on("error", async (err: any) => {
-  //     // Update data request table with fail
-  //     await failToZipDataRequest(dataRequestId);
-  //     hasError = true;
-  //   });
-  //
-  //   // when archive successfully run
-  //   output.on("finish", async () => {
-  //     // Update data request table with success (but only if there hasn't been an
-  //     // error!)
-  //     if (!hasError) {
-  //       await successfullyZipDataRequest(dataRequestId);
-  //     }
-  //   });
-  //
-  //   // pipe archive data to the output file
-  //   archive.pipe(output);
-  //
-  //   // Get the maximum length of the name and type strings
-  //   const nameStrLength = Math.max(
-  //     ...dataFiles.map((file: { name: string }) => file.name.length)
-  //   );
-  //   const typeStrLength = Math.max(
-  //     ...dataFiles.map((file: { type: string }) => file.type.length)
-  //   );
+  // zip files
+  if (!process.env.DATA_REQUEST_BASE_DIR) {
+    throw new Error("The DATA_REQUEST_BASE_DIR has not been set.");
+  }
+  const output = fs.createWriteStream(
+    `${process.env.DATA_REQUEST_BASE_DIR}/${dataRequestId.toString()}.zip`
+  );
+  const archive = archiver("zip", {
+    gzip: true,
+    zlib: { level: 9 } // Sets the compression level.
+  });
+  let hasError = false;
+  // case archive raise a warning
+  archive.on("warning", async (err: any) => {
+    if (err.code === "ENOENT") {
+      // Update data request table with fail
+      await failToZipDataRequest(dataRequestId);
+      // Record that there has been a problem
+      hasError = true;
+    } else {
+      // Update data request table with fail
+      await failToZipDataRequest(dataRequestId);
+      // Record that there has been a problem
+      hasError = true;
+    }
+  });
+
+  // If ever there is an error raise it
+  archive.on("error", async (err: any) => {
+    // Update data request table with fail
+    await failToZipDataRequest(dataRequestId);
+    hasError = true;
+  });
+
+  // when archive successfully run
+  output.on("finish", async () => {
+    // Update data request table with success (but only if there hasn't been an
+    // error!)
+    if (!hasError) {
+      await successfullyZipDataRequest(dataRequestId);
+    }
+  });
+
+  // pipe archive data to the output file
+  archive.pipe(output);
+
+  // Get the maximum length of the table column names
+  const typeStrLength = Math.max(
+    ...dataFiles.map((file: { type: string }) => file.type.length)
+  );
+
+  const proposalCodeStrLength = Math.max(
+    ...dataFiles.map((file: { proposal_code: string }) =>
+      file.proposal_code ? file.proposal_code.length : "proposal code".length
+    )
+  );
+
+  const blockIdStrLength = Math.max(
+    ...dataFiles.map((file: { block_id: string }) =>
+      file.block_id ? file.block_id.length : "block id".length
+    )
+  );
+
+  const nameOfFile = dataFiles.map(data => {
+    // tslint:disable-next-line:no-console
+    console.log(data);
+  });
+  // tslint:disable-next-line:no-console
+  console.log(nameOfFile);
+
   //
   //   // Table row separator
   //   const rowBorder = `
