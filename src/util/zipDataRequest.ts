@@ -75,7 +75,6 @@ export const zipDataRequest = async (
                 LEFT OUTER JOIN observations.proposal obsp ON obs.proposal_id = obsp.proposal_id
                 LEFT OUTER JOIN observations.instrument ins on obs.instrument_id = ins.instrument_id
                 WHERE dra.artifact_id = ANY($1)
-
   `;
   const res = await ssdaPool.query(sql, [fileIds]);
   const dataFiles = res.rows;
@@ -196,7 +195,7 @@ export const zipDataRequest = async (
   )} | Date${" ".repeat(
     observationNightStrLength - "Date".length
   )} | File Description${" ".repeat(
-    fileDescription[0].length - "File Description".length
+    fileDescription[0].length - "file description".length
   )} |`;
 
   // The header of the table
@@ -213,7 +212,7 @@ export const zipDataRequest = async (
     }) => {
       // The content of the table body
       let tableBodyContent = `
-| ${fileName[0]}${" ".repeat(fileName[0].length)}`;
+| ${fileName[0]} `;
       tableBodyContent += `| ${file.type}${" ".repeat(
         typeStrLength - file.type.length
       )} `;
@@ -228,20 +227,29 @@ export const zipDataRequest = async (
             " ".repeat(Math.max("block_id  ".length) - file.block_id.length)
           : " ".repeat(blockIdStrLength)
       } `;
-      tableBodyContent += `| ${fileDescription[0]}${" ".repeat(
-        fileDescription[0].length
-      )} |\r`;
+      tableBodyContent += `| ${moment(file.date).format(
+        "YYYY-MM-DD"
+      )}${" ".repeat(
+        observationNightStrLength -
+          moment(file.date).format("YYYY-MM-DD").length
+      )} `;
+
+      tableBodyContent += `| ${fileDescription[0]} |\r`;
       tableBody = tableBody + tableBodyContent + rowBorder;
     }
   );
+
+  const calibrationsMessage = `
+        Arcs, flats and biases (if requested) are only included if they were
+        taken as part of an observation. For spectrophotometric
+        and radial velocity standards (if requested) the standard taken nearest
+        to an observation is included.`;
 
   // The title of the table
   const tableTitle = `The requested files\r\n===================\r\n`;
 
   // The table containing the data request file names and type of the product data contained by the file
   const table = tableHeader + tableBody + `\r\n`;
-  // tslint:disable-next-line:no-console
-  console.log(table);
   // The SALT policy
   const policy = `
   Publication and acknowledgment policy
@@ -279,7 +287,7 @@ export const zipDataRequest = async (
   SPIE Astronomical Instrumentation, 7737-82\r\n\n`;
 
   // A read me file content
-  const readMeFileContent = tableTitle + table + policy;
+  const readMeFileContent = tableTitle + calibrationsMessage + table + policy;
 
   // append a file from string
   archive.append(readMeFileContent, { name: "README.txt" });
