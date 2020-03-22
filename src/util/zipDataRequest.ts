@@ -1,5 +1,6 @@
 import archiver from "archiver";
 import fs from "fs";
+import moment from "moment";
 import { ssdaPool } from "../db/postgresql_pool";
 import { CalibrationLevel } from "./calibrations";
 
@@ -141,101 +142,162 @@ export const zipDataRequest = async (
       file.block_id ? file.block_id.length : "block id".length
     )
   );
+  const observationNightStrLength = Math.max(
+    ...dataFiles.map(
+      (file: { night: string }) =>
+        moment(file.night).format("YYYY-MM-DD").length
+    )
+  );
 
-  const nameOfFile = dataFiles.map(data => {
-    // tslint:disable-next-line:no-console
-    console.log(data);
+  const fileName = dataFiles.map(data => {
+    let filename = "";
+    const path = require("path");
+
+    if (data.calibration_level === "Raw") {
+      filename = path.basename(data.raw);
+    }
+    if (data.calibration_level === "Reduced") {
+      filename = path.basename(data.reduced);
+    }
+    return filename;
   });
-  // tslint:disable-next-line:no-console
-  console.log(nameOfFile);
 
-  //
-  //   // Table row separator
-  //   const rowBorder = `
-  // +-${"-".repeat(nameStrLength)}-+-${"-".repeat(typeStrLength)}-+`;
-  //
-  //   // Table content of the table header
-  //   const tableHeaderContent = `
-  // | File name${" ".repeat(nameStrLength - "File name".length)} | Type${" ".repeat(
-  //     typeStrLength - "Type".length
-  //   )} |`;
-  //
-  //   // The header of the table
-  //   const tableHeader = rowBorder + tableHeaderContent + rowBorder;
-  //
-  //   // The body of the table
-  //   let tableBody = ``;
-  //   dataFiles.forEach((file: { name: string; type: string }) => {
-  //     // The content of the table body
-  //     const tableBodyContent = `
-  // | ${file.name}${" ".repeat(nameStrLength - file.name.length)} | ${
-  //       file.type
-  //     }${" ".repeat(typeStrLength - file.type.length)} |\r`;
-  //     tableBody = tableBody + tableBodyContent + rowBorder;
-  //   });
-  //
-  //   // The title of the table
-  //   const tableTitle = `The requested files\r\n===================\r\n`;
-  //
-  //   // The table containing the data request file names and type of the product data contained by the file
-  //   const table = tableHeader + tableBody + `\r\n`;
-  //
-  //   // The SALT policy
-  //   const policy = `
-  // Publication and acknowledgment policy
-  // =====================================
-  //
-  // Publications
-  // ------------
-  // Please notify salthelp@salt.ac.za of any publication made using SALT data including
-  // reviewed papers and conference proceedings.
-  //
-  // Science paper acknowledgements
-  // ------------------------------
-  // All science papers that include SALT data which are submitted for publication in refereed
-  // science journals must include the following words of acknowledgment:
-  //
-  // “All/some [choose which is appropriate] of the observations reported in this paper
-  // were obtained with the Southern African Large Telescope (SALT) under program(s)
-  // [insert Proposal Code(s)].”
-  //
-  // We recommend that the Principle Investigator is also mentioned after the Proposal Code. In
-  // addition, for papers which predominantly based on SALT data, a footnote symbol should
-  // appear after the paper title*, and the following text should be written as a footnote:
-  //
-  // *based on observations made with the Southern African Large Telescope (SALT)"
-  //
-  // If possible, please also include the Proposal Code and Principle Investigator in body of the
-  // paper when describing observations.
-  //
-  // If you use data reduced by the SALT science pipeline or use the PySALT software, please
-  // provide a link to http://pysalt.salt.ac.za/ and cite the following paper:
-  //
-  // Crawford, S.M., Still, M., Schellart, P., Balona, L., Buckley, D.A.H., Gulbis, A.A.S., Kniazev,
-  // A., Kotze, M., Loaring, N., Nordsieck, K.H., Pickering, T.E., Potter, S., Romero Colmenero,
-  // E., Vaisanen, P., Williams, T., Zietsman, E., 2010. PySALT: the SALT Science Pipeline.
-  // SPIE Astronomical Instrumentation, 7737-82\r\n\n`;
-  //
-  //   // A read me file content
-  //   const readMeFileContent = tableTitle + table + policy;
-  //
-  //   // append a file from string
-  //   archive.append(readMeFileContent, { name: "README.txt" });
-  //   const rawRequested = requestedCalibrationLevels.has("RAW");
-  //   const reducedRequested = requestedCalibrationLevels.has("REDUCED");
-  //   // save files
-  //   dataFiles.forEach((file: { reduced: string; raw: string; name: string }) => {
-  //     if (rawRequested) {
-  //       archive.file(`${process.env.FITS_BASE_DIR}/${file.raw}`, {
-  //         name: file.name
-  //       });
-  //     }
-  //     if (reducedRequested) {
-  //       archive.file(`${process.env.FITS_BASE_DIR}/${file.reduced}`, {
-  //         name: file.name
-  //       });
-  //     }
-  //   });
-  //
-  //   await archive.finalize();
+  const fileDescription = dataFiles.map(data => {
+    let description = "";
+    if (data.calibration_level === "Reduced") {
+      description = `Reduced ${data.instrument_name} data`;
+    }
+    if (data.calibration_level === "Raw") {
+      description = `Raw ${data.instrument_name} data`;
+    }
+    return description;
+  });
+
+  // Table row separator
+  const rowBorder = `
++-${"-".repeat(fileName[0].length)}-+-${"-".repeat(
+    typeStrLength
+  )}-+-${"-".repeat(proposalCodeStrLength)}-+-${"-".repeat(
+    blockIdStrLength
+  )}-+-${"-".repeat(observationNightStrLength)}-+-${"-".repeat(
+    fileDescription[0].length
+  )}-+`;
+
+  // Table content of the table header
+  const tableHeaderContent = `
+| File name${" ".repeat(
+    fileName[0].length - "File name".length
+  )} | Type${" ".repeat(
+    typeStrLength - "Type".length
+  )} | Proposal code${" ".repeat(
+    proposalCodeStrLength - "Proposal code".length
+  )} | Block id${" ".repeat(
+    blockIdStrLength - "Block id".length
+  )} | Date${" ".repeat(
+    observationNightStrLength - "Date".length
+  )} | File Description${" ".repeat(
+    fileDescription[0].length - "File Description".length
+  )} |`;
+
+  // The header of the table
+  const tableHeader = rowBorder + tableHeaderContent + rowBorder;
+
+  // The body of the table
+  let tableBody = ``;
+  dataFiles.forEach(
+    (file: {
+      type: string;
+      date: string;
+      proposal_code: string;
+      block_id: string;
+    }) => {
+      // The content of the table body
+      let tableBodyContent = `
+| ${fileName[0]}${" ".repeat(fileName[0].length)}`;
+      tableBodyContent += `| ${file.type}${" ".repeat(
+        typeStrLength - file.type.length
+      )} `;
+      tableBodyContent += `| ${
+        file.proposal_code
+          ? file.proposal_code
+          : " ".repeat(proposalCodeStrLength)
+      } `;
+      tableBodyContent += `| ${
+        file.block_id
+          ? file.block_id +
+            " ".repeat(Math.max("block_id  ".length) - file.block_id.length)
+          : " ".repeat(blockIdStrLength)
+      } `;
+      tableBodyContent += `| ${fileDescription[0]}${" ".repeat(
+        fileDescription[0].length
+      )} |\r`;
+      tableBody = tableBody + tableBodyContent + rowBorder;
+    }
+  );
+
+  // The title of the table
+  const tableTitle = `The requested files\r\n===================\r\n`;
+
+  // The table containing the data request file names and type of the product data contained by the file
+  const table = tableHeader + tableBody + `\r\n`;
+  // tslint:disable-next-line:no-console
+  console.log(table);
+  // The SALT policy
+  const policy = `
+  Publication and acknowledgment policy
+  =====================================
+
+  Publications
+  ------------
+  Please notify salthelp@salt.ac.za of any publication made using SALT data including
+  reviewed papers and conference proceedings.
+
+  Science paper acknowledgements
+  ------------------------------
+  All science papers that include SALT data which are submitted for publication in refereed
+  science journals must include the following words of acknowledgment:
+
+  “All/some [choose which is appropriate] of the observations reported in this paper
+  were obtained with the Southern African Large Telescope (SALT) under program(s)
+  [insert Proposal Code(s)].”
+
+  We recommend that the Principle Investigator is also mentioned after the Proposal Code. In
+  addition, for papers which predominantly based on SALT data, a footnote symbol should
+  appear after the paper title*, and the following text should be written as a footnote:
+
+  *based on observations made with the Southern African Large Telescope (SALT)"
+
+  If possible, please also include the Proposal Code and Principle Investigator in body of the
+  paper when describing observations.
+
+  If you use data reduced by the SALT science pipeline or use the PySALT software, please
+  provide a link to http://pysalt.salt.ac.za/ and cite the following paper:
+
+  Crawford, S.M., Still, M., Schellart, P., Balona, L., Buckley, D.A.H., Gulbis, A.A.S., Kniazev,
+  A., Kotze, M., Loaring, N., Nordsieck, K.H., Pickering, T.E., Potter, S., Romero Colmenero,
+  E., Vaisanen, P., Williams, T., Zietsman, E., 2010. PySALT: the SALT Science Pipeline.
+  SPIE Astronomical Instrumentation, 7737-82\r\n\n`;
+
+  // A read me file content
+  const readMeFileContent = tableTitle + table + policy;
+
+  // append a file from string
+  archive.append(readMeFileContent, { name: "README.txt" });
+  const rawRequested = requestedCalibrationLevels.has("RAW");
+  const reducedRequested = requestedCalibrationLevels.has("REDUCED");
+  // save files
+  dataFiles.forEach((file: { reduced: string; raw: string; name: string }) => {
+    if (rawRequested) {
+      archive.file(`${process.env.FITS_BASE_DIR}/${file.raw}`, {
+        name: file.name
+      });
+    }
+    if (reducedRequested) {
+      archive.file(`${process.env.FITS_BASE_DIR}/${file.reduced}`, {
+        name: file.name
+      });
+    }
+  });
+
+  await archive.finalize();
 };
