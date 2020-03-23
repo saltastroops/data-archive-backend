@@ -25,12 +25,18 @@ export const createDataRequest = async (
     throw new Error("You must be logged in to create a data request");
   }
 
+  // store the requested files before adding calibrations
+  const requestedDataFiles = [...dataFiles];
+
   // add calibrations, if requested
   if (requestedCalibrationTypes.size) {
     dataFiles = await addCalibrations(dataFiles, requestedCalibrationTypes);
   }
 
   const dataFileIdStrings = dataFiles.map(id => id.toString());
+  const requestedDataFileIdStrings = requestedDataFiles.map(id =>
+    id.toString()
+  );
   const mayRequest = await mayViewAllOfDataFiles(user, dataFileIdStrings);
   if (!mayRequest) {
     throw new Error("You are not allowed to request some of the files");
@@ -60,7 +66,7 @@ export const createDataRequest = async (
         INSERT INTO admin.data_request_artifact (data_request_id, artifact_id)
         VALUES ($1, $2)
     `;
-    dataFileIdStrings.map(async dataFileId => {
+    requestedDataFileIdStrings.map(async dataFileId => {
       await client.query(dataRequestArtifactSQL, [dataRequestId, dataFileId]);
     });
 
