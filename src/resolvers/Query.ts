@@ -176,7 +176,7 @@ const Query = {
 
 const DataRequest = {
   async user(root: any, args: {}, ctx: IContext) {
-    return await batchGetUsers([parseInt(root.user.id, 10)]);
+    return batchGetUsers([parseInt(root.user.id, 10)]);
   }
 
   // TODO: There should be a dataFiles method using a data loader. However, it
