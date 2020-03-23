@@ -3,6 +3,11 @@ import moment from "moment";
 import * as Path from "path";
 import { ssdaPool } from "../db/postgresql_pool";
 import { dataRequestIdsByUserIds } from "../util/dataRequests";
+import {
+  batchGetDataFiles,
+  batchGetDataRequests,
+  batchGetUsers
+} from "../util/loaders";
 import { getUserByToken, User } from "../util/user";
 import { queryDataFiles } from "./serchResults";
 
@@ -30,7 +35,11 @@ const Query = {
       return null;
     }
 
-    return loaders.userLoader.load(ctx.user.id);
+    // TODO: This should be implemented using a data loader instead of the data
+    // loader's batch function. However, it seemed that data request queries
+    // return incorrect data files when using data loaders.
+    const users = await batchGetUsers([parseInt(ctx.user.id, 10)]);
+    return users[0];
   },
 
   async dataFiles(
@@ -64,10 +73,20 @@ const Query = {
         parseInt(ctx.user.id, 10)
       ]);
 
-      const { loaders } = ctx;
-      const { dataRequestLoader } = loaders;
+      // TODO: The following should be implemented using data loaders instead of
+      // the data loaders' batch functions. However, it seemed that data request
+      // queries return incorrect data files when using data loaders.
+      const drs = await batchGetDataRequests(dataRequestIds);
 
-      return await dataRequestLoader.loadMany(dataRequestIds);
+      for (const dr of drs) {
+        const dataFiles = await batchGetDataFiles(
+          ctx.user,
+          dr.dataFiles as any
+        );
+        dr.dataFiles = dataFiles as any;
+      }
+
+      return drs;
     } catch (e) {
       throw new Error(
         "Something went wrong while retrieving your data requests. Please try again later."
@@ -157,16 +176,12 @@ const Query = {
 
 const DataRequest = {
   async user(root: any, args: {}, ctx: IContext) {
-    const { loaders } = ctx;
-
-    return loaders.userLoader.load(root.user);
-  },
-
-  async dataFiles(root: any, args: {}, ctx: IContext) {
-    const { loaders } = ctx;
-
-    return loaders.dataFileLoader.loadMany(root.dataFiles);
+    return await batchGetUsers([parseInt(root.user.id, 10)]);
   }
+
+  // TODO: There should be a dataFiles method using a data loader. However, it
+  // seemed that data request queries return incorrect data files when using
+  // data loaders.
 };
 
 export { DataRequest, Query };

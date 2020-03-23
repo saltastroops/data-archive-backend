@@ -5,7 +5,7 @@ import { ownsOutOfDataFiles, Role, User } from "./user";
 /**
  * Batch function for getting data requests.
  */
-async function batchGetDataRequests(ids: number[]) {
+export async function batchGetDataRequests(ids: number[]) {
   // get the data requests
   const dataRequestsSQL = `
     SELECT data_request_id, path, status, made_at, ssda_user_id
@@ -81,7 +81,7 @@ async function batchGetDataRequests(ids: number[]) {
   }
 
   // Return the data requests
-  return dataRequests.map((d: any) => ({
+  const e = dataRequests.map((d: any) => ({
     calibrationLevels: dataRequestCalibrationLevels.get(d.data_request_id),
     calibrationTypes: dataRequestCalibrationTypes.get(d.data_request_id),
     dataFiles: dataRequestArtifacts.get(d.data_request_id),
@@ -91,12 +91,13 @@ async function batchGetDataRequests(ids: number[]) {
     uri: d.path,
     user: d.ssda_user_id
   }));
+  return e;
 }
 
 /**
  * Batch function for getting data files.
  */
-async function batchGetDataFiles(user: User, ids: number[]) {
+export async function batchGetDataFiles(user: User, ids: number[]) {
   const sql = `
   SELECT artifact_id, name, content_length
   FROM observations.artifact
@@ -111,16 +112,17 @@ async function batchGetDataFiles(user: User, ids: number[]) {
   const ownedArtifactIds = await ownsOutOfDataFiles(user, artifactIds);
 
   // return the data files
-  return artifacts.map(artifact => ({
+  const r = artifacts.map(artifact => ({
     id: artifact.artifact_id,
     name: artifact.name
   }));
+  return r;
 }
 
 /**
  * Batch function for getting users.
  */
-async function batchGetUsers(ids: number[]) {
+export async function batchGetUsers(ids: number[]) {
   // Get the users
   const usersSQL = `
   SELECT u.ssda_user_id, family_name, given_name, email, affiliation, username, auth_provider
