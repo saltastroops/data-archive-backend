@@ -54,31 +54,57 @@ export const zipDataRequest = async (
   requestedCalibrationLevels: Set<CalibrationLevel>
 ) => {
   // collect the files
-  const sql = `SELECT         
-                              (paths).raw,
-                              (paths).reduced,
+  const sql = `SELECT         (paths).raw,
+                              (paths).reduced,   
                               product_type AS type,
                               proposal_code AS proposal_code,
-                              observation_group_id AS block_id,
+                              observation_group_id AS observation_id,
                               ins.name AS instrument_name,
-                              calibration_level,
-                              night AS date
-                FROM admin.data_request dr
-                LEFT OUTER JOIN admin.data_request_artifact dra on dra.data_request_id = dr.data_request_id
-                LEFT OUTER JOIN observations.artifact atf on atf.artifact_id = dra.artifact_id
-                LEFT OUTER JOIN admin.data_request_calibration_level drl on drl.data_request_id = dr.data_request_id
-                LEFT OUTER JOIN admin.calibration_level ac on ac.calibration_level_id = drl.calibration_level_id
+                              night
+               FROM observations.artifact atf
                 LEFT OUTER JOIN observations.plane p ON p.plane_id = atf.plane_id
                 LEFT OUTER JOIN observations.observation_time obs_time ON obs_time.plane_id = p.plane_id
                 LEFT OUTER JOIN observations.observation obs ON p.observation_id = obs.observation_id
                 LEFT OUTER JOIN observations.product_type pt ON atf.product_type_id = pt.product_type_id
                 LEFT OUTER JOIN observations.proposal obsp ON obs.proposal_id = obsp.proposal_id
                 LEFT OUTER JOIN observations.instrument ins on obs.instrument_id = ins.instrument_id
-                WHERE dra.artifact_id = ANY($1)
+               WHERE artifact_id = ANY($1) 
   `;
   const res = await ssdaPool.query(sql, [fileIds]);
-  const dataFiles = res.rows;
+  const artifacts = res.rows;
 
+  const dataFiles: Array<any> = [];
+  const path = require("path");
+
+  for (const df of artifacts) {
+    for (const calibrationLevel of Array.from(requestedCalibrationLevels)) {
+      let filepath: string;
+      let description: string;
+
+      if (calibrationLevel === "RAW") {
+        filepath = df.raw;
+        description = `Raw ${df.instrument_name} data`;
+      } else if (calibrationLevel === "REDUCED") {
+        filepath = df.reduced;
+        description = `Reduced ${df.instrument_name} data`;
+      } else {
+        throw new Error(`Unsupported calibration level ${calibrationLevel}`);
+      }
+
+      const filename = path.basename(filepath);
+      const fileDescription = description;
+
+      dataFiles.push({
+        fileDescription,
+        filename,
+        instrument_name: df.instrument_name,
+        night: df.night,
+        observation_id: df.observation_id,
+        proposal_code: df.proposal_code,
+        type: df.type
+      });
+    }
+  }
   // zip files
   if (!process.env.DATA_REQUEST_BASE_DIR) {
     throw new Error("The DATA_REQUEST_BASE_DIR has not been set.");
@@ -126,6 +152,10 @@ export const zipDataRequest = async (
   archive.pipe(output);
 
   // Get the maximum length of the table column names
+  const nameStrLength = Math.max(
+    ...dataFiles.map((file: { filename: string }) => file.filename.length)
+  );
+
   const typeStrLength = Math.max(
     ...dataFiles.map((file: { type: string }) => file.type.length)
   );
@@ -137,8 +167,8 @@ export const zipDataRequest = async (
   );
 
   const blockIdStrLength = Math.max(
-    ...dataFiles.map((file: { block_id: string }) =>
-      file.block_id ? file.block_id.length : "block id".length
+    ...dataFiles.map((file: { observation_id: string }) =>
+      file.observation_id ? file.observation_id.length : "observation id".length
     )
   );
   const observationNightStrLength = Math.max(
@@ -148,54 +178,32 @@ export const zipDataRequest = async (
     )
   );
 
-  const fileName = dataFiles.map(data => {
-    let filename = "";
-    const path = require("path");
-
-    if (data.calibration_level === "Raw") {
-      filename = path.basename(data.raw);
-    }
-    if (data.calibration_level === "Reduced") {
-      filename = path.basename(data.reduced);
-    }
-    return filename;
-  });
-
-  const fileDescription = dataFiles.map(data => {
-    let description = "";
-    if (data.calibration_level === "Reduced") {
-      description = `Reduced ${data.instrument_name} data`;
-    }
-    if (data.calibration_level === "Raw") {
-      description = `Raw ${data.instrument_name} data`;
-    }
-    return description;
-  });
+  const fileDescriptionStrLength = Math.max(
+    ...dataFiles.map(
+      (file: { fileDescription: string }) => file.fileDescription.length
+    )
+  );
 
   // Table row separator
   const rowBorder = `
-+-${"-".repeat(fileName[0].length)}-+-${"-".repeat(
-    typeStrLength
-  )}-+-${"-".repeat(proposalCodeStrLength)}-+-${"-".repeat(
-    blockIdStrLength
-  )}-+-${"-".repeat(observationNightStrLength)}-+-${"-".repeat(
-    fileDescription[0].length
-  )}-+`;
++-${"-".repeat(nameStrLength)}-+-${"-".repeat(typeStrLength)}-+-${"-".repeat(
+    proposalCodeStrLength
+  )}-+-${"-".repeat(blockIdStrLength)}-+-${"-".repeat(
+    observationNightStrLength
+  )}-+-${"-".repeat(fileDescriptionStrLength)}-+`;
 
   // Table content of the table header
   const tableHeaderContent = `
-| File name${" ".repeat(
-    fileName[0].length - "File name".length
-  )} | Type${" ".repeat(
+| File name${" ".repeat(nameStrLength - "File name".length)} | Type${" ".repeat(
     typeStrLength - "Type".length
   )} | Proposal code${" ".repeat(
     proposalCodeStrLength - "Proposal code".length
-  )} | Block id${" ".repeat(
-    blockIdStrLength - "Block id".length
+  )} | Observation id${" ".repeat(
+    blockIdStrLength - "Observation id".length
   )} | Date${" ".repeat(
     observationNightStrLength - "Date".length
   )} | File Description${" ".repeat(
-    fileDescription[0].length - "file description".length
+    fileDescriptionStrLength - "file description".length
   )} |`;
 
   // The header of the table
@@ -205,36 +213,47 @@ export const zipDataRequest = async (
   let tableBody = ``;
   dataFiles.forEach(
     (file: {
+      filename: string;
+      fileDescription: string;
       type: string;
-      date: string;
+      night: string;
       proposal_code: string;
-      block_id: string;
+      observation_id: string;
     }) => {
       // The content of the table body
       let tableBodyContent = `
-| ${fileName[0]} `;
+| ${file.filename}${" ".repeat(nameStrLength - file.filename.length)} `;
+
       tableBodyContent += `| ${file.type}${" ".repeat(
         typeStrLength - file.type.length
       )} `;
+
       tableBodyContent += `| ${
         file.proposal_code
           ? file.proposal_code
           : " ".repeat(proposalCodeStrLength)
       } `;
+
       tableBodyContent += `| ${
-        file.block_id
-          ? file.block_id +
-            " ".repeat(Math.max("block_id  ".length) - file.block_id.length)
+        file.observation_id
+          ? file.observation_id +
+            " ".repeat(
+              Math.max("block_id  ".length) - file.observation_id.length
+            )
           : " ".repeat(blockIdStrLength)
       } `;
-      tableBodyContent += `| ${moment(file.date).format(
+
+      tableBodyContent += `| ${moment(file.night).format(
         "YYYY-MM-DD"
       )}${" ".repeat(
         observationNightStrLength -
-          moment(file.date).format("YYYY-MM-DD").length
+          moment(file.night).format("YYYY-MM-DD").length
       )} `;
 
-      tableBodyContent += `| ${fileDescription[0]} |\r`;
+      tableBodyContent += `| ${file.fileDescription}${" ".repeat(
+        fileDescriptionStrLength - file.fileDescription.length
+      )} |\r`;
+
       tableBody = tableBody + tableBodyContent + rowBorder;
     }
   );
@@ -250,6 +269,8 @@ export const zipDataRequest = async (
 
   // The table containing the data request file names and type of the product data contained by the file
   const table = tableHeader + tableBody + `\r\n`;
+  // tslint:disable-next-line:no-console
+  console.log(table);
   // The SALT policy
   const policy = `
   Publication and acknowledgment policy
