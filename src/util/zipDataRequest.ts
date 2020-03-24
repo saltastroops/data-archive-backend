@@ -105,8 +105,8 @@ export const zipDataRequest = async (
         filename,
         instrument_name: df.instrument_name,
         night: moment(df.night).format("YYYY-MM-DD"),
-        observation_id: df.observation_id,
-        proposal_code: df.proposal_code,
+        observation_id: df.observation_id ? df.observation_id : "",
+        proposal_code: df.proposal_code ? df.proposal_code.length : "",
         type: df.type
       });
     }
@@ -159,29 +159,43 @@ export const zipDataRequest = async (
 
   // Get the maximum length of the table columns
   const nameStrLength = Math.max(
-    ...dataFiles.map((file: { filename: string }) => file.filename.length)
+    ...[
+      "File name".length,
+      ...dataFiles.map((file: { filename: string }) => file.filename.length)
+    ]
   );
 
   const typeStrLength = Math.max(
-    ...dataFiles.map((file: { type: string }) => file.type.length)
+    ...[
+      "Type".length,
+      ...dataFiles.map((file: { type: string }) => file.type.length)
+    ]
   );
 
   const proposalCodeStrLength = Math.max(
-    ...dataFiles.map((file: { proposal_code: string }) =>
-      file.proposal_code ? file.proposal_code.length : "proposal code".length
-    )
+    ...[
+      "Proposal code".length,
+      ...dataFiles.map(
+        (file: { proposal_code: string }) => file.proposal_code.length
+      )
+    ]
   );
 
   const observationIdStrLength = Math.max(
-    ...dataFiles.map((file: { observation_id: string }) =>
-      file.observation_id ? file.observation_id.length : "observation id".length
-    )
+    ...[
+      "observation id".length,
+      ...dataFiles.map((file: { observation_id: string }) =>
+        file.observation_id
+          ? file.observation_id.length
+          : "observation id".length
+      )
+    ]
   );
   const NightStrLength = Math.max(
-    ...dataFiles.map(
-      (file: { night: string }) =>
-        moment(file.night).format("YYYY-MM-DD").length
-    )
+    ...[
+      "Night".length,
+      ...dataFiles.map((file: { night: string }) => file.night.length)
+    ]
   );
 
   const fileDescriptionStrLength = Math.max(
@@ -234,17 +248,13 @@ export const zipDataRequest = async (
         typeStrLength - file.type.length
       )} `;
 
-      tableRowContent += `| ${
-        file.proposal_code
-          ? file.proposal_code
-          : " ".repeat(proposalCodeStrLength)
-      } `;
+      tableRowContent += `| ${file.proposal_code}${" ".repeat(
+        proposalCodeStrLength - file.proposal_code.length
+      )} `;
 
-      tableRowContent += `| ${
-        file.observation_id
-          ? file.observation_id
-          : " ".repeat(observationIdStrLength)
-      } `;
+      tableRowContent += `| ${file.observation_id}${" ".repeat(
+        observationIdStrLength - file.observation_id.length
+      )} `;
 
       tableRowContent += `| ${file.night}${" ".repeat(
         NightStrLength - file.night.length
