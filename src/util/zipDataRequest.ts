@@ -1,6 +1,7 @@
 import archiver from "archiver";
 import fs from "fs";
 import moment from "moment";
+import { basename } from "path";
 import { ssdaPool } from "../db/postgresql_pool";
 import { CalibrationLevel } from "./calibrations";
 
@@ -74,8 +75,13 @@ export const zipDataRequest = async (
   const artifacts = res.rows;
 
   const dataFiles: Array<any> = [];
-  const path = require("path");
 
+  /*
+   Checking if user chose Reduced ar Raw calibration level for their
+   data request then we create the object to be used in
+   making our README table. We also do the description of the file(s) chosen
+   based on the instrument used an and the calibration level chosen
+ */
   for (const df of artifacts) {
     for (const calibrationLevel of Array.from(requestedCalibrationLevels)) {
       let filepath: string;
@@ -91,14 +97,14 @@ export const zipDataRequest = async (
         throw new Error(`Unsupported calibration level ${calibrationLevel}`);
       }
 
-      const filename = path.basename(filepath);
+      const filename = basename(filepath);
       const fileDescription = description;
 
       dataFiles.push({
         fileDescription,
         filename,
         instrument_name: df.instrument_name,
-        night: df.night,
+        night: moment(df.night).format("YYYY-MM-DD"),
         observation_id: df.observation_id,
         proposal_code: df.proposal_code,
         type: df.type
@@ -151,7 +157,7 @@ export const zipDataRequest = async (
   // pipe archive data to the output file
   archive.pipe(output);
 
-  // Get the maximum length of the table column names
+  // Get the maximum length of the table columns
   const nameStrLength = Math.max(
     ...dataFiles.map((file: { filename: string }) => file.filename.length)
   );
@@ -166,12 +172,12 @@ export const zipDataRequest = async (
     )
   );
 
-  const blockIdStrLength = Math.max(
+  const observationIdStrLength = Math.max(
     ...dataFiles.map((file: { observation_id: string }) =>
       file.observation_id ? file.observation_id.length : "observation id".length
     )
   );
-  const observationNightStrLength = Math.max(
+  const NightStrLength = Math.max(
     ...dataFiles.map(
       (file: { night: string }) =>
         moment(file.night).format("YYYY-MM-DD").length
@@ -188,8 +194,8 @@ export const zipDataRequest = async (
   const rowBorder = `
 +-${"-".repeat(nameStrLength)}-+-${"-".repeat(typeStrLength)}-+-${"-".repeat(
     proposalCodeStrLength
-  )}-+-${"-".repeat(blockIdStrLength)}-+-${"-".repeat(
-    observationNightStrLength
+  )}-+-${"-".repeat(observationIdStrLength)}-+-${"-".repeat(
+    NightStrLength
   )}-+-${"-".repeat(fileDescriptionStrLength)}-+`;
 
   // Table content of the table header
@@ -199,11 +205,11 @@ export const zipDataRequest = async (
   )} | Proposal code${" ".repeat(
     proposalCodeStrLength - "Proposal code".length
   )} | Observation id${" ".repeat(
-    blockIdStrLength - "Observation id".length
-  )} | Date${" ".repeat(
-    observationNightStrLength - "Date".length
+    observationIdStrLength - "Observation id".length
+  )} | Night${" ".repeat(
+    NightStrLength - "Night".length
   )} | File Description${" ".repeat(
-    fileDescriptionStrLength - "file description".length
+    fileDescriptionStrLength - "File Description".length
   )} |`;
 
   // The header of the table
@@ -221,40 +227,34 @@ export const zipDataRequest = async (
       observation_id: string;
     }) => {
       // The content of the table body
-      let tableBodyContent = `
+      let tableRowContent = `
 | ${file.filename}${" ".repeat(nameStrLength - file.filename.length)} `;
 
-      tableBodyContent += `| ${file.type}${" ".repeat(
+      tableRowContent += `| ${file.type}${" ".repeat(
         typeStrLength - file.type.length
       )} `;
 
-      tableBodyContent += `| ${
+      tableRowContent += `| ${
         file.proposal_code
           ? file.proposal_code
           : " ".repeat(proposalCodeStrLength)
       } `;
 
-      tableBodyContent += `| ${
+      tableRowContent += `| ${
         file.observation_id
-          ? file.observation_id +
-            " ".repeat(
-              Math.max("block_id  ".length) - file.observation_id.length
-            )
-          : " ".repeat(blockIdStrLength)
+          ? file.observation_id
+          : " ".repeat(observationIdStrLength)
       } `;
 
-      tableBodyContent += `| ${moment(file.night).format(
-        "YYYY-MM-DD"
-      )}${" ".repeat(
-        observationNightStrLength -
-          moment(file.night).format("YYYY-MM-DD").length
+      tableRowContent += `| ${file.night}${" ".repeat(
+        NightStrLength - file.night.length
       )} `;
 
-      tableBodyContent += `| ${file.fileDescription}${" ".repeat(
+      tableRowContent += `| ${file.fileDescription}${" ".repeat(
         fileDescriptionStrLength - file.fileDescription.length
       )} |\r`;
 
-      tableBody = tableBody + tableBodyContent + rowBorder;
+      tableBody = tableBody + tableRowContent + rowBorder;
     }
   );
 
@@ -269,8 +269,7 @@ export const zipDataRequest = async (
 
   // The table containing the data request file names and type of the product data contained by the file
   const table = tableHeader + tableBody + `\r\n`;
-  // tslint:disable-next-line:no-console
-  console.log(table);
+
   // The SALT policy
   const policy = `
   Publication and acknowledgment policy
