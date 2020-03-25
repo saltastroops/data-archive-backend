@@ -77,10 +77,9 @@ export const zipDataRequest = async (
   const dataFiles: Array<any> = [];
 
   /*
-   Checking if user chose Reduced ar Raw calibration level for their
-   data request then we create the object to be used in
-   making our README table. We also do the description of the file(s) chosen
-   based on the instrument used an and the calibration level chosen
+  For each requested file and calibration level we create the object to be used when
+  creating the rows of the table of files. This includes a description of the file(s)
+  based on the instrument and calibration level.
  */
   for (const df of artifacts) {
     for (const calibrationLevel of Array.from(requestedCalibrationLevels)) {
@@ -157,24 +156,31 @@ export const zipDataRequest = async (
   // pipe archive data to the output file
   archive.pipe(output);
 
+  const fileNameHeading = "File name";
+  const fileTypeHeading = "Type";
+  const proposalCodeHeading = "Proposal code";
+  const observationIdHeading = "Observation id";
+  const nightHeading = "Night";
+  const fileDescriptionHeading = "File Description";
+
   // Get the maximum length of the table columns
   const nameStrLength = Math.max(
     ...[
-      "File name".length,
+      fileNameHeading.length,
       ...dataFiles.map((file: { filename: string }) => file.filename.length)
     ]
   );
 
   const typeStrLength = Math.max(
     ...[
-      "Type".length,
+      fileTypeHeading.length,
       ...dataFiles.map((file: { type: string }) => file.type.length)
     ]
   );
 
   const proposalCodeStrLength = Math.max(
     ...[
-      "Proposal code".length,
+      proposalCodeHeading.length,
       ...dataFiles.map(
         (file: { proposal_code: string }) => file.proposal_code.length
       )
@@ -183,25 +189,27 @@ export const zipDataRequest = async (
 
   const observationIdStrLength = Math.max(
     ...[
-      "observation id".length,
-      ...dataFiles.map((file: { observation_id: string }) =>
-        file.observation_id
-          ? file.observation_id.length
-          : "observation id".length
+      observationIdHeading.length,
+      ...dataFiles.map(
+        (file: { observation_id: string }) => file.observation_id.length
       )
     ]
   );
-  const NightStrLength = Math.max(
+
+  const nightStrLength = Math.max(
     ...[
-      "Night".length,
+      nightHeading.length,
       ...dataFiles.map((file: { night: string }) => file.night.length)
     ]
   );
 
   const fileDescriptionStrLength = Math.max(
-    ...dataFiles.map(
-      (file: { fileDescription: string }) => file.fileDescription.length
-    )
+    ...[
+      fileDescriptionHeading.length,
+      ...dataFiles.map(
+        (file: { fileDescription: string }) => file.fileDescription.length
+      )
+    ]
   );
 
   // Table row separator
@@ -209,7 +217,7 @@ export const zipDataRequest = async (
 +-${"-".repeat(nameStrLength)}-+-${"-".repeat(typeStrLength)}-+-${"-".repeat(
     proposalCodeStrLength
   )}-+-${"-".repeat(observationIdStrLength)}-+-${"-".repeat(
-    NightStrLength
+    nightStrLength
   )}-+-${"-".repeat(fileDescriptionStrLength)}-+`;
 
   // Table content of the table header
@@ -221,7 +229,7 @@ export const zipDataRequest = async (
   )} | Observation id${" ".repeat(
     observationIdStrLength - "Observation id".length
   )} | Night${" ".repeat(
-    NightStrLength - "Night".length
+    nightStrLength - "Night".length
   )} | File Description${" ".repeat(
     fileDescriptionStrLength - "File Description".length
   )} |`;
@@ -257,7 +265,7 @@ export const zipDataRequest = async (
       )} `;
 
       tableRowContent += `| ${file.night}${" ".repeat(
-        NightStrLength - file.night.length
+        nightStrLength - file.night.length
       )} `;
 
       tableRowContent += `| ${file.fileDescription}${" ".repeat(
