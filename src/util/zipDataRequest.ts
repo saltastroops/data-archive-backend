@@ -105,7 +105,7 @@ export const zipDataRequest = async (
         instrument_name: df.instrument_name,
         night: moment(df.night).format("YYYY-MM-DD"),
         observation_id: df.observation_id ? df.observation_id : "",
-        proposal_code: df.proposal_code ? df.proposal_code.length : "",
+        proposal_code: df.proposal_code ? df.proposal_code : "",
         type: df.type
       });
     }
@@ -222,16 +222,18 @@ export const zipDataRequest = async (
 
   // Table content of the table header
   const tableHeaderContent = `
-| File name${" ".repeat(nameStrLength - "File name".length)} | Type${" ".repeat(
-    typeStrLength - "Type".length
-  )} | Proposal code${" ".repeat(
-    proposalCodeStrLength - "Proposal code".length
-  )} | Observation id${" ".repeat(
-    observationIdStrLength - "Observation id".length
-  )} | Night${" ".repeat(
-    nightStrLength - "Night".length
-  )} | File Description${" ".repeat(
-    fileDescriptionStrLength - "File Description".length
+| ${fileNameHeading}${" ".repeat(
+    nameStrLength - fileNameHeading.length
+  )} | ${fileTypeHeading}${" ".repeat(
+    typeStrLength - fileTypeHeading.length
+  )} | ${proposalCodeHeading}${" ".repeat(
+    proposalCodeStrLength - proposalCodeHeading.length
+  )} | ${observationIdHeading}${" ".repeat(
+    observationIdStrLength - observationIdHeading.length
+  )} | ${nightHeading}${" ".repeat(
+    nightStrLength - nightHeading.length
+  )} | ${fileDescriptionHeading}${" ".repeat(
+    fileDescriptionStrLength - fileDescriptionHeading.length
   )} |`;
 
   // The header of the table
