@@ -30,6 +30,7 @@ The server requires the following environment variables. These must be defined i
 Variable | Description | Example
 ---- | ---- | ----
 FRONTEND_HOST | The host of the frontend accessing this server | https://ssda.saao.ac.za
+TZ | The timezone, which must be UTC. | UTC
 PRISMA_ENDPOINT | The URL of the Prisma server | https://ssdadb.saao.ac.za
 PRISMA_SECRET | The secret key for the Prisma server | topsecretkey
 SESSION_SECRET | The secret key for for signing the session ID cookie | anothertopsecretkey
