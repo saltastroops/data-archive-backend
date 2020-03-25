@@ -74,7 +74,7 @@ export const zipDataRequest = async (
   const res = await ssdaPool.query(sql, [fileIds]);
   const artifacts = res.rows;
 
-  const dataFiles: Array<any> = [];
+  const dataFiles: any[] = [];
 
   /*
   For each requested file and calibration level we create the object to be used when
