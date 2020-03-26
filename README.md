@@ -30,6 +30,7 @@ The server requires the following environment variables. These must be defined i
 Variable | Description | Example
 ---- | ---- | ----
 FRONTEND_HOST | The host of the frontend accessing this server | https://ssda.saao.ac.za
+TZ | The timezone, which must be UTC. | UTC
 PRISMA_ENDPOINT | The URL of the Prisma server | https://ssdadb.saao.ac.za
 PRISMA_SECRET | The secret key for the Prisma server | topsecretkey
 SESSION_SECRET | The secret key for for signing the session ID cookie | anothertopsecretkey
@@ -48,6 +49,8 @@ MAIL_USER | The mail server username | mail-username
 MAIL_PASSWORD | The mail server user password | mail-password
 MAIL_PORT | The mail server port | 2525
 MAIL_SSL | Securing the mail server SMTP | true/false
+
+The `TZ` variable needs to be set to ensure that Node and the PostgreSQL driver use UTC when converting `DATE` database entries to a JavaScript `Date` object.
 
 The [Sentry](https://sentry.io) DSN (Data Source Name) can be obtained from the client keys tab in your Sentry project's settings.
 
