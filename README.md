@@ -50,6 +50,8 @@ MAIL_PASSWORD | The mail server user password | mail-password
 MAIL_PORT | The mail server port | 2525
 MAIL_SSL | Securing the mail server SMTP | true/false
 
+The `TZ` variable needs to be set to ensure that Node and the PostgreSQL driver use UTC when converting `DATE` database entries to a JavaScript `Date` object.
+
 The [Sentry](https://sentry.io) DSN (Data Source Name) can be obtained from the client keys tab in your Sentry project's settings.
 
 ## Deploying Prisma
