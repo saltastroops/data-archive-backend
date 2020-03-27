@@ -398,11 +398,16 @@ async function findFileDataId(artifactId: number): Promise<number> {
   const name = artifactNameRes.rows[0].name;
 
   // Find the file data id for that name.
+  // Note: This requires that the SDB is as up-to-date as the SSDA.
   const fileIdSQL = `
   SELECT FileData_Id FROM FileData WHERE FileName=?
   `;
   const fileDataIdRes: any = await sdbPool.query(fileIdSQL, [name]);
-  assert(fileDataIdRes[0].length === 1 && fileDataIdRes[0][0].FileData_Id);
+  if (fileDataIdRes[0].length !== 1 || !fileDataIdRes[0][0].FileData_Id) {
+    throw new Error(
+      "There is a database issue. Please contact salthelp@salt.ac.za."
+    );
+  }
   return parseInt(fileDataIdRes[0][0].FileData_Id, 10);
 }
 
