@@ -1,4 +1,3 @@
-import assert from "assert";
 import { sdbPool } from "../db/mysql_pool";
 import { ssdaPool } from "../db/postgresql_pool";
 import { CalibrationType } from "./calibrations";
@@ -370,7 +369,9 @@ async function findInstrument(artifactId: number): Promise<string> {
   WHERE a.artifact_id=$1
   `;
   const instrumentRes = await ssdaPool.query(instrumentSQL, [artifactId]);
-  assert(instrumentRes.rowCount === 1);
+  if (instrumentRes.rowCount === 0) {
+    throw new Error(`No instrument found for artifact id ${artifactId}.`);
+  }
   return instrumentRes.rows[0].name;
 }
 
@@ -394,15 +395,22 @@ async function findFileDataId(artifactId: number): Promise<number> {
   SELECT name FROM artifact WHERE artifact_id=$1
   `;
   const artifactNameRes = await ssdaPool.query(artifactNameSQL, [artifactId]);
-  assert(artifactNameRes.rowCount === 1);
+  if (artifactNameRes.rowCount === 0) {
+    throw new Error(`There exists no artifact with id ${artifactId}.`);
+  }
   const name = artifactNameRes.rows[0].name;
 
   // Find the file data id for that name.
+  // Note: This requires that the SDB is as up-to-date as the SSDA.
   const fileIdSQL = `
   SELECT FileData_Id FROM FileData WHERE FileName=?
   `;
   const fileDataIdRes: any = await sdbPool.query(fileIdSQL, [name]);
-  assert(fileDataIdRes[0].length === 1 && fileDataIdRes[0][0].FileData_Id);
+  if (fileDataIdRes[0].length !== 1 || !fileDataIdRes[0][0].FileData_Id) {
+    throw new Error(
+      "There is a database issue. Please contact salthelp@salt.ac.za."
+    );
+  }
   return parseInt(fileDataIdRes[0][0].FileData_Id, 10);
 }
 
@@ -424,7 +432,9 @@ async function findArtifactId(fileDataId: number): Promise<number> {
   SELECT FileName FROM FileData WHERE FileData_Id=?
   `;
   const fileNameRes: any = await sdbPool.query(fileNameSQL, [fileDataId]);
-  assert(fileNameRes[0].length === 1 && fileNameRes[0][0].FileName);
+  if (fileNameRes[0].length === 0 || !fileNameRes[0][0].FileName) {
+    throw new Error(`No filename found for file data id ${fileDataId}.`);
+  }
   const filename = fileNameRes[0][0].FileName;
 
   // Find the artifact id for that file name.
@@ -436,7 +446,9 @@ async function findArtifactId(fileDataId: number): Promise<number> {
   WHERE t.name='SALT' AND a.name=$1
   `;
   const artifactIdRes = await ssdaPool.query(artifactIdSQL, [filename]);
-  assert(artifactIdRes.rowCount === 1);
+  if (artifactIdRes.rowCount === 0) {
+    throw new Error(`No artifact found for filename ${filename}.`);
+  }
   return parseInt(artifactIdRes.rows[0].artifact_id, 10);
 }
 
