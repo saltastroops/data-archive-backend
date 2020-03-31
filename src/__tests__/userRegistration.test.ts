@@ -188,31 +188,6 @@ describe("User registration", () => {
     }
   });
 
-  it("should not register the user with a username containing an upper case character", async () => {
-    // Mock the database querying
-    // 1. Mocks the get user by email address to register with not to exist.
-    (ssdaPool.query as any).mockResolvedValueOnce({ rows: [] });
-
-    // User signing up with a username that contains an upper case character
-    const args = {
-      affiliation: "Test3 Affiliation",
-      email: "test3@gmail.com",
-      familyName: "Test3",
-      givenName: "Test3",
-      password: "test3password",
-      username: "tesT3"
-    };
-
-    // Expect signing up to fail with the appropriate error
-    try {
-      await resolvers.Mutation.signup({}, args, {
-        user: { id: "", authProvider: "SSDA" }
-      });
-    } catch (e) {
-      expect(e.message).toContain("tesT3");
-    }
-  });
-
   it("should not register a user with an existing username", async () => {
     // Mock the database querying
     // 1. Mocks get user by email address to register with not to exist.
