@@ -102,13 +102,6 @@ export const createUser = async (args: IUserCreateInput) => {
       throw new Error(`The username must not be empty.`);
     }
 
-    // Check that the submitted username does not contain upper case characters
-    if (username !== username.toLowerCase()) {
-      throw new Error(
-        `The username ${username} contains upper case characters.`
-      );
-    }
-
     // Check if there already exists a user with the submitted username
     const userWithGivenUsername = await getUserByUsername(username);
 
