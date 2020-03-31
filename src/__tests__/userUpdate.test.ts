@@ -84,7 +84,7 @@ describe("User update", () => {
       expect(ssdaPool.query).toHaveBeenCalledTimes(8);
 
       // Expect the first and second query to have been called
-      // with the correct sql query and the suplied params
+      // with the correct sql query and the supplied params
       expect((ssdaPool.query as any).mock.calls[0][0]).toContain(
         "SELECT u.ssda_user_id AS id"
       );
@@ -118,7 +118,7 @@ describe("User update", () => {
       );
       expect((ssdaPool.query as any).mock.calls[3][1]).toEqual([1]);
 
-      // Expect the fith query to have been called
+      // Expect the fifth query to have been called
       // with the correct sql query and the suplied params
       expect((ssdaPool.query as any).mock.calls[4][0]).toContain(
         "SELECT u.ssda_user_id AS id"
@@ -131,7 +131,7 @@ describe("User update", () => {
       ]);
 
       // Expect the sixth query to have been called
-      // with the correct sql query and the suplied params
+      // with the correct sql query and the supplied params
       expect((ssdaPool.query as any).mock.calls[5][0]).toContain(
         "SELECT u.ssda_user_id AS id"
       );
@@ -144,7 +144,7 @@ describe("User update", () => {
       ]);
 
       // Expect the seventh query to have been called
-      // with the correct sql query and the suplied params
+      // with the correct sql query and the supplied params
       expect((ssdaPool.query as any).mock.calls[6][0]).toContain(
         "UPDATE admin.ssda_user"
       );
@@ -157,7 +157,7 @@ describe("User update", () => {
       ]);
 
       // Expect the eighth query to have been called
-      // with the correct sql query and the suplied params
+      // with the correct sql query and the supplied params
       expect((ssdaPool.query as any).mock.calls[7][0]).toContain(
         "WHERE u.ssda_user_id = $1"
       );
@@ -173,7 +173,7 @@ describe("User update", () => {
       expect(client().query.mock.calls[0][0]).toContain("BEGIN");
 
       // Expect the ssdaPool client transaction query to
-      // have been called with the correct sql query and the suplied params
+      // have been called with the correct sql query and the supplied params
       expect(client().query.mock.calls[1][0]).toContain(
         "UPDATE admin.ssda_user_auth"
       );
@@ -206,7 +206,7 @@ describe("User update", () => {
 
       // Mocks the database transaction
       // 1. Mocks client connection.
-      // 2. Mocks begining of the client transaction.
+      // 2. Mocks beginning of the client transaction.
       // 3. Mocks a select of the user id.
       // 4. Mocks an insert of the user details.
       // 5. Mocks a commit of the client transaction.
@@ -247,7 +247,7 @@ describe("User update", () => {
       expect(ssdaPool.query).toHaveBeenCalledTimes(8);
 
       // Expect the first and second query to have been called
-      // with the correct sql query and the suplied params
+      // with the correct sql query and the supplied params
       expect((ssdaPool.query as any).mock.calls[0][0]).toContain(
         "SELECT u.ssda_user_id AS id"
       );
@@ -265,7 +265,7 @@ describe("User update", () => {
       expect((ssdaPool.query as any).mock.calls[1][1]).toEqual([1]);
 
       // Expect the third and forth query to have been called
-      // with the correct sql query and the suplied params
+      // with the correct sql query and the supplied params
       expect((ssdaPool.query as any).mock.calls[2][0]).toContain(
         "SELECT u.ssda_user_id AS id"
       );
@@ -281,8 +281,8 @@ describe("User update", () => {
       );
       expect((ssdaPool.query as any).mock.calls[3][1]).toEqual([1]);
 
-      // Expect the fith query to have been called
-      // with the correct sql query and the suplied params
+      // Expect the fifth query to have been called
+      // with the correct sql query and the supplied params
       expect((ssdaPool.query as any).mock.calls[4][0]).toContain(
         "SELECT u.ssda_user_id AS id"
       );
@@ -292,7 +292,7 @@ describe("User update", () => {
       expect((ssdaPool.query as any).mock.calls[4][1]).toEqual(["test"]);
 
       // Expect the sixth query to have been called
-      // with the correct sql query and the suplied params
+      // with the correct sql query and the supplied params
       expect((ssdaPool.query as any).mock.calls[5][0]).toContain(
         "SELECT u.ssda_user_id AS id"
       );
@@ -305,7 +305,7 @@ describe("User update", () => {
       ]);
 
       // Expect the seventh query to have been called
-      // with the correct sql query and the suplied params
+      // with the correct sql query and the supplied params
       expect((ssdaPool.query as any).mock.calls[6][0]).toContain(
         "UPDATE admin.ssda_user"
       );
@@ -318,7 +318,7 @@ describe("User update", () => {
       ]);
 
       // Expect the eighth query to have been called
-      // with the correct sql query and the suplied params
+      // with the correct sql query and the supplied params
       expect((ssdaPool.query as any).mock.calls[7][0]).toContain(
         " WHERE u.ssda_user_id = $1"
       );
@@ -334,7 +334,7 @@ describe("User update", () => {
       expect(client().query.mock.calls[0][0]).toContain("BEGIN");
 
       // Expect the ssdaPool client transaction query to
-      // have been called with the correct sql query and the suplied params
+      // have been called with the correct sql query and the supplied params
       expect(client().query.mock.calls[1][0]).toContain(
         "UPDATE admin.ssda_user_auth"
       );
@@ -523,7 +523,7 @@ describe("User update", () => {
       expect((ssdaPool.query as any).mock.calls[1][1]).toEqual([1]);
 
       // Expect the third and forth query to have been called
-      // with the correct sql query and the suplied params
+      // with the correct sql query and the supplied params
       expect((ssdaPool.query as any).mock.calls[2][0]).toContain(
         "SELECT u.ssda_user_id AS id"
       );
@@ -539,8 +539,8 @@ describe("User update", () => {
       );
       expect((ssdaPool.query as any).mock.calls[3][1]).toEqual([2]);
 
-      // Expect the fith query to have been called
-      // with the correct sql query and the suplied params
+      // Expect the fifth query to have been called
+      // with the correct sql query and the supplied params
       expect((ssdaPool.query as any).mock.calls[4][0]).toContain(
         "SELECT u.ssda_user_id AS id"
       );
@@ -552,7 +552,7 @@ describe("User update", () => {
       ]);
 
       // Expect the sixth query to have been called
-      // with the correct sql query and the suplied params
+      // with the correct sql query and the supplied params
       expect((ssdaPool.query as any).mock.calls[5][0]).toContain(
         "SELECT u.ssda_user_id AS id"
       );
@@ -565,7 +565,7 @@ describe("User update", () => {
       ]);
 
       // Expect the seventh query to have been called
-      // with the correct sql query and the suplied params
+      // with the correct sql query and the supplied params
       expect((ssdaPool.query as any).mock.calls[6][0]).toContain(
         "UPDATE admin.ssda_user"
       );
@@ -578,7 +578,7 @@ describe("User update", () => {
       ]);
 
       // Expect the eighth query to have been called
-      // with the correct sql query and the suplied params
+      // with the correct sql query and the supplied params
       expect((ssdaPool.query as any).mock.calls[7][0]).toContain(
         "WHERE u.ssda_user_id = $1"
       );
@@ -594,7 +594,7 @@ describe("User update", () => {
       expect(client().query.mock.calls[0][0]).toContain("BEGIN");
 
       // Expect the ssdaPool client transaction query to
-      // have been called with the correct sql query and the suplied params
+      // have been called with the correct sql query and the supplied params
       expect(client().query.mock.calls[1][0]).toContain(
         "UPDATE admin.ssda_user_auth"
       );
