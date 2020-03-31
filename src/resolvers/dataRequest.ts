@@ -26,8 +26,8 @@ export const createDataRequest = async (
   }
 
   // check if there are data files
-  if (!dataFiles) {
-    throw new Error("You can not create an empty data request.");
+  if (dataFiles.length !== 0) {
+    throw new Error("You cannot create an empty data request.");
   }
 
   // store the requested files before adding calibrations
