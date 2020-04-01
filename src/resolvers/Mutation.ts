@@ -158,13 +158,6 @@ const Mutation = {
     // If the username is to change
     if (args.username) {
       if (userToUpdate.username !== args.username) {
-        // Check if the submitted username contains upper case characters
-        if (args.username !== args.username.toLowerCase()) {
-          throw new Error(
-            `The username ${args.username} contains upper case characters.`
-          );
-        }
-
         // Check if there already exists a user with the submitted username
         const userWithGivenUsername = await getUserByUsername(args.username);
 
