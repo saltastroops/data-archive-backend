@@ -102,6 +102,7 @@ export const zipDataRequest = async (
       dataFiles.push({
         fileDescription,
         filename,
+        filepath,
         instrument_name: df.instrument_name,
         night: moment(df.night).format("YYYY-MM-DD"),
         observation_id: df.observation_id ? df.observation_id : "",
@@ -334,14 +335,14 @@ export const zipDataRequest = async (
   const rawRequested = requestedCalibrationLevels.has("RAW");
   const reducedRequested = requestedCalibrationLevels.has("REDUCED");
   // save files
-  dataFiles.forEach((file: { reduced: string; raw: string; name: string }) => {
+  dataFiles.forEach((file: { filepath: string; name: string }) => {
     if (rawRequested) {
-      archive.file(`${process.env.FITS_BASE_DIR}/${file.raw}`, {
+      archive.file(`${process.env.FITS_BASE_DIR}/${file.filepath}`, {
         name: file.name
       });
     }
     if (reducedRequested) {
-      archive.file(`${process.env.FITS_BASE_DIR}/${file.reduced}`, {
+      archive.file(`${process.env.FITS_BASE_DIR}/${file.filepath}`, {
         name: file.name
       });
     }
