@@ -26,7 +26,7 @@ export const createDataRequest = async (
   }
 
   // check if there are data files
-  if (dataFiles.length !== 0) {
+  if (dataFiles.length === 0) {
     throw new Error("You cannot create an empty data request.");
   }
 
