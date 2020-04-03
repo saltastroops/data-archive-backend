@@ -25,6 +25,11 @@ export const createDataRequest = async (
     throw new Error("You must be logged in to create a data request");
   }
 
+  // check if there are data files
+  if (dataFiles.length === 0) {
+    throw new Error("You cannot create an empty data request.");
+  }
+
   // store the requested files before adding calibrations
   const requestedDataFiles = [...dataFiles];
 
