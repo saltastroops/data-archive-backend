@@ -332,20 +332,11 @@ export const zipDataRequest = async (
 
   // append a file from string
   archive.append(readMeFileContent, { name: "README.txt" });
-  const rawRequested = requestedCalibrationLevels.has("RAW");
-  const reducedRequested = requestedCalibrationLevels.has("REDUCED");
   // save files
   dataFiles.forEach((file: { filepath: string; name: string }) => {
-    if (rawRequested) {
-      archive.file(`${process.env.FITS_BASE_DIR}/${file.filepath}`, {
-        name: file.name
-      });
-    }
-    if (reducedRequested) {
-      archive.file(`${process.env.FITS_BASE_DIR}/${file.filepath}`, {
-        name: file.name
-      });
-    }
+    archive.file(`${process.env.FITS_BASE_DIR}/${file.filepath}`, {
+      name: file.name
+    });
   });
 
   await archive.finalize();
