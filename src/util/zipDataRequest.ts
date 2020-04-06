@@ -63,12 +63,12 @@ export const zipDataRequest = async (
                               ins.name AS instrument_name,
                               night
                FROM observations.artifact atf
-                LEFT OUTER JOIN observations.plane p ON p.plane_id = atf.plane_id
-                LEFT OUTER JOIN observations.observation_time obs_time ON obs_time.plane_id = p.plane_id
-                LEFT OUTER JOIN observations.observation obs ON p.observation_id = obs.observation_id
-                LEFT OUTER JOIN observations.product_type pt ON atf.product_type_id = pt.product_type_id
-                LEFT OUTER JOIN observations.proposal obsp ON obs.proposal_id = obsp.proposal_id
-                LEFT OUTER JOIN observations.instrument ins on obs.instrument_id = ins.instrument_id
+               LEFT OUTER JOIN observations.plane p ON p.plane_id = atf.plane_id
+               LEFT OUTER JOIN observations.observation_time obs_time ON obs_time.plane_id = p.plane_id
+               LEFT OUTER JOIN observations.observation obs ON p.observation_id = obs.observation_id
+               LEFT OUTER JOIN observations.product_type pt ON atf.product_type_id = pt.product_type_id
+               LEFT OUTER JOIN observations.proposal obsp ON obs.proposal_id = obsp.proposal_id
+               LEFT OUTER JOIN observations.instrument ins on obs.instrument_id = ins.instrument_id
                WHERE artifact_id = ANY($1) 
   `;
   const res = await ssdaPool.query(sql, [fileIds]);
@@ -216,8 +216,8 @@ export const zipDataRequest = async (
   // Table row separator
   const rowBorder = `
 +-${"-".repeat(nameStrLength)}-+-${"-".repeat(typeStrLength)}-+-${"-".repeat(
-    proposalCodeStrLength
-  )}-+-${"-".repeat(observationIdStrLength)}-+-${"-".repeat(
+    proposalCodeHeading.length
+  )}-+-${"-".repeat(observationIdHeading.length)}-+-${"-".repeat(
     nightStrLength
   )}-+-${"-".repeat(fileDescriptionStrLength)}-+`;
 
@@ -280,52 +280,51 @@ export const zipDataRequest = async (
   );
 
   const calibrationsMessage = `
-        Arcs, flats and biases (if requested) are only included if they were
-        taken as part of an observation. For spectrophotometric
-        and radial velocity standards (if requested) the standard taken nearest
-        to an observation is included.`;
-
+Arcs, flats and biases (if requested) are only included if they were taken as
+part of an observation. For spectrophotometric and radial velocity standards
+(if requested) the standard taken nearest to an observation is included.`;
   // The title of the table
   const tableTitle = `The requested files\r\n===================\r\n`;
 
   // The table containing the data request file names and type of the product data contained by the file
   const table = tableHeader + tableBody + `\r\n`;
-
+  // tslint:disable-next-line:no-console
+  console.log(table);
   // The SALT policy
   const policy = `
-  Publication and acknowledgment policy
-  =====================================
+Publication and acknowledgment policy
+=====================================
 
-  Publications
-  ------------
-  Please notify salthelp@salt.ac.za of any publication made using SALT data including
-  reviewed papers and conference proceedings.
+Publications
+------------
+Please notify salthelp@salt.ac.za of any publication made using SALT data including
+reviewed papers and conference proceedings.
 
-  Science paper acknowledgements
-  ------------------------------
-  All science papers that include SALT data which are submitted for publication in refereed
-  science journals must include the following words of acknowledgment:
+Science paper acknowledgements
+------------------------------
+All science papers that include SALT data which are submitted for publication in refereed
+science journals must include the following words of acknowledgment:
 
-  “All/some [choose which is appropriate] of the observations reported in this paper
-  were obtained with the Southern African Large Telescope (SALT) under program(s)
-  [insert Proposal Code(s)].”
+“All/some [choose which is appropriate] of the observations reported in this paper
+were obtained with the Southern African Large Telescope (SALT) under program(s)
+[insert Proposal Code(s)].”
 
-  We recommend that the Principle Investigator is also mentioned after the Proposal Code. In
-  addition, for papers which predominantly based on SALT data, a footnote symbol should
-  appear after the paper title*, and the following text should be written as a footnote:
+We recommend that the Principle Investigator is also mentioned after the Proposal Code. In
+addition, for papers which predominantly based on SALT data, a footnote symbol should
+appear after the paper title*, and the following text should be written as a footnote:
 
-  *based on observations made with the Southern African Large Telescope (SALT)"
+*based on observations made with the Southern African Large Telescope (SALT)"
 
-  If possible, please also include the Proposal Code and Principle Investigator in body of the
-  paper when describing observations.
+If possible, please also include the Proposal Code and Principle Investigator in body of the
+paper when describing observations.
 
-  If you use data reduced by the SALT science pipeline or use the PySALT software, please
-  provide a link to http://pysalt.salt.ac.za/ and cite the following paper:
+If you use data reduced by the SALT science pipeline or use the PySALT software, please
+provide a link to http://pysalt.salt.ac.za/ and cite the following paper:
 
-  Crawford, S.M., Still, M., Schellart, P., Balona, L., Buckley, D.A.H., Gulbis, A.A.S., Kniazev,
-  A., Kotze, M., Loaring, N., Nordsieck, K.H., Pickering, T.E., Potter, S., Romero Colmenero,
-  E., Vaisanen, P., Williams, T., Zietsman, E., 2010. PySALT: the SALT Science Pipeline.
-  SPIE Astronomical Instrumentation, 7737-82\r\n\n`;
+Crawford, S.M., Still, M., Schellart, P., Balona, L., Buckley, D.A.H., Gulbis, A.A.S., Kniazev,
+A., Kotze, M., Loaring, N., Nordsieck, K.H., Pickering, T.E., Potter, S., Romero Colmenero,
+E., Vaisanen, P., Williams, T., Zietsman, E., 2010. PySALT: the SALT Science Pipeline.
+SPIE Astronomical Instrumentation, 7737-82\r\n\n`;
 
   // A read me file content
   const readMeFileContent = tableTitle + calibrationsMessage + table + policy;
