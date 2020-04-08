@@ -59,7 +59,7 @@ export const zipDataRequest = async (
                               (paths).reduced,   
                               product_type AS type,
                               proposal_code AS proposal_code,
-                              observation_group_id AS observation_id,
+                              obs_group.name AS observation_id,
                               ins.name AS instrument_name,
                               night
                FROM observations.artifact atf
@@ -69,7 +69,8 @@ export const zipDataRequest = async (
                LEFT OUTER JOIN observations.product_type pt ON atf.product_type_id = pt.product_type_id
                LEFT OUTER JOIN observations.proposal obsp ON obs.proposal_id = obsp.proposal_id
                LEFT OUTER JOIN observations.instrument ins on obs.instrument_id = ins.instrument_id
-               WHERE artifact_id = ANY($1) 
+               LEFT OUTER JOIN observations.observation_group obs_group on obs_group.observation_group_id= obs.observation_group_id
+               WHERE artifact_id = ANY($1)
   `;
   const res = await ssdaPool.query(sql, [fileIds]);
   const artifacts = res.rows;
@@ -216,8 +217,8 @@ export const zipDataRequest = async (
   // Table row separator
   const rowBorder = `
 +-${"-".repeat(nameStrLength)}-+-${"-".repeat(typeStrLength)}-+-${"-".repeat(
-    proposalCodeHeading.length
-  )}-+-${"-".repeat(observationIdHeading.length)}-+-${"-".repeat(
+    proposalCodeStrLength
+  )}-+-${"-".repeat(observationIdStrLength)}-+-${"-".repeat(
     nightStrLength
   )}-+-${"-".repeat(fileDescriptionStrLength)}-+`;
 
