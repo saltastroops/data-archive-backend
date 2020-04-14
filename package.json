@@ -28,7 +28,7 @@
   },
   "homepage": "https://github.com/chynamyerz/ssda-server#readme",
   "dependencies": {
-    "@sentry/node": "^4.5.3",
+    "@sentry/node": "^5.15.4",
     "@types/archiver": "^3.0.0",
     "@types/bcrypt": "^3.0.0",
     "@types/body-parser": "^1.17.0",

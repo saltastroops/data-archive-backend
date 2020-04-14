@@ -267,6 +267,7 @@ const createServer = async () => {
     const queryResults: any = await ssdaPool.query(sql, [dataFileId]);
     const rows = queryResults.rows;
     if (!rows.length) {
+      Sentry.captureMessage(notFound.message);
       return res.status(404).send(notFound);
     }
     
@@ -289,6 +290,7 @@ const createServer = async () => {
     res.download(fullPath, dataFilename, err => {
       if (err) {
         if (!res.headersSent) {
+          Sentry.captureMessage(internalServerError.message);
           res.status(500).send(internalServerError);
         } else {
           res.end();
@@ -413,8 +415,10 @@ async function downloadDataRequest({
   // Get the data request base path if it exists
   // If not, raise an internal server error.
   if (!process.env.DATA_REQUEST_BASE_DIR) {
+    const message = "The environment variable DATA_REQUEST_BASE_DIR for the data request base directory has not been set.";
+    Sentry.captureMessage(message);
     res.status(500).send({
-      message: "The environment variable DATA_REQUEST_BASE_DIR for the data request base directory has not been set.",
+      message,
       success: false
     });
     return;
@@ -480,6 +484,7 @@ async function downloadDataRequest({
   res.download(fullPath, filename, err => {
     if (err) {
       if (!res.headersSent) {
+        Sentry.captureMessage(notFound.message);
         res.status(404).send(notFound);
       } else {
         res.end();
