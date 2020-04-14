@@ -69,7 +69,7 @@ export const zipDataRequest = async (
                LEFT OUTER JOIN observations.product_type pt ON atf.product_type_id = pt.product_type_id
                LEFT OUTER JOIN observations.proposal obsp ON obs.proposal_id = obsp.proposal_id
                LEFT OUTER JOIN observations.instrument ins on obs.instrument_id = ins.instrument_id
-               LEFT OUTER JOIN observations.observation_group obs_group on obs_group.observation_group_id= obs.observation_group_id
+               LEFT OUTER JOIN observations.observation_group obs_group on obs_group.observation_group_id = obs.observation_group_id
                WHERE artifact_id = ANY($1)
   `;
   const res = await ssdaPool.query(sql, [fileIds]);
@@ -283,12 +283,12 @@ export const zipDataRequest = async (
   const calibrationsMessage = `
 Arcs, flats and biases (if requested) are only included if they were taken as
 part of an observation. For spectrophotometric and radial velocity standards
-(if requested) the standard taken nearest to an observation is included.`;
+(if requested) the standard taken nearest to an observation is included.\n`;
   // The title of the table
-  const tableTitle = `The requested files\r\n===================\r\n\n`;
+  const tableTitle = `The requested files\n===================\n`;
 
   // The table containing the data request file names and type of the product data contained by the file
-  const table = tableHeader + tableBody + `\r\n`;
+  const table = tableHeader + tableBody + `\n`;
   // The SALT policy
   const policy = `
 Publication and acknowledgment policy
@@ -310,10 +310,10 @@ program(s) [insert Proposal Code(s)].”
 
 We recommend that the Principle Investigator is also mentioned after the
 Proposal Code. In addition, for papers which predominantly based on SALT data,
-a footnote symbol should appear after the paper title*, and the following text
+a footnote symbol should appear after the paper title, and the following text
 should be written as a footnote:
 
-*based on observations made with the Southern African Large Telescope (SALT)"
+"based on observations made with the Southern African Large Telescope (SALT)"
 
 If possible, please also include the Proposal Code and Principle Investigator in
 body of the paper when describing observations.
@@ -325,10 +325,24 @@ Crawford, S.M., Still, M., Schellart, P., Balona, L., Buckley, D.A.H.,
 Gulbis, A.A.S., Kniazev, A., Kotze, M., Loaring, N., Nordsieck, K.H.,
 Pickering, T.E., Potter, S., Romero Colmenero, E., Vaisanen, P., Williams, T.,
 Zietsman, E., 2010. PySALT: the SALT Science Pipeline.
-SPIE Astronomical Instrumentation, 7737-82\r\n\n`;
+SPIE Astronomical Instrumentation, 7737-82\n`;
 
   // A read me file content
   const readMeFileContent = tableTitle + calibrationsMessage + table + policy;
+
+  const fileSaver = require("fs");
+  fileSaver.writeFile(
+    "/home/lonwabolap/Documents/test2",
+    readMeFileContent,
+    (err: any) => {
+      if (err) {
+        // tslint:disable-next-line:no-console
+        console.log(err);
+      }
+      // tslint:disable-next-line:no-console
+      console.log("The file was saved");
+    }
+  );
 
   // append a file from string
   archive.append(readMeFileContent, { name: "README.txt" });
