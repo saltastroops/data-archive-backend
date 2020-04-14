@@ -274,7 +274,7 @@ export const zipDataRequest = async (
 
       tableRowContent += `| ${file.fileDescription}${" ".repeat(
         fileDescriptionStrLength - file.fileDescription.length
-      )} |\r`;
+      )} |`;
 
       tableBody = tableBody + tableRowContent + rowBorder;
     }
@@ -329,21 +329,6 @@ SPIE Astronomical Instrumentation, 7737-82\n`;
 
   // A read me file content
   const readMeFileContent = tableTitle + calibrationsMessage + table + policy;
-
-  const fileSaver = require("fs");
-  fileSaver.writeFile(
-    "/home/lonwabolap/Documents/test2",
-    readMeFileContent,
-    (err: any) => {
-      if (err) {
-        // tslint:disable-next-line:no-console
-        console.log(err);
-      }
-      // tslint:disable-next-line:no-console
-      console.log("The file was saved");
-    }
-  );
-
   // append a file from string
   archive.append(readMeFileContent, { name: "README.txt" });
   // save files
