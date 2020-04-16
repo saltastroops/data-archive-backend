@@ -77,12 +77,14 @@ jobs:
           # and we still have to connect to the machine on which the data archive is hosted.
           command: |
             ssh -o StrictHostKeyChecking=no -tt ${{ secrets.DEV_USER}}@${{ secrets.DEV_HOST}} -p ${{ secrets.DEV_PORT}} """
-              cd /home/ssda/data-archive-backend
-              git checkout development
-              git pull
-              yarn install
-              yarn lint
-              yarn test
-              yarn restart
+              set -eu
+              cd /home/ssda/data-archive-backend &&
+              git checkout . &&
+              git checkout development &&
+              git pull &&
+              yarn install &&
+              yarn lint &&
+              yarn test &&
+              yarn restart &&
               exit
             """
