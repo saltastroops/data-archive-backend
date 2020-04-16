@@ -79,8 +79,8 @@ jobs:
             ssh -o StrictHostKeyChecking=no -tt ${{ secrets.DEV_USER}}@${{ secrets.DEV_HOST}} -p ${{ secrets.DEV_PORT}} """
               set -eu
               cd /home/ssda/data-archive-backend &&
-              git checkout development &&
               git checkout . &&
+              git checkout development &&
               git pull &&
               yarn install &&
               yarn lint &&
