@@ -173,7 +173,7 @@ const proposal = {
 const proposal_type = {
   join: "proposal.proposal_type_id=proposal_type.proposal_type_id",
   name: "proposal_type",
-  rightOf: new Set(["observation"])
+  rightOf: new Set(["proposal"])
 };
 
 const rss_fabry_perot_mode = {
