@@ -170,6 +170,12 @@ const proposal = {
   rightOf: new Set(["observation"])
 };
 
+const proposal_type = {
+  join: "proposal.proposal_type_id=proposal_type.proposal_type_id",
+  name: "proposal_type",
+  rightOf: new Set(["observation"])
+};
+
 const rss_fabry_perot_mode = {
   join:
     "rss_setup.rss_fabry_perot_mode_id=rss_fabry_perot_mode.rss_fabry_perot_mode_id",
@@ -240,6 +246,7 @@ export const dataModel = new DatabaseModel(
     product_category,
     product_type,
     proposal,
+    proposal_type,
     rss_fabry_perot_mode,
     rss_grating,
     rss_setup,
