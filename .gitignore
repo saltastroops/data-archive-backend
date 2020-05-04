@@ -10,10 +10,12 @@
 /build
 
 # misc
-.env
+*.env
 
 # IDE
 .idea
 
 # VSCode
 .vscode
+
+yarn-error.log

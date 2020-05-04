@@ -1,11 +1,14 @@
 {
-    "extends": ["tslint:latest", "tslint-config-prettier"],
-    "linterOptions": {
-        "exclude": ["src/generated/**/*"]
+  "extends": ["tslint:latest", "tslint-config-prettier"],
+  "rules": {
+    "member-access": {
+      "severity": "off"
     },
-    "rules": {
-        "member-access": {
-            "severity": "off"
-        }
-    }
+    "no-implicit-dependencies": [true, "dev"],
+    "no-submodule-imports": [
+      true,
+      "mysql2/node_modules/iconv-lite",
+      "mysql2/promise"
+    ]
+  }
 }

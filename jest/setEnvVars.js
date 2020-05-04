@@ -1,0 +1,1 @@
+process.env.DATA_REQUEST_BASE_DIR="."

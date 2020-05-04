@@ -1,10 +1,446 @@
-# import * from './generated/prisma.graphql'
-
+"""
+The schema's root query type.
+"""
 type Query {
-  user(id: ID!): User
-  users(limit: Int): [User]!
+  """
+  The currently logged in user. An error is raised if the user is not logged in.
+  """
+  user: User
+
+  """
+  The data requests made by the currently logged in user, ordered in descending order by the time they were made.
+  """
+  dataRequests(
+    """
+    The maximum number of data requests to return.
+    """
+    limit: Int
+
+    """
+    The index of the first data request to return.
+    """
+    startIndex: Int!
+  ): [DataRequest!]!
+
+  """
+  Checks if the given token is valid.
+  """
+  passwordResetTokenStatus(token: String!): Status
+
+  """
+  The data preview content for a data file.
+  """
+  dataPreview(
+    """
+    Data file ID.
+    """
+    dataFileId: ID!
+  ): DataPreview!
+
+  """
+  Data files with data matching a filter condition.
+  """
+  dataFiles(
+    """
+    Filter condition for the database query.
+    """
+    where: String!
+
+    """
+    Database columns whose values should be included in the results.
+    """
+    columns: [String!]!
+
+    """
+    The index of the first result to include in the search results. An offset of zero is assumed, i.e. a start index
+    of 5 refers to the 6th result.
+    """
+    startIndex: Int = 0
+
+    """
+    Maximum number of data files to return.
+    """
+    limit: Int = 1000
+  ): DataFileConnection!
 }
 
+"""
+The schema's root mutation type.
+"""
 type Mutation {
-  addUser(name: String!): User!
+  # TODO UPDATE
+  """
+  Register a new data archive user.
+
+  Neither the username nor the email address must be used by another user already.
+  """
+  signup(
+    """
+    Family name ("surname").
+    """
+    familyName: String!
+
+    """
+    Given name ("first name").
+    """
+    givenName: String!
+
+    """
+    Username, which must not contain upper case letters.
+    """
+    username: String!
+
+    """
+    Email address, which will be stored as lower case.
+    """
+    email: String!
+
+    """
+    Affiliation, such as a university or an institute.
+    """
+    affiliation: String!
+
+    """
+    Password.
+    """
+    password: String!
+  ): User!
+
+  """
+  Update the data archive user information.
+
+  Neither the username nor the email address updated must be used by another user already.
+  To update the data archive user information, the current password must be provided.
+  """
+  updateUser(
+    """
+    Unique user ID
+    """
+    id: ID
+
+    """
+    Family name ("surname").
+    """
+    familyName: String
+
+    """
+    Given name ("first name").
+    """
+    givenName: String
+
+    """
+    Username, which must not contain upper case letters.
+    """
+    username: String
+
+    """
+    Email address, which will be stored as lower case.
+    """
+    email: String
+
+    """
+    Affiliation, such as a university or an institute.
+    """
+    affiliation: String
+
+    """
+    Password.
+    """
+    password: String!
+
+    """
+    New password.
+    """
+    newPassword: String
+  ): User!
+
+  """
+  Reset a user's password.
+  """
+  resetPassword(
+    """
+    The new password, which must have at least seven characters.
+    """
+    password: String!
+    """
+    The unique token identifying the user.
+    """
+    token: String!
+  ): User!
+
+  """
+  Request a password reset.
+  """
+  requestPasswordReset(
+    """
+    The email address of the user for whom a password reset request is made.
+    """
+    email: String!
+  ): User!
+
+  """
+  Create a data request.
+  """
+  createDataRequest(
+    """
+    Requested data files.
+    """
+    dataFiles: [Int!]!
+
+    """
+    The calibration types to include along with the requested files.
+    """
+    requestedCalibrationTypes: [CalibrationType!]
+    """
+    The calibration levels to include along with the requested files.
+    """
+    requestedCalibrationLevels: [CalibrationLevel!]!
+  ): Status!
+}
+
+"""
+A data archive user.
+"""
+type User {
+  """
+  User id.
+  """
+  id: ID!
+
+  """
+  Family name ("surname").
+  """
+  familyName: String!
+
+  """
+  Given name ("first name").
+  """
+  givenName: String!
+
+  """
+  Username, which must not contain upper case letters.
+  """
+  username: String
+
+  """
+  Email address, which will be stored as lower case.
+  """
+  email: String!
+
+  """
+  Affiliation, such as a university or an institute.
+  """
+  affiliation: String!
+
+  """
+  User roles, which defines the user's permissions.
+  """
+  roles: [Role!]!
+
+  """
+  Authentication provider.
+  """
+  authProvider: AuthProvider!
+}
+
+type Status {
+  """
+  Success status.
+  """
+  status: Boolean!
+
+  """
+  Status message.
+  """
+  message: String
+}
+
+"""
+Data preview.
+"""
+type DataPreview {
+  """
+  URIs for the data preview images.
+  """
+  imageURIs: [String!]!
+
+  """
+  FITS header as a string.
+  """
+  fitsHeader: String!
+}
+
+"""
+Information about a search results page.
+"""
+type PageInfo {
+  """
+  The index of the first search result on the page. An index offset of 0 is assumed. So, for example, if the start index
+  is 100, the first 100 search results have been skipped and 101st result is the first result included in the page's
+  items.
+  """
+  startIndex: Int!
+  """
+  The (maximum) number of results included on a page. Depending on the values of the start index and the items total
+  the actual number returned may be smaller.
+  """
+  itemsPerPage: Int!
+
+  """
+  The total number of search results.
+  """
+  itemsTotal: Int!
+}
+
+"""
+A metadata item.
+"""
+type MetadataItem {
+  """
+  Name of the metadata item.
+  """
+  name: String!
+
+  """
+  Value of the metadata item.
+  """
+  value: String
+}
+
+"""
+Results for a data file query.
+"""
+type DataFileConnection {
+  """
+  List of data files.
+  """
+  dataFiles: [DataFile!]!
+
+  """
+  Search page details.
+  """
+  pageInfo: PageInfo!
+}
+
+"""
+Details about a data file.
+"""
+type DataFile {
+  """
+  Id of the data file.
+  """
+  id: ID!
+
+  """
+  Whether the currently logged in user owns the data in the file, and hence may access it even if it proprietary.
+  """
+  ownedByUser: Boolean!
+
+  """
+  Metadata for the data file.
+  """
+  metadata: [MetadataItem!]!
+}
+
+"""
+Details about a data request.
+"""
+type DataRequest {
+  """
+  Id of the data request.
+  """
+  id: ID!
+  """
+  User who owns the data request.
+  """
+  user: User!
+  """
+  file location fro download.
+  """
+  uri: String
+  """
+  The date and time when the data request was made.
+  """
+  madeAt: String!
+  """
+  The requested data files.
+  """
+  dataFiles: [DataRequestDataFile!]!
+  """
+  The status of the data request.
+  """
+  status: DataRequestStatus!
+  """
+  The calibration type.
+  """
+  calibrationTypes: [CalibrationType!]
+  """
+  The calibration level such as: Is data Raw or Reduced.
+  """
+  calibrationLevels: [CalibrationLevel!]!
+}
+
+"""
+A requested data file.
+"""
+type DataRequestDataFile {
+  """
+  Id of the data file.
+  """
+  id: ID!
+  """
+  Filename.
+  """
+  name: String!
+}
+
+"""
+The data request status.
+"""
+enum DataRequestStatus {
+  PENDING
+  FAILED
+  SUCCESSFUL
+}
+
+"""
+An enumeration of the user roles, which define the permissions a user has.
+"""
+enum Role {
+  """
+  Administrator with full power.
+  """
+  Admin
+}
+
+"""
+Enumeration of the supported authentication providers.
+"""
+enum AuthProvider {
+  """
+  This data archive.
+  """
+  SSDA
+
+  """
+  The SALT Science Database.
+  """
+  SDB
+}
+
+"""
+An enumeration of the calibration tpyes that are supported.
+"""
+enum CalibrationType {
+  ARC
+  BIAS
+  DARK
+  FLAT
+  RADIAL_VELOCITY_STANDARD
+  SPECTROPHOTOMETRIC_STANDARD
+}
+
+enum CalibrationLevel {
+  RAW
+  REDUCED
 }

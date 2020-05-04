@@ -1,41 +1,20 @@
-import * as Sentry from "@sentry/node";
-import dotenv from "dotenv";
-import { GraphQLServer } from "graphql-yoga";
-import { prisma } from "./generated/prisma-client";
-import resolvers from "./resolvers";
+import createServer from "./createServer";
 
-// Config dotenv
-dotenv.config();
+const launchServer = async () => {
+  // Instantiate the server
+  const server = createServer();
 
-// Setting up Sentry
-Sentry.init({
-  dsn: process.env.SENTRY_DSN
-});
+  if (process.env.NODE_ENV === "test") {
+    return;
+  }
 
-// Creating server options
-const serverOptions = {
-  context: {
-    prisma
-  },
-  resolvers,
-  typeDefs: "./src/schema.graphql"
-};
-
-// Instatiating GraphQL-Yoga server
-const server = new GraphQLServer(serverOptions);
-
-// Starting the server with the cors enabled
-server.start(
-  {
+  // Start the server with CORS enabled
+  (await server).start({
     cors: {
       credentials: true,
-      origin: process.env.FRONTEND_URL
+      origin: process.env.FRONTEND_HOST
     }
-  } /* ,
-  () =>
-    console.log(
-      `The server is listening on http://localhost:${process.env.PORT}`
-    ) */
-);
+  });
+};
 
-export { server };
+launchServer();
