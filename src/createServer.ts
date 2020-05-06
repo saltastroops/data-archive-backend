@@ -271,7 +271,7 @@ const createServer = async () => {
       return res.status(404).send(notFound);
     }
 
-    const {path: filePath, data_release: publicFrom } = rows[0];
+    const { path: filePath, data_release: publicFrom } = rows[0];
 
     // Check whether the data file is public or the user may access it
     // because they own the data or are an administrator.
@@ -415,7 +415,8 @@ async function downloadDataRequest({
   // Get the data request base path if it exists
   // If not, raise an internal server error.
   if (!process.env.DATA_REQUEST_BASE_DIR) {
-    const message = "The environment variable DATA_REQUEST_BASE_DIR for the data request base directory has not been set.";
+    const message =
+      "The environment variable DATA_REQUEST_BASE_DIR for the data request base directory has not been set.";
     Sentry.captureMessage(message);
     res.status(500).send({
       message,
