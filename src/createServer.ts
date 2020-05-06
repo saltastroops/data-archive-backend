@@ -174,7 +174,7 @@ const createServer = async () => {
    * 401: If the username or password are wrong.
    * 500: If a server-side error occurs.
    */
-  server.express.post("/auth/login", (req, res, next) => {
+  server.express.post("/?/auth/login", (req, res, next) => {
     passport.authenticate("local", (err, user) => {
       if (err) {
         return res.status(500).send({
