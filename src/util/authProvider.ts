@@ -208,7 +208,7 @@ WHERE Username=? AND Password=MD5(?);
         email: user.Email,
         familyName: user.Surname,
         givenName: user.FirstName,
-        institutionMember: user.Partner_Code != "OTH",
+        institutionMember: user.Partner_Code !== "OTH",
         password,
         username
       };
