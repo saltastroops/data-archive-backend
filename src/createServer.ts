@@ -174,7 +174,7 @@ const createServer = async () => {
    * 401: If the username or password are wrong.
    * 500: If a server-side error occurs.
    */
-  server.express.post("/auth/login", (req, res, next) => {
+  server.express.post("/?/auth/login", (req, res, next) => {
     passport.authenticate("local", (err, user) => {
       if (err) {
         return res.status(500).send({
@@ -213,7 +213,7 @@ const createServer = async () => {
    *
    * The success field is always true.
    */
-  server.express.post("/auth/logout", (req, res) => {
+  server.express.post("/?/auth/logout", (req, res) => {
     req.logout();
     res.send({
       message: "You have been logged out.",
@@ -231,7 +231,7 @@ const createServer = async () => {
    * :dataFilename
    *     The data filename.
    */
-  server.express.get("/data/:dataFileId/:dataFilename", async (req, res) => {
+  server.express.get("/?/data/:dataFileId/:dataFilename", async (req, res) => {
     // Not found error
     const notFound = {
       message: "The requested FITS file does not exist.",
@@ -270,8 +270,8 @@ const createServer = async () => {
       Sentry.captureMessage(notFound.message);
       return res.status(404).send(notFound);
     }
-    
-    const {path: filePath, data_release: publicFrom } = rows[0];
+
+    const { path: filePath, data_release: publicFrom } = rows[0];
 
     // Check whether the data file is public or the user may access it
     // because they own the data or are an administrator.
@@ -310,7 +310,7 @@ const createServer = async () => {
    *     The data preview filename.
    */
   server.express.get(
-    "/previews/:dataFileId/:dataPreviewFileName",
+    "/?/previews/:dataFileId/:dataPreviewFileName",
     async (req, res) => {
       // Get the data request
       const notFound = {
@@ -376,7 +376,7 @@ const createServer = async () => {
    *     identifying the data file, but is used in the attachment HTTP header.
    */
   server.express.get(
-    "/downloads/data-requests/:dataRequestId/:filename",
+    "/?/downloads/data-requests/:dataRequestId/:filename",
     async (req, res) => {
       // Check if the user is logged in
       if (!req.user) {
@@ -415,7 +415,8 @@ async function downloadDataRequest({
   // Get the data request base path if it exists
   // If not, raise an internal server error.
   if (!process.env.DATA_REQUEST_BASE_DIR) {
-    const message = "The environment variable DATA_REQUEST_BASE_DIR for the data request base directory has not been set.";
+    const message =
+      "The environment variable DATA_REQUEST_BASE_DIR for the data request base directory has not been set.";
     Sentry.captureMessage(message);
     res.status(500).send({
       message,
