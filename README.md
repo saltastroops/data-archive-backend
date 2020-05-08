@@ -10,7 +10,7 @@ The API is run on a [GraphQL-Yoga server](https://github.com/prisma/graphql-yoga
 
 ## Setting up
 
-Assuming that you have followed the instructions outlined in the file ```sever_setup.md``` found in the ```docs``` directory you may proceed, if not, please start by following it first.
+Before proceeding you need to have set up a server as described in [docs/server_setup.md](https://github.com/saltastroops/data-archive-backend/blob/development/docs/project_setup.md).
 
 Clone this repository to a location of your choice.
 
@@ -60,9 +60,11 @@ MAIL_SSL | Securing the mail server SMTP | true/false
 
 These must be defined in a file ```.env``` in the root directory. *This file should not be committed to the git repository.*
 
-The SDB information can only be requested from the Astroops Software line manager at SALT.
-
 The SSDA information should match the PostgreSQL information you installed and set up.
+
+The `SSDA_DATABASE_USER` should have the `admin_editor` and `archive_user` roles in the SSDA database.
+
+The `SDB_DATABASE_USER` should have SELECT permissions for the tables in the SDB.
 
 The `TZ` variable needs to be set to ensure that Node and the PostgreSQL driver use UTC when converting `DATE` database entries to a JavaScript `Date` object.
 
@@ -91,7 +93,7 @@ To restart the server in production mode, execute
 yarn restart
 ```
 
-To run the tests, executes the usual npm test command,
+To run the tests, executes the usual yarn test command,
 
 ```bash
 yarn test

@@ -1,12 +1,12 @@
 # SALT/SAAO Data Archive API Server Setup
 
-The SALT/SAAO Data Archive API is hosted on the Ubuntu 16.04 server.
+The SALT/SAAO Data Archive API is hosted on the Ubuntu 16.04 or higher server.
 Various packges which are required to be installed to get the Data Archive API server up and running.
 
 
 ## Install Node JS Using a PPA
 
-This will allow you to install the latest [NodeJS](https://nodejs.org/en/) or may choose the version of node.js you want to install. By the time of writing this document, version 12.16.2 was the latest.
+[NodeJS](https://nodejs.org/en/) version 12.x should be installed.
 
 ```sh
 cd ~
@@ -28,23 +28,7 @@ Verify that Node.js was installed successfuly.
 nodejs -v
 ```
 
-```
-Output
-v10.16.2
-```
-
-The nodejs package contains the nodejs binary as well as npm, so you don't need to install npm separately.
-
-```sh
-npm --version
-```
-
-```
-Output
-6.6.0
-```
-
-Alternatively on using npm, one can use yarn. To istall [Yarn](https://classic.yarnpkg.com/en/) run the following commands
+Install [Yarn](https://classic.yarnpkg.com/en/) by executing the following commands
 
 ```sh
 curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
@@ -60,14 +44,17 @@ To confirm yarn was installed you should run the following command
 yarn --version
 ```
 
-```
-Output
-1.22.4
+The Data Archive API uses a [bcrypt](https://www.npmjs.com/package/bcrypt) package which is installed via `yarn` along other specified packages in the `package.json` file. For it to install successfuly, a python build essential should be installed first. 
+
+To install it run
+
+```sh
+sudo apt-get install -y build-essential python
 ```
 
 ## Install Git
 
-[Git](https://git-scm.com/) is an **Open Source Distributed Version Control System**.
+[Git](https://git-scm.com/) is an open source distributed dersion control system.
 
 ```sh
 sudo apt update
@@ -80,12 +67,6 @@ Verify that Git was installed successfuly.
 ```sh
 git --version
 ```
-
-```
-Output
-2.17.1
-```
-
 
 ## Install Nginx
 
@@ -103,14 +84,9 @@ Verify that Nginx was installed successfuly.
 nginx -V
 ```
 
-```
-Output
-nginx version: nginx/1.14.0 (Ubuntu)
-```
+### Setup Nginx
 
-### Setup NGINX
-
-After NGINX installed, you may create another NGINX config file, because of the default ```nginx.conf``` having a script to include all files that match pattern ```*.conf``` like the following
+After Nginx is installed, you may create another Nginx config file, because of the default ```nginx.conf``` having a script to include all files that match pattern ```*.conf``` like the following
 
 ```
 include /etc/nginx/conf.d/*.conf;
@@ -157,7 +133,7 @@ sudo service nginx restart
 ```
 
 ### Setup the UFW
-You migh face firewall issues, below is one solution but you may required further steps.
+You might face firewall issues, below is one solution but you may require further steps.
 
 Enable [UFW](https://help.ubuntu.com/community/UFW) (a firewall configuration tool for iptables that is included with Ubuntu by default) with the default set of rules.
 
@@ -185,9 +161,9 @@ sudo ufw allow <port>/<optional: protocol>
 
 ## Install PM2
 
-When you want to long run Node.js, you need daemon process, and Node.js uses [PM2](http://pm2.keymetrics.io/) to achieve that. 
+In production, you should use a daemon process. For Node.js you can use [PM2](http://pm2.keymetrics.io/) to set this up.
 
-Just Install PM2 globally in the server.
+Install PM2 globally in the server.
 
 ```
 yarn global add pm2
@@ -199,17 +175,15 @@ Make sure PM2 supports TypeScript and TS-Node.
 pm2 install typescript && pm2 install ts-node
 ```
 
-After the app has been ran, you can  set the startup and save the PM2 process for when a machine restarts/reboots/crashes so that the same configurations are kept.
-When the machine starts, the process of the app is started also.
+To run the Data Archive API with pm2, you should clone this repository first and run yarn start. 
 
-***After running the app, then can execute the following commands***
+Restarting PM2 with the processes you manage on server boot/reboot is critical. To solve this, you should run pm2 startup after the Data Archive API is started and is running to generate an active startup script.
 
-Set up the startup
 ```sh
 pm2 startup
 ```
 
-Save the configurations
+To freeze a process list for automatic respawn run
 ```sh
 pm2 save
 ```
