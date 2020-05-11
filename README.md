@@ -10,7 +10,7 @@ The API is run on a [GraphQL-Yoga server](https://github.com/prisma/graphql-yoga
 
 ## Setting up
 
-Before proceeding you need to have set up a server as described in [docs/server_setup.md](https://github.com/saltastroops/data-archive-backend/blob/development/docs/project_setup.md).
+Before proceeding you need to have set up a server as described in [docs/server_setup.md](docs/server_setup.md).
 
 Clone this repository to a location of your choice.
 
@@ -59,8 +59,6 @@ MAIL_PORT | The mail server port | 2525
 MAIL_SSL | Securing the mail server SMTP | true/false
 
 These must be defined in a file ```.env``` in the root directory. *This file should not be committed to the git repository.*
-
-The SSDA information should match the PostgreSQL information you installed and set up.
 
 The `SSDA_DATABASE_USER` should have the `admin_editor` and `archive_user` roles in the SSDA database.
 
