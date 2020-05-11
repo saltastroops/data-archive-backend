@@ -333,8 +333,10 @@ SPIE Astronomical Instrumentation, 7737-82\n`;
   archive.append(readMeFileContent, { name: "README.txt" });
   // save files
   dataFiles.forEach((file: { filepath: string; filename: string }) => {
-    // The '|| ""' in the following line keeps TypeScript happy
-    const filepath = join(process.env.FITS_BASE_DIR || "", file.filepath);
+    if (process.env.FITS_BASE_DIR === undefined) {
+      throw new Error("The environment variable FITS_BASE_DIR must be set.");
+    }
+    const filepath = join(process.env.FITS_BASE_DIR, file.filepath);
     archive.append(fs.createReadStream(filepath), {
       name: file.filename
     });
