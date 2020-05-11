@@ -1,7 +1,7 @@
 import archiver from "archiver";
 import fs from "fs";
 import moment from "moment";
-import { basename } from "path";
+import { basename, join } from "path";
 import { ssdaPool } from "../db/postgresql_pool";
 import { CalibrationLevel } from "./calibrations";
 
@@ -332,9 +332,13 @@ SPIE Astronomical Instrumentation, 7737-82\n`;
   // append a file from string
   archive.append(readMeFileContent, { name: "README.txt" });
   // save files
-  dataFiles.forEach((file: { filepath: string; name: string }) => {
-    archive.file(`${process.env.FITS_BASE_DIR}/${file.filepath}`, {
-      name: file.name
+  dataFiles.forEach((file: { filepath: string; filename: string }) => {
+    if (process.env.FITS_BASE_DIR === undefined) {
+      throw new Error("The environment variable FITS_BASE_DIR must be set.");
+    }
+    const filepath = join(process.env.FITS_BASE_DIR, file.filepath);
+    archive.append(fs.createReadStream(filepath), {
+      name: file.filename
     });
   });
 
