@@ -128,7 +128,7 @@ GraphQL-Yoga is used to create the GraphQL API.
 
 ## Installing GraphQL-Yoga server.
 
-```
+```sh
 yarn add graphql-yoga
 ```
 
@@ -258,7 +258,7 @@ We should be set to go and start the server, but before that we need to install 
 
 Installing a [Sentry](https://docs.sentry.io/) package, an open-source error tracking tool that helps you monitor and fix crashes in real time.
 
-```
+```sh
 yarn add @sentry/node
 ```
 
@@ -266,7 +266,7 @@ yarn add @sentry/node
 
 Installing a [Dotenv](https://www.npmjs.com/package/dotenv) package, a zero-dependency module that loads environment variables from a .env file into process.env.
 
-```
+```sh
 yarn add dotenv @types/dotenv
 ```
 
@@ -278,7 +278,7 @@ Installing a [nodemon](https://www.npmjs.com/package/nodemon) package, a tool th
 
 Installing [Jest](https://basarat.gitbooks.io/typescript/docs/testing/jest.html) package for testing the code.
 
-```
+```sh
 yarn add jest @types/jest ts-jest
 ```
 
@@ -311,7 +311,7 @@ module.exports = {
 Install the [Husky](https://prettier.io/docs/en/precommit.html) package, used to make sure that committed files are formatted properly. 
 **You must have created a git repository before installing Husky**.
 
-```
+```sh
 git init # if not done already
 yarn add husky lint-staged --dev
 ```
@@ -382,37 +382,37 @@ Now, can run the following commands:
 
 To start the server in the development mode
 
-```
+```sh
 yarn dev
 ```
 
 To start the server in the production mode
 
-```
+```sh
 yarn start
 ```
 
 To restart the server in the production mode
 
-```
+```sh
 yarn restart
 ```
 
 To test the server in the development mode
 
-```
+```sh
 yarn test
 ```
 
 To format the files with prettier and tslint.
 
-```
+```sh
 yarn format
 ```
 
 To check if tslint rules are fulfilled.
 
-```
+```sh
 yarn lint
 ```
 

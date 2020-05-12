@@ -1,25 +1,22 @@
 # SALT/SAAO Data Archive API Server Setup
 
-The SALT/SAAO Data Archive API is hosted on a server running under Ubuntu 16.04 or higher.
-Various packges which are required to be installed to get the Data Archive API server up and running.
+The SALT/SAAO Data Archive API should be hosted on a server running under Ubuntu 16.04 or higher.
+Various packages need to be installed and configured to get the Data Archive API server up and running.
 
 
-## Install Node JS Using a PPA
+## Install Node JS using a Personal Package Archives (PPA)
 
 [NodeJS](https://nodejs.org/en/) version 12.x should be installed.
 
 ```sh
 cd ~
-
 curl -sL https://deb.nodesource.com/setup_12.x -o nodesource_setup.sh
 ```
 
-The PPA will be added to your configuration and your local package cache will be updated automatically. Should be able to install the Node.js package by running the following commands.
+This will add the PPA to your configuration and automatically update your local package cache. You should then be able to install the Node.js package by running the following commands.
 
 ```sh
-sudo apt-get update
-
-sudo apt-get install nodejs
+sudo apt-get update && sudo apt-get install nodejs
 ```
 
 Verify that Node.js was installed successfuly.
@@ -28,7 +25,7 @@ Verify that Node.js was installed successfuly.
 nodejs -v
 ```
 
-Install [Yarn](https://classic.yarnpkg.com/en/) by executing the following commands
+Install [yarn](https://classic.yarnpkg.com/en/) by executing the following commands
 
 ```sh
 curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
@@ -39,14 +36,12 @@ echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/source
 sudo apt update && sudo apt install yarn
 ```
 
-To confirm yarn was installed you should run the following command
+To confirm yarn was installed, you should run the following command
 ```sh
 yarn --version
 ```
 
-The Data Archive API uses a [bcrypt](https://www.npmjs.com/package/bcrypt) package which is installed via `yarn` along other specified packages in the `package.json` file. For it to install successfuly, a python build essential should be installed first. 
-
-To install it run
+The Data Archive API uses the [bcrypt](https://www.npmjs.com/package/bcrypt) package which is installed via yarn along other specified packages in the `package.json` file. For it to install successfully, you might have to install the build-essential package first.
 
 ```sh
 sudo apt install build-essential
@@ -54,37 +49,84 @@ sudo apt install build-essential
 
 ## Install Git
 
-[Git](https://git-scm.com/) is an open source distributed version control system.
+[Git](https://git-scm.com/) can be installed by running
 
 ```sh
-sudo apt update
-
-sudo apt install git
+sudo apt update && sudo apt install git
 ```
 
-Verify that Git was installed successfuly.
+Verify that Git was installed successfully.
 
 ```sh
 git --version
 ```
 
-## Install Nginx
-
-[Nginx](https://www.nginx.com/) is one of the most popular web servers. It can be used as a web server or a reverse proxy. 
+## Clone the repository
 
 ```sh
-sudo apt update
-
-sudo apt install nginx
+git clone https://github.com/saltastroops/data-archive-backend.git data-archive-backend
 ```
 
-Verify that Nginx was installed successfuly.
+or using ssh
+
+```sh
+git clone git@github.com:saltastroops/data-archive-backend.git data-archive-backend
+```
+
+## Install packages
+
+```sh
+cd data-archive-backend
+yarn install
+```
+
+## Install PM2
+
+In production, you should use a daemon process. For Node.js you can use [PM2](http://pm2.keymetrics.io/) to set this up.
+
+Install PM2 globally on the server.
+
+```
+yarn global add pm2
+```
+
+Make sure PM2 supports TypeScript and TS-Node.
+
+```
+pm2 install typescript && pm2 install ts-node
+```
+
+The Data Archive API can be started by running. 
+
+```sh
+yarn start
+```
+
+To ensure that PM2 restarts your process after a server reboot and automatically respawns the process, execute the following commands after starting the server.
+
+```sh
+pm2 startup
+```
+
+To freeze a process list for automatic respawn run
+
+```sh
+pm2 save
+```
+
+## Install and configuring Nginx
+
+[Nginx](https://www.nginx.com/) should be used as the web server. It can be installed with apt.
+
+```sh
+sudo apt update && apt install nginx
+```
+
+Verify that Nginx was installed successfully.
 
 ```sh
 nginx -V
 ```
-
-### Configuring Nginx
 
 After installing Nginx you should add your server configuration in a file (`your.domain.conf`, say) in the folder `/etc/nginx/sites-available`. Afterwards you need to create a symbolic link in the folder `/etc/nginx/sites-enabled` which points to your configuration file. For example:
 
@@ -145,15 +187,13 @@ server {
 }
 ```
 
-You will need to restart Nginx.
-
-#### To verify nginx configuration
+Before restarting Nginx you can check your configuration by running
 
 ```sh
 sudo nginx -t
 ```
 
-#### Restart nginx
+If there are no errors you should restart Nginx.
 
 ```sh
 sudo service nginx restart
@@ -185,58 +225,4 @@ Allow and Deny (specific rules)
 
 ```sh
 sudo ufw allow <port>/<optional: protocol>
-```
-
-## Install PM2
-
-In production, you should use a daemon process. For Node.js you can use [PM2](http://pm2.keymetrics.io/) to set this up.
-
-Install PM2 globally on the server.
-
-```
-yarn global add pm2
-```
-
-Make sure PM2 supports TypeScript and TS-Node.
-
-```
-pm2 install typescript && pm2 install ts-node
-```
-
-To run the Data Archive API with PM2, you should clone this repository, install packages and run yarn start. 
-
-#### Clone the repository
-
-```bash
-git clone https://github.com/saltastroops/data-archive-backend.git data-archive-backend
-```
-
-or using ssh
-
-```bash
-git clone git@github.com:saltastroops/data-archive-backend.git data-archive-backend
-```
-
-#### Install packages
-
-```bash
-cd data-archive-backend
-yarn install
-```
-
-#### Run the API
-
-```bash
-yarn start
-```
-
-To ensure that PM2 restarts your process after a server reboot and automatically respawns the process, execute the following commands after starting the server with `yarn start`.
-
-```sh
-pm2 startup
-```
-
-To freeze a process list for automatic respawn run
-```sh
-pm2 save
 ```
