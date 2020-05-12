@@ -25,10 +25,10 @@ This workflow is defined in [github/workflows/features.yml](.github/workflows/fe
 
 The development workflow is triggered whenever there are new commits pushed to the development branch.
 
-This workflow is defined in [github/workflows/development.yml](.github/workflows/features.yml).
+This workflow is defined in [github/workflows/development.yml](.github/workflows/development.yml).
 
 ### Master Workflow
 
 The master workflow is triggered whenever there are new commits pushed to the master branch.
 
-This workflow is defined in [github/workflows/master.yml](.github/workflows/features.yml).
+This workflow is defined in [github/workflows/master.yml](.github/workflows/master.yml).
