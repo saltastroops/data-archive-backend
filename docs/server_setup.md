@@ -4,7 +4,7 @@ The SALT/SAAO Data Archive API should be hosted on a server running under Ubuntu
 Various packages need to be installed and configured to get the Data Archive API server up and running.
 
 
-## Install Node JS using a Personal Package Archives (PPA)
+## Install NodeJS, yarn and bcrypt
 
 [NodeJS](https://nodejs.org/en/) version 12.x should be installed.
 
@@ -13,10 +13,11 @@ cd ~
 curl -sL https://deb.nodesource.com/setup_12.x -o nodesource_setup.sh
 ```
 
-This will add the PPA to your configuration and automatically update your local package cache. You should then be able to install the Node.js package by running the following commands.
+This will add Node's Personal Package Archive to your configuration and automatically update your local package cache. You should then be able to install the Node.js package by running the following commands.
 
 ```sh
-sudo apt-get update && sudo apt-get install nodejs
+sudo apt-get update
+sudo apt-get install nodejs
 ```
 
 Verify that Node.js was installed successfuly.
@@ -33,7 +34,8 @@ echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/source
 ```
 
 ```sh
-sudo apt update && sudo apt install yarn
+sudo apt update
+sudo apt install yarn
 ```
 
 To confirm yarn was installed, you should run the following command
@@ -52,7 +54,8 @@ sudo apt install build-essential
 [Git](https://git-scm.com/) can be installed by running
 
 ```sh
-sudo apt update && sudo apt install git
+sudo apt update
+sudo apt install git
 ```
 
 Verify that Git was installed successfully.
@@ -80,6 +83,8 @@ cd data-archive-backend
 yarn install
 ```
 
+As mentioned above, you might have to install the build_essential package if the installation of bcrypt fails.
+
 ## Install PM2
 
 In production, you should use a daemon process. For Node.js you can use [PM2](http://pm2.keymetrics.io/) to set this up.
@@ -102,15 +107,19 @@ The Data Archive API can be started by running.
 yarn start
 ```
 
+This command uses PM2 to launch the server.
+
 To ensure that PM2 restarts your process after a server reboot and automatically respawns the process, execute the following commands after starting the server.
 
 ```sh
+# generate an active startup script
 pm2 startup
 ```
 
 To freeze a process list for automatic respawn run
 
 ```sh
+# freeze the process list for automatic respawn
 pm2 save
 ```
 
@@ -119,7 +128,8 @@ pm2 save
 [Nginx](https://www.nginx.com/) should be used as the web server. It can be installed with apt.
 
 ```sh
-sudo apt update && apt install nginx
+sudo apt update
+sudo apt install nginx
 ```
 
 Verify that Nginx was installed successfully.
@@ -209,20 +219,24 @@ Enable [UFW](https://help.ubuntu.com/community/UFW) (a firewall configuration to
 sudo ufw enable
 ```
 
-Check the statu of UWF
+Check the status of UFW
 
 ```sh
 sudo ufw status verbose
 ```
 
-Check the available ufw application profiles
+Check the available UFW application profiles
 
 ```sh
 sudo ufw app list
 ```
 
-Allow and Deny (specific rules)
+Allow or deny (specific rules)
 
 ```sh
 sudo ufw allow <port>/<optional: protocol>
+```
+
+```sh
+sudo ufw deny <port>/<optional: protocol>
 ```
