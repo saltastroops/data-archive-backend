@@ -6,67 +6,67 @@ The SALT/SAAO Data Archive is used for storing and managing the observation data
 
 A GraphQL API is used to make the data search and retrieval possible. This repository explains in details how to get started and run the API.
 
-The API is run on a [GraphQL-Yoga server](https://github.com/prisma/graphql-yoga) and is using [Prisma](https://www.prisma.io/) for storing and retrieving data.
+The API is run on a [GraphQL-Yoga server](https://github.com/prisma/graphql-yoga) and is using [PostgreQL](https://www.postgresql.org/) for storing and retrieving data.
 
 ## Setting up
 
-[NodeJS](https://nodejs.org/en/) and [git](https://git-scm.com/) must be installed on your machine.
+Before proceeding you need to have set up a server as described in [docs/server_setup.md](docs/server_setup.md).
 
 Clone this repository to a location of your choice.
 
 ```bash
-git clone https://github.com/saltastroops/data-archive-backend.git backend
+git clone https://github.com/saltastroops/data-archive-backend.git data-archive-backend
+```
+
+or using ssh
+
+```bash
+git clone git@github.com:saltastroops/data-archive-backend.git data-archive-backend
 ```
 
 Install the required Node packages.
 
 ```bash
-cd backend
+cd data-archive-backend
 yarn install
 ```
 
-The server requires the following environment variables. These must be defined in a file `.env` in the root directory. *This file must not be committed to the git repository.*
+The server requires the following environment variables. 
 
 Variable | Description | Example
 ---- | ---- | ----
 FRONTEND_HOST | The host of the frontend accessing this server | https://ssda.saao.ac.za
 TZ | The timezone, which must be UTC. | UTC
-PRISMA_ENDPOINT | The URL of the Prisma server | https://ssdadb.saao.ac.za
-PRISMA_SECRET | The secret key for the Prisma server | topsecretkey
 SESSION_SECRET | The secret key for for signing the session ID cookie | anothertopsecretkey
 APP_SECRET | The secret key for this server | anothertopsecretkey
 PORT | Port on which the server should be listening | 443
 SENTRY_DSN | The Sentry DSN (Data Source Name) | https://d6251ee8232d4au0b57cbhy38c059af6@sentry.io/237524
-SSDA_ADMIN_DATABASE_NAME | An ssda admin database name | ssda-admin
-SSDA_DATABASE_NAME | An ssda database name | ssda
-DATABASE_HOST | The database host | http://localhost
-DATABASE_PASSWORD | The database host password | password
-DATABASE_USER | The host user name | username
+SSDA_DATABASE_NAME | The ssda database name | ssda
+SSDA_DATABASE_HOST | The sdda database host | http://localhost
+SSDA_DATABASE_PASSWORD | The ssda database host password | password
+SSDA_DATABASE_USER | The ssda host user name | username
+SDB_DATABASE_NAME | The sdb database name | ssda
+SDB_DATABASE_HOST | The sdb database host | http://localhost
+SDB_DATABASE_PASSWORD | The sdb database host password | password
+SDB_DATABASE_USER | The sdb host user name | username
 PREVIEW_BASE_DIR | The preview base diractory | base/directory/to/previews
 FITS_BASE_DIR | The FITS file base directory | base/directory/to/fits
+DATA_REQUEST_BASE_DIR | The data request file base directory | base/directory/to/data_request
 MAIL_HOST | The mail server address | smtp.mail.host
 MAIL_USER | The mail server username | mail-username
 MAIL_PASSWORD | The mail server user password | mail-password
 MAIL_PORT | The mail server port | 2525
 MAIL_SSL | Securing the mail server SMTP | true/false
 
+These must be defined in a file ```.env``` in the root directory. *This file should not be committed to the git repository.*
+
+The `SSDA_DATABASE_USER` should have the `admin_editor` and `archive_user` roles in the SSDA database.
+
+The `SDB_DATABASE_USER` should have SELECT permissions for the tables in the SDB.
+
 The `TZ` variable needs to be set to ensure that Node and the PostgreSQL driver use UTC when converting `DATE` database entries to a JavaScript `Date` object.
 
 The [Sentry](https://sentry.io) DSN (Data Source Name) can be obtained from the client keys tab in your Sentry project's settings.
-
-## Deploying Prisma
-
-Install prisma globally using yarn.
-
-```bash
-yarn install -g prisma
-```
-
-Run the following command in the project's root directory.
-
-```
-yarn run deploy
-```
 
 ## Running the server and tests
 
@@ -76,97 +76,23 @@ You can start the server in development mode by executing
 yarn dev
 ```
 
-The server will be listening to file changes. To start the server in production mode, execute
+The server will be listening to file changes. 
+
+
+To start the server in production mode, execute
 
 ```bash
 yarn start
 ```
 
-To run the tests, executes the usual npm test command,
+To restart the server in production mode, execute
+
+```bash
+yarn restart
+```
+
+To run the tests, executes the usual yarn test command,
 
 ```bash
 yarn test
 ```
-
-## Using the server with nginx and PM2
-
-In a production environment you may use [nginx](https://www.nginx.com/) as the outward facing server and let [PM2](http://pm2.keymetrics.io/) handle launching the GraphQL-Yoga server and keeping tabs on the logs.
-
-Install nginx and add a configuration file with the following content.
-
-```
-server {
-  listen              80;
-  listen              443 ssl;
-  ssl_certificate     /etc/nginx/cert.crt;
-  ssl_certificate_key /etc/nginx/cert.key;
-  server_name        your_domain.com;
-  location / {
-    proxy_pass http://localhost:4000;
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection 'upgrade';
-    proxy_set_header Host $host;
-    proxy_cache_bypass $http_upgrade;
-   }
-}
-```
-
-`/etc/nginx/cert.crt` and `/etc/nginx/cert.key` must be valid SSL certificate files.
-
-The name and location of the configuration file depends on your nginx installation. On Ubuntu, you may put it in the directory
-
-```
-/etc/nginx/sites-available
-```
-
-with a name like `dassapi.saao.ac.za.conf`, and then activate it by creating a symbolic link to it,
-
-```bash
-ln -s /etc/nginx/sites-available/ssdaapi.saao.ac.za.conf /etc/nginx/sites-enabled/
-```
-
-You may test your configuration by executing
-
-```bash
-nginx -t
-```
-
-For your configuration to take effect, nginx has to be restarted. On Ubuntu, you may restart nginx using
-
-```bash
-service nginx restart
-```
-
-PM2 can be installed globally via yarn.
-
-```bash
-yarn global add -g pm2
-```
-
-Support for TypeScript and ts-node needs to be enabled.
-
-```bash
-pm2 install typescript
-pm2 install ts-node
-```
-
-The server can then be started by running
-
-```bash
-pm2 start
-```
-
-If you want to the server to launch automatically after a system reboot, you may use PM2's startup command.
-
-```bash
-pm2 startup
-```
-
-To disable automatic startup again, run
-
-```bash
-pm2 unstartup
-```
-
-See [http://pm2.keymetrics.io/docs/usage/quick-start/](http://pm2.keymetrics.io/docs/usage/quick-start/) for more details about PM2.

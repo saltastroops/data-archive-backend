@@ -1,23 +1,22 @@
-# SALT/SAAO Data Archive Server Setup
+# SALT/SAAO Data Archive API Server Setup
 
-The SALT/SAAO Data Archive is hosted on the Ubuntu 16.04 server.
-Various packges which are required to be installed to get the Data Archive API server up and running.
+The SALT/SAAO Data Archive API should be hosted on a server running under Ubuntu 16.04 or higher.
+Various packages need to be installed and configured to get the Data Archive API server up and running.
 
-## Install Node JS Using a PPA
 
-This will allow you to install the lates Node.js or may choose the version of node.js you want to install. By the time of writing this document, version 10.15.0 was the latest.
+## Install NodeJS, yarn and bcrypt
+
+[NodeJS](https://nodejs.org/en/) version 12.x should be installed.
 
 ```sh
 cd ~
-
-curl -sL https://deb.nodesource.com/setup_10.x -o nodesource_setup.sh
+curl -sL https://deb.nodesource.com/setup_12.x -o nodesource_setup.sh
 ```
 
-The PPA will be added to your configuration and your local package cache will be updated automatically. May now install the Node.js package.
+This will add Node's Personal Package Archive to your system's software sources and automatically update your local package cache. You should then be able to install the Node.js package by running the following commands.
 
 ```sh
 sudo apt-get update
-
 sudo apt-get install nodejs
 ```
 
@@ -27,101 +26,122 @@ Verify that Node.js was installed successfuly.
 nodejs -v
 ```
 
-```
-Output
-v10.15.0
-```
-
-The nodejs package contains the nodejs binary as well as npm, so you don't need to install npm separately.
+Install [yarn](https://classic.yarnpkg.com/en/) by executing the following commands
 
 ```sh
-npm --version
+curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
 ```
 
+```sh
+sudo apt update
+sudo apt install yarn
 ```
-Output
-6.6.0
+
+To confirm yarn was installed, you should run the following command
+```sh
+yarn --version
+```
+
+The Data Archive API uses the [bcrypt](https://www.npmjs.com/package/bcrypt) package which is installed via yarn along other specified packages in the `package.json` file. For it to install successfully, you might have to install the build-essential package first.
+
+```sh
+sudo apt install build-essential
 ```
 
 ## Install Git
 
-[Git](https://git-scm.com/) is an **Open Source Distributed Version Control System**.
+[Git](https://git-scm.com/) can be installed by running
 
 ```sh
 sudo apt update
-
 sudo apt install git
 ```
 
-Verify that Git was installed successfuly.
+Verify that Git was installed successfully.
 
 ```sh
 git --version
 ```
 
+## Clone the repository
+
+```sh
+git clone https://github.com/saltastroops/data-archive-backend.git data-archive-backend
 ```
-Output
-2.17.1
+
+or using ssh
+
+```sh
+git clone git@github.com:saltastroops/data-archive-backend.git data-archive-backend
 ```
 
+## Install packages
 
-## Install Nginx
+```sh
+cd data-archive-backend
+yarn install
+```
 
-[Nginx](https://www.nginx.com/) is one of the most popular web servers. It can be used as a web server or reverse proxy. 
+As mentioned above, you might have to install the build_essential package if the installation of bcrypt fails.
+
+## Install PM2
+
+In production, you should use a daemon process. For Node.js you can use [PM2](http://pm2.keymetrics.io/) to set this up.
+
+Install PM2 globally on the server.
+
+```
+yarn global add pm2
+```
+
+Make sure PM2 supports TypeScript and TS-Node.
+
+```
+pm2 install typescript && pm2 install ts-node
+```
+
+The Data Archive API can be started by running. 
+
+```sh
+yarn start
+```
+
+This command uses PM2 to launch the server.
+
+To ensure that PM2 restarts your process after a server reboot and automatically respawns the process, execute the following commands after starting the server.
+
+```sh
+# generate an active startup script
+pm2 startup
+
+# freeze the process list for automatic respawn
+pm2 save
+```
+
+## Install and configuring Nginx
+
+[Nginx](https://www.nginx.com/) should be used as the web server. It can be installed with apt.
 
 ```sh
 sudo apt update
-
 sudo apt install nginx
 ```
 
-Verify that Nginx was installed successfuly.
+Verify that Nginx was installed successfully.
 
 ```sh
 nginx -V
 ```
 
-```
-Output
-nginx version: nginx/1.14.0 (Ubuntu)
-```
-
-### Setup the UFW
-
-Enable [UFW](https://help.ubuntu.com/community/UFW) (a firewall configuration tool for iptables that is included with Ubuntu by default) with the default set of rules.
+After installing Nginx you should add your server configuration in a file (`your.domain.conf`, say) in the folder `/etc/nginx/sites-available`. Afterwards you need to create a symbolic link in the folder `/etc/nginx/sites-enabled` which points to your configuration file. For example:
 
 ```sh
-sudo ufw enable
+cd /etc/nginx/sites-enabled
+ln -s /etc/nginx/sites-available/your.domain.conf your.domain.conf
 ```
 
-Check the statu of UWF
-
-```sh
-sudo ufw status verbose
-```
-
-Check the available ufw application profiles
-
-```sh
-sudo ufw app list
-```
-
-Allow and Deny (specific rules)
-
-```sh
-sudo ufw allow <port>/<optional: protocol>
-```
-
-### Setup NGINX
-
-After NGINX installed, you may create another NGINX config file, because of the default ```nginx.conf``` have a script to include all files that match pattern ```*.conf``` like the following
-
-```
-include /etc/nginx/conf.d/*.conf;
-include /etc/nginx/sites-enabled/*;
-```
-
-That means you can create a new file e.g. ```my-app.conf``` inside the ```/etc/nginx/conf.d``` and everything works perfectly! The file ```my-app.conf``` have only server name, port and match location that set proxy_pass to the port the Node application is running (e.g. port 4000).
+The content of the configuration file depends on your particular needs. If the Data Archive backend is the only webservice running on the server, it might look as follows.
 
 ```conf
 server {
@@ -138,11 +158,34 @@ server {
 }
 ```
 
-To make sure that the Nginx allows also HTTPS must add the lines bellow inside the server block.
+If you are running both the Data Archive frontend and backend on the same server, it could look as follows.
 
 ```conf
 server {
-  ...;
+  listen 80 default_server;
+  server_name your.domain;
+
+  location / {
+    root /var/www/frontend/build;
+    index index.html index.htm;
+    try_files $uri /index.html;
+  }
+
+  location /api {
+    proxy_pass http://localhost:4000/;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection 'upgrade';
+  }
+```
+
+This setup assumes that all backend URLs are relative to `/api`. Note the slash at the end of proxy_pass `http://localhost:4001/`. This absolutely crucial, as otherwise Nginx won't drop the `/api` prefix when passing through requests.
+
+To support HTTPS you must add the lines below inside the server block.
+
+```conf
+server {
+  ...
   listen              443 ssl;
   ssl_certificate     /etc/nginx/cert.crt;
   ssl_certificate_key /etc/nginx/cert.key;
@@ -150,39 +193,43 @@ server {
 }
 ```
 
-You will need to restart Nginx.
+Before restarting Nginx you can check your configuration by running
 
 ```sh
-# To verify nginx configuration
 sudo nginx -t
+```
 
-# Restart nginx
+If there are no errors you should restart Nginx.
+
+```sh
 sudo service nginx restart
 ```
 
-## Install PM2
+### Setup the UFW
 
-When you want to long run Node.js, you need daemon process, and Node.js uses [PM2](http://pm2.keymetrics.io/) to achieve that. 
+You might face firewall issues. Below is one solution but you may require further steps.
 
-Just Install PM2 via global.
+Enable [UFW](https://help.ubuntu.com/community/UFW) (a firewall configuration tool for iptables that is included with Ubuntu by default) with the default set of rules.
 
-```
-npm install -g pm2
-```
-
-Make sure PM2 supports TypeScript and TS-Node.
-
-```
-sudo pm2 install typescript && pm2 install ts-node
+```sh
+sudo ufw enable
 ```
 
-After the app has been ran, you can save the PM2 process for when a machine restarts/reboots so that the same configurations are kept.
-When the machine starts, the process of the app is started also.
+Check the status of UFW
 
-***After running the app, then can execute the following commands***
-
+```sh
+sudo ufw status verbose
 ```
-pm2 save
 
-pm2 startup
+Check the available UFW application profiles
+
+```sh
+sudo ufw app list
+```
+
+Allow or deny (specific rules)
+
+```sh
+sudo ufw allow <port>/<optional: protocol>
+sudo ufw deny <port>/<optional: protocol>
 ```
