@@ -13,7 +13,7 @@ cd ~
 curl -sL https://deb.nodesource.com/setup_12.x -o nodesource_setup.sh
 ```
 
-This will add Node's Personal Package Archive to your configuration and automatically update your local package cache. You should then be able to install the Node.js package by running the following commands.
+This will add Node's Personal Package Archive to your system's software sources and automatically update your local package cache. You should then be able to install the Node.js package by running the following commands.
 
 ```sh
 sudo apt-get update
@@ -114,11 +114,7 @@ To ensure that PM2 restarts your process after a server reboot and automatically
 ```sh
 # generate an active startup script
 pm2 startup
-```
 
-To freeze a process list for automatic respawn run
-
-```sh
 # freeze the process list for automatic respawn
 pm2 save
 ```
@@ -235,8 +231,5 @@ Allow or deny (specific rules)
 
 ```sh
 sudo ufw allow <port>/<optional: protocol>
-```
-
-```sh
 sudo ufw deny <port>/<optional: protocol>
 ```
