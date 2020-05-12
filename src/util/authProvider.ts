@@ -188,7 +188,13 @@ class SDBAuthProvider extends AuthProvider {
   ): Promise<IAuthProviderUser | null> {
     const result: any = await sdbPool.query(
       `
-SELECT * FROM PiptUser JOIN Investigator USING (Investigator_Id) JOIN Institute USING (Institute_Id) JOIN InstituteName USING (InstituteName_Id) WHERE Username=? AND Password=MD5(?);
+SELECT *
+FROM PiptUser
+     JOIN Investigator USING (Investigator_Id)
+     JOIN Institute USING (Institute_Id)
+     JOIN InstituteName USING (InstituteName_Id)
+     JOIN Partner USING (Partner_Id)
+WHERE Username=? AND Password=MD5(?);
       `,
       [username, password]
     );
@@ -202,6 +208,7 @@ SELECT * FROM PiptUser JOIN Investigator USING (Investigator_Id) JOIN Institute 
         email: user.Email,
         familyName: user.Surname,
         givenName: user.FirstName,
+        institutionMember: user.Partner_Code !== "OTH",
         password,
         username
       };

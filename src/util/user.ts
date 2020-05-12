@@ -16,6 +16,7 @@ export interface IAuthProviderUser {
   familyName: string;
   givenName: string;
   institutionId?: string;
+  institutionMember?: boolean;
   institutionUserId?: string;
   password: string;
   username: string;
@@ -35,6 +36,7 @@ export interface IUserCreateInput {
   email: string;
   familyName: string;
   givenName: string;
+  institutionMember?: boolean;
   password?: string;
   username?: string;
 }
@@ -67,6 +69,7 @@ export const createUser = async (args: IUserCreateInput) => {
     email,
     familyName,
     givenName,
+    institutionMember,
     password,
     username
   } = args;
@@ -167,9 +170,12 @@ export const createUser = async (args: IUserCreateInput) => {
     if (authProvider === "SSDA") {
       // do nothing
     } else if (authProvider === "SDB") {
+      // Does the user belong to a SALT partner?
+
       createInstitutionUser(
         client,
         "Southern African Large Telescope",
+        !!institutionMember,
         authProviderUserId as string,
         userId
       );
@@ -666,6 +672,7 @@ function checkPasswordStrength(password: string) {
 async function createInstitutionUser(
   client: PoolClient,
   institution: string,
+  institutionMember: boolean,
   institutionUserId: string,
   ssdaUserId: string
 ) {
@@ -675,12 +682,19 @@ async function createInstitutionUser(
       )
       INSERT INTO institution_user (
           institution_id,
+          institution_member,
           institution_user_id,
           ssda_user_id)
       VALUES (
           (SELECT id FROM institution_id),
           $2,
-          $3)
+          $3,
+          $4)
   `;
-  await client.query(sql, [institution, institutionUserId, ssdaUserId]);
+  await client.query(sql, [
+    institution,
+    institutionMember,
+    institutionUserId,
+    ssdaUserId
+  ]);
 }
