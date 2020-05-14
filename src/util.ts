@@ -23,4 +23,15 @@ const transporter = nodemailer.createTransport({
   secure
 });
 
-export { IContext, transporter };
+/**
+ * The frontend URL, without a trailing slash.
+ */
+function frontendURL(): string {
+  const url = process.env.FRONTEND_HOST;
+  if (!url) {
+    throw new Error("The FRONTEND_HOST environment variable must be set.")
+  }
+  return url.endsWith("/") ? url.slice(0, -1) : url;
+}
+
+export { frontendURL, IContext, transporter };

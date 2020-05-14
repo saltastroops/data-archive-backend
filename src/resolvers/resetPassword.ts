@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import { randomBytes } from "crypto";
 import moment from "moment";
 import { promisify } from "util";
-import { transporter } from "../util";
+import { frontendURL, transporter } from "../util";
 import { AuthProviderName } from "../util/authProvider";
 import {
   changeUserPassword,
@@ -52,7 +52,7 @@ const requestPasswordReset = async (
 
   // Send the email with the reset link to the user
   try {
-    const url = `${process.env.FRONTEND_HOST}/reset-password/${passwordResetToken}`;
+    const url = `${frontendURL()}/reset-password/${passwordResetToken}`;
     const html = `Dear ${user.givenName} ${user.familyName},<br><br>
 Someone (probably you) has requested to reset your password for the SAAO/SALT Data Archive.<br><br>
 Please click on the following link to change the password:<br><br>
