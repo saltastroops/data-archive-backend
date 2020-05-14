@@ -74,9 +74,9 @@ describe("parseWhereCondition", () => {
     });
 
     it("should not change strings", () => {
-      expect(objectToValues({ EQUALS: { column: "A.B", value: "V" } })).toEqual(
-        ["V"]
-      );
+      expect(
+        objectToValues({ EQUALS: { column: "A.B", value: "V" } })
+      ).toEqual(["V"]);
     });
 
     it("should convert true to 1", () => {
@@ -229,7 +229,9 @@ describe("parseWhereCondition", () => {
     it("should collect the columns", () => {
       expect(
         objectToColumns({ NOT: { EQUALS: { column: "A.B", value: 14 } } })
-      ).toEqual(new Set<string>(["A.B"]));
+      ).toEqual(
+        new Set<string>(["A.B"])
+      );
     });
   });
 
@@ -313,7 +315,9 @@ describe("parseWhereCondition", () => {
     it("should collect the columns", () => {
       expect(
         objectToColumns({ LESS_THAN: { column: "A.B", value: 14 } })
-      ).toEqual(new Set<string>(["A.B"]));
+      ).toEqual(
+        new Set<string>(["A.B"])
+      );
     });
   });
 
@@ -343,7 +347,9 @@ describe("parseWhereCondition", () => {
     it("should collect the columns", () => {
       expect(
         objectToColumns({ GREATER_THAN: { column: "A.B", value: 14 } })
-      ).toEqual(new Set<string>(["A.B"]));
+      ).toEqual(
+        new Set<string>(["A.B"])
+      );
     });
   });
 
@@ -373,7 +379,9 @@ describe("parseWhereCondition", () => {
     it("should collect the columns", () => {
       expect(
         objectToColumns({ LESS_EQUAL: { column: "A.B", value: 14 } })
-      ).toEqual(new Set<string>(["A.B"]));
+      ).toEqual(
+        new Set<string>(["A.B"])
+      );
     });
   });
 
@@ -403,7 +411,9 @@ describe("parseWhereCondition", () => {
     it("should collect the columns", () => {
       expect(
         objectToColumns({ GREATER_EQUAL: { column: "A.B", value: 14 } })
-      ).toEqual(new Set<string>(["A.B"]));
+      ).toEqual(
+        new Set<string>(["A.B"])
+      );
     });
   });
 
@@ -441,7 +451,9 @@ describe("parseWhereCondition", () => {
     it("should collect the columns", () => {
       expect(
         objectToColumns({ IS_IN: { column: "A.B", values: [14] } })
-      ).toEqual(new Set<string>(["A.B"]));
+      ).toEqual(
+        new Set<string>(["A.B"])
+      );
     });
   });
 
@@ -471,7 +483,9 @@ describe("parseWhereCondition", () => {
     it("should collect the columns", () => {
       expect(
         objectToColumns({ CONTAINS: { column: "A.B", value: "AGN" } })
-      ).toEqual(new Set<string>(["A.B"]));
+      ).toEqual(
+        new Set<string>(["A.B"])
+      );
     });
   });
 
@@ -503,7 +517,9 @@ describe("parseWhereCondition", () => {
     it("should collect the columns", () => {
       expect(
         objectToColumns({ STARTS_WITH: { column: "A.B", value: "AGN" } })
-      ).toEqual(new Set<string>(["A.B"]));
+      ).toEqual(
+        new Set<string>(["A.B"])
+      );
     });
   });
 
@@ -533,7 +549,9 @@ describe("parseWhereCondition", () => {
     it("should collect the columns", () => {
       expect(
         objectToColumns({ STARTS_WITH: { column: "A.B", value: "AGN" } })
-      ).toEqual(new Set<string>(["A.B"]));
+      ).toEqual(
+        new Set<string>(["A.B"])
+      );
     });
   });
 
