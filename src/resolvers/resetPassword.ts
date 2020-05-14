@@ -52,9 +52,7 @@ const requestPasswordReset = async (
 
   // Send the email with the reset link to the user
   try {
-    const url = `${
-      process.env.FRONTEND_HOST
-    }/reset-password/${passwordResetToken}`;
+    const url = `${process.env.FRONTEND_HOST}/reset-password/${passwordResetToken}`;
     const html = `Dear ${user.givenName} ${user.familyName},<br><br>
 Someone (probably you) has requested to reset your password for the SAAO/SALT Data Archive.<br><br>
 Please click on the following link to change the password:<br><br>
@@ -64,7 +62,7 @@ If you have not requested to reset your password there is no need for any action
 Kind regards,<br><br>
 The SAAO/SALT Data Archive Team`;
     await transporter.sendMail({
-      from: process.env.MAIL_USER,
+      from: '"SAAO/SALT Data Archive" <ssda@saao.ac.za>',
       html,
       subject: "Reset your password for the SAAO/SALT Data Archive",
       to: user.email
