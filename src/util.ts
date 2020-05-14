@@ -29,7 +29,7 @@ const transporter = nodemailer.createTransport({
 function frontendURL(): string {
   const url = process.env.FRONTEND_HOST;
   if (!url) {
-    throw new Error("The FRONTEND_HOST environment variable must be set.")
+    throw new Error("The FRONTEND_HOST environment variable must be set.");
   }
   return url.endsWith("/") ? url.slice(0, -1) : url;
 }
