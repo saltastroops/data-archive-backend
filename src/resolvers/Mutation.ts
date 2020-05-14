@@ -38,7 +38,7 @@ const Mutation = {
    *     The email address to which the link for resetting the password shall
    *     be sent. This must be an existing user's email address.
    */
-  requestPasswordReset: (
+  requestPasswordReset: async (
     root: any,
     { email }: { email: string },
     ctx: IContext
