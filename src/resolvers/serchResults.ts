@@ -88,11 +88,9 @@ export const queryDataFiles = async (
      ORDER BY "observation_time.start_time" DESC
   `;
 
-  const results: any = (await ssdaPool.query(sql, [
-    ...whereDetails.values,
-    limit,
-    startIndex
-  ])).rows;
+  const results: any = (
+    await ssdaPool.query(sql, [...whereDetails.values, limit, startIndex])
+  ).rows;
 
   // Due to the RIGHT JOIN in the SQL query, there is guaranteed to be at least one row.
   if (results[0].items_total === "0") {
