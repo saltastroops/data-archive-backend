@@ -676,25 +676,52 @@ async function createInstitutionUser(
   institutionUserId: string,
   ssdaUserId: string
 ) {
-  const sql = `
-      WITH institution_id (id) AS (
-          SELECT institution_id FROM institution WHERE name=$1
-      )
-      INSERT INTO institution_user (
-          institution_id,
-          institution_member,
-          institution_user_id,
-          ssda_user_id)
-      VALUES (
-          (SELECT id FROM institution_id),
-          $2,
-          $3,
-          $4)
+  // Inserting a new record if the institution user does not exist.
+  // Update the ssda_user_id if the institution user already exosts.
+  const insertOrUpdateInstitutionUserSQL = `
+    WITH institution_id (id) AS (
+      SELECT institution_id FROM institution WHERE name=$1
+    )
+    INSERT INTO institution_user (
+      institution_id,
+      institution_member,
+      institution_user_id,
+      ssda_user_id
+    )
+    VALUES (
+      (SELECT id FROM institution_id),
+      $2,
+      $3,
+      $4
+    )
+    ON CONFLICT (institution_user_id, institution_id) 
+    DO UPDATE
+    SET ssda_user_id=$5
+    RETURNING institution_member_user_id, institution_user_id, institution_id;
   `;
-  await client.query(sql, [
+  const res: any = await client.query(insertOrUpdateInstitutionUserSQL, [
     institution,
     institutionMember,
     institutionUserId,
+    ssdaUserId,
     ssdaUserId
+  ]);
+
+  const institution_member_user_id = res.rows[0].institution_member_user_id;
+  const institution_user_id = res.rows[0].institution_user_id;
+  const institution_id = res.rows[0].institution_id;
+
+  // Link the created institution user with his or her proposals.
+  const updateProposalInvestigatorSQL = `
+    UPDATE admin.proposal_investigator pi
+    SET institution_member_user_id=$1
+    FROM observations.proposal p
+    WHERE p.proposal_id=pi.proposal_id AND institution_user_id=$2 AND institution_id=$3;
+  `;
+
+  await client.query(updateProposalInvestigatorSQL, [
+    institution_member_user_id,
+    institution_user_id,
+    institution_id
   ]);
 }
