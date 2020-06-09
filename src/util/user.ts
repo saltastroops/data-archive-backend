@@ -697,7 +697,6 @@ async function createInstitutionUser(
     ON CONFLICT (user_id, institution_id) 
     DO UPDATE
     SET ssda_user_id=$5
-    RETURNING institution_user_id, institution_id;
   `;
   const res: any = await client.query(insertOrUpdateInstitutionUserSQL, [
     institution,
@@ -705,24 +704,5 @@ async function createInstitutionUser(
     userId,
     ssdaUserId,
     ssdaUserId
-  ]);
-
-  // TODO UPDATE
-
-  const institutionUserId = res.rows[0].institution_user_id;
-  const institution_id = res.rows[0].institution_id;
-
-  // Link the created institution user with his or her proposals.
-  const updateProposalInvestigatorSQL = `
-    UPDATE admin.proposal_investigator pi
-    SET institution_user_id=$1
-    FROM observations.proposal p
-    WHERE p.proposal_id=pi.proposal_id AND user_id=$2 AND institution_id=$3;
-  `;
-
-  await client.query(updateProposalInvestigatorSQL, [
-    institutionUserId,
-    userId,
-    institution_id
   ]);
 }
