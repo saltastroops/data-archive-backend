@@ -673,7 +673,7 @@ async function createInstitutionUser(
   client: PoolClient,
   institution: string,
   institutionMember: boolean,
-  institutionUserId: string,
+  userId: string,
   ssdaUserId: string
 ) {
   // Inserting a new record if the institution user does not exist.
@@ -685,7 +685,7 @@ async function createInstitutionUser(
     INSERT INTO institution_user (
       institution_id,
       institution_member,
-      institution_user_id,
+      user_id,
       ssda_user_id
     )
     VALUES (
@@ -694,34 +694,35 @@ async function createInstitutionUser(
       $3,
       $4
     )
-    ON CONFLICT (institution_user_id, institution_id) 
+    ON CONFLICT (user_id, institution_id) 
     DO UPDATE
     SET ssda_user_id=$5
-    RETURNING institution_member_user_id, institution_user_id, institution_id;
+    RETURNING institution_user_id, institution_id;
   `;
   const res: any = await client.query(insertOrUpdateInstitutionUserSQL, [
     institution,
     institutionMember,
-    institutionUserId,
+    userId,
     ssdaUserId,
     ssdaUserId
   ]);
 
-  const institution_member_user_id = res.rows[0].institution_member_user_id;
-  const institution_user_id = res.rows[0].institution_user_id;
+  // TODO UPDATE
+
+  const institutionUserId = res.rows[0].institution_user_id;
   const institution_id = res.rows[0].institution_id;
 
   // Link the created institution user with his or her proposals.
   const updateProposalInvestigatorSQL = `
     UPDATE admin.proposal_investigator pi
-    SET institution_member_user_id=$1
+    SET institution_user_id=$1
     FROM observations.proposal p
-    WHERE p.proposal_id=pi.proposal_id AND institution_user_id=$2 AND institution_id=$3;
+    WHERE p.proposal_id=pi.proposal_id AND user_id=$2 AND institution_id=$3;
   `;
 
   await client.query(updateProposalInvestigatorSQL, [
-    institution_member_user_id,
-    institution_user_id,
+    institutionUserId,
+    userId,
     institution_id
   ]);
 }
