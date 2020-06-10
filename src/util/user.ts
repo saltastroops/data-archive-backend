@@ -673,28 +673,36 @@ async function createInstitutionUser(
   client: PoolClient,
   institution: string,
   institutionMember: boolean,
-  institutionUserId: string,
+  userId: string,
   ssdaUserId: string
 ) {
-  const sql = `
-      WITH institution_id (id) AS (
-          SELECT institution_id FROM institution WHERE name=$1
-      )
-      INSERT INTO institution_user (
-          institution_id,
-          institution_member,
-          institution_user_id,
-          ssda_user_id)
-      VALUES (
-          (SELECT id FROM institution_id),
-          $2,
-          $3,
-          $4)
+  // Inserting a new record if the institution user does not exist.
+  // Update the ssda_user_id if the institution user already exosts.
+  const insertOrUpdateInstitutionUserSQL = `
+    WITH institution_id (id) AS (
+      SELECT institution_id FROM institution WHERE name=$1
+    )
+    INSERT INTO institution_user (
+      institution_id,
+      institution_member,
+      user_id,
+      ssda_user_id
+    )
+    VALUES (
+      (SELECT id FROM institution_id),
+      $2,
+      $3,
+      $4
+    )
+    ON CONFLICT (user_id, institution_id) 
+    DO UPDATE
+    SET ssda_user_id=$5
   `;
-  await client.query(sql, [
+  const res: any = await client.query(insertOrUpdateInstitutionUserSQL, [
     institution,
     institutionMember,
-    institutionUserId,
+    userId,
+    ssdaUserId,
     ssdaUserId
   ]);
 }
