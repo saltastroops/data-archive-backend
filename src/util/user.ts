@@ -845,9 +845,9 @@ async function saltUserPartners(userId: string): Promise<Set<string>> {
   `;
   const result = await sdbPool.query(sql, [userId]);
 
-  const partner_codes = new Set<string>();
+  const partnerCodes = new Set<string>();
   for (const row of result[0] as any) {
-    partner_codes.add(row.Partner_Code);
+    partnerCodes.add(row.Partner_Code);
   }
-  return partner_codes;
+  return partnerCodes;
 }
