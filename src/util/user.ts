@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import { validate } from "isemail";
 import { PoolClient } from "pg";
 import { v4 as uuid } from "uuid";
+import { sdbPool } from "../db/mysql_pool";
 import { ssdaPool } from "../db/postgresql_pool";
 import AuthProvider, {
   AuthProviderName,
@@ -684,25 +685,169 @@ async function createInstitutionUser(
     )
     INSERT INTO institution_user (
       institution_id,
-      institution_member,
       user_id,
       ssda_user_id
     )
     VALUES (
       (SELECT id FROM institution_id),
       $2,
-      $3,
-      $4
+      $3
     )
     ON CONFLICT (user_id, institution_id) 
     DO UPDATE
-    SET ssda_user_id=$5
+    SET ssda_user_id=$4
+    RETURNING institution_user_id
   `;
   const res: any = await client.query(insertOrUpdateInstitutionUserSQL, [
     institution,
-    institutionMember,
     userId,
     ssdaUserId,
     ssdaUserId
   ]);
+  const institutionUserId = res.rows[0].institution_user_id;
+
+  // Update the membership details for the user.
+  await updateInstitutionMembershipDetails(
+    institution,
+    institutionUserId,
+    userId
+  );
+}
+
+async function updateInstitutionMembershipDetails(
+  institution: string,
+  institutionUserId: string,
+  userId: string
+) {
+  if (institution === "Southern African Large Telescope") {
+    // TODO: This should be replaced with an improved version, getting the date
+    // intervals from the SDB
+    const partnerMembershipIntervals: Map<
+      string,
+      Array<[Date, Date]>
+    > = new Map([
+      ["AMNH", [[new Date(2011, 8, 1), new Date(2100, 0, 1)]]],
+      ["CMU", [[new Date(2011, 8, 1), new Date(2013, 3, 30)]]],
+      ["DC", [[new Date(2011, 8, 1), new Date(2100, 0, 1)]]],
+      ["DUR", [[new Date(2017, 4, 1), new Date(2019, 3, 30)]]],
+      [
+        "GU",
+        [
+          [new Date(2011, 8, 1), new Date(2015, 3, 30)],
+          [new Date(2016, 4, 1), new Date(2017, 9, 31)]
+        ]
+      ],
+      ["HET", [[new Date(2011, 8, 1), new Date(2015, 3, 30)]]],
+      ["IUCAA", [[new Date(2011, 8, 1), new Date(2100, 0, 1)]]],
+      ["POL", [[new Date(2011, 8, 1), new Date(2100, 0, 1)]]],
+      ["RSA", [[new Date(2011, 8, 1), new Date(2100, 0, 1)]]],
+      ["RU", [[new Date(2011, 8, 1), new Date(2100, 0, 1)]]],
+      [
+        "UC",
+        [
+          [new Date(2011, 8, 1), new Date(2014, 9, 31)],
+          [new Date(2015, 4, 1), new Date(2016, 9, 31)],
+          [new Date(2017, 4, 1), new Date(2019, 3, 30)]
+        ]
+      ],
+      ["UKSC", [[new Date(2011, 8, 1), new Date(2100, 0, 1)]]],
+      ["UNC", [[new Date(2011, 8, 1), new Date(2020, 3, 30)]]],
+      ["UW", [[new Date(2011, 8, 1), new Date(2100, 0, 1)]]]
+    ]);
+
+    // Get the user's partners from the SDB
+    const membershipIntervals = new Set<[Date, Date]>();
+    const partnerCodes = await saltUserPartners(userId);
+
+    // Collect the membership intervals
+    for (const partnerCode of Array.from(partnerCodes)) {
+      const intervals = partnerMembershipIntervals.get(partnerCode);
+      if (!intervals) {
+        throw new Error(`Unknown partner code: ${partnerCode}`);
+      }
+      for (const interval of intervals) {
+        if (!isDateIntervalInSet(interval, membershipIntervals)) {
+          membershipIntervals.add(interval);
+        }
+      }
+    }
+
+    // Insert the membership details
+    await updateInstitutionMemberships(institutionUserId, membershipIntervals);
+  }
+}
+
+function isDateIntervalInSet(
+  interval: [Date, Date],
+  intervals: Set<[Date, Date]>
+): boolean {
+  for (const i of Array.from(intervals)) {
+    if (
+      i[0].getTime() === interval[0].getTime() &&
+      i[1].getTime() === interval[1].getTime()
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+async function updateInstitutionMemberships(
+  institutionUserId: string,
+  institutionMemberships: Set<[Date, Date]>
+) {
+  await deleteInstitutionMemberships(institutionUserId);
+  await insertInstitutionMemberships(institutionUserId, institutionMemberships);
+}
+
+async function deleteInstitutionMemberships(institutionUserId: string) {
+  const sql = `
+  DELETE FROM institution_membership WHERE institution_user_id=$1
+  `;
+
+  await ssdaPool.query(sql, [institutionUserId]);
+}
+
+async function insertInstitutionMemberships(
+  institutionUserId: string,
+  institutionMemberships: Set<[Date, Date]>
+) {
+  const sql = `
+  INSERT INTO institution_membership (
+                                      institution_user_id,
+                                      membership_start,
+                                      membership_end
+                                      )
+  VALUES ($1, $2, $3)
+  `;
+
+  for (const institutionMembership of Array.from(institutionMemberships)) {
+    await ssdaPool.query(sql, [
+      institutionUserId,
+      institutionMembership[0],
+      institutionMembership[1]
+    ]);
+  }
+}
+
+/**
+ * Get the partner codes of the partners a SALT user is associated with.
+ */
+async function saltUserPartners(userId: string): Promise<Set<string>> {
+  const sql = `
+  SELECT Partner_Code
+  FROM PiptUser
+  JOIN Investigator ON PiptUser.PiptUser_Id = Investigator.PiptUser_Id
+  JOIN Institute ON Investigator.Institute_Id = Institute.Institute_Id
+  JOIN Partner ON Institute.Partner_Id = Partner.Partner_Id
+  WHERE PiptUser.PiptUser_Id=? AND Partner.Partner_Code != "OTH" AND Partner.Virtual = 0
+  `;
+  const result = await sdbPool.query(sql, [userId]);
+
+  const partner_codes = new Set<string>();
+  for (const row of result[0] as any) {
+    partner_codes.add(row.Partner_Code);
+  }
+  return partner_codes;
 }
