@@ -637,11 +637,13 @@ export const ownsOutOfDataFiles = async (
   SELECT artifact_id
   FROM observations.artifact a
 JOIN observations.plane p on a.plane_id = p.plane_id
+JOIN observations.observation_time obt on a.plane_id = obt.plabe_id
 JOIN observations.observation o on p.observation_id = o.observation_id
 JOIN observations.proposal p2 on o.proposal_id = p2.proposal_id
 JOIN admin.proposal_investigator pi ON p2.proposal_id = pi.proposal_id
+JOIN admin.institution_membership im ON pi.institution_user_id = im.institution_user_id
 JOIN observations.institution i ON p2.institution_id = i.institution_id
-WHERE pi.institution_user_id=$1 AND i.abbreviated_name=$2 AND a.artifact_id = ANY($3)
+WHERE pi.institution_user_id=$1 AND i.abbreviated_name=$2 AND a.artifact_id = ANY($3) AND obt.night BETWEEN (im.membership_start AND im.membership_end)
   `;
   const res: any = await ssdaPool.query(sql, [
     user.institutionUserId,
