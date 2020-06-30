@@ -37,7 +37,6 @@ export interface IUserCreateInput {
   email: string;
   familyName: string;
   givenName: string;
-  institutionMember?: boolean;
   password?: string;
   username?: string;
 }
@@ -70,7 +69,6 @@ export const createUser = async (args: IUserCreateInput) => {
     email,
     familyName,
     givenName,
-    institutionMember,
     password,
     username
   } = args;
@@ -176,7 +174,6 @@ export const createUser = async (args: IUserCreateInput) => {
       createInstitutionUser(
         client,
         "Southern African Large Telescope",
-        !!institutionMember,
         authProviderUserId as string,
         userId
       );
