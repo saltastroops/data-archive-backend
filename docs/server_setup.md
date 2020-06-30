@@ -10,7 +10,7 @@ Various packages need to be installed and configured to get the Data Archive API
 
 ```sh
 cd ~
-curl -sL https://deb.nodesource.com/setup_12.x -o nodesource_setup.sh
+curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
 ```
 
 This will add Node's Personal Package Archive to your system's software sources and automatically update your local package cache. You should then be able to install the Node.js package by running the following commands.
@@ -95,11 +95,20 @@ Install PM2 globally on the server.
 yarn global add pm2
 ```
 
+After pm2 is added glabaly, sometimes it is not recorgnized. If that is the case, the pm2 path need to be added to the system environment path.
+Using sudo privileges, open the file `/etc/environment` and the path below.
+
+```
+/home/myUser/.yarn/bin/
+```
+
 Make sure PM2 supports TypeScript and TS-Node.
 
 ```
-pm2 install typescript && pm2 install ts-node
+pm2 install typescript
 ```
+
+Typescript comes with TS-Node enabled, so no need to install it separate.
 
 The Data Archive API can be started by running. 
 
