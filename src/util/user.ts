@@ -37,7 +37,6 @@ export interface IUserCreateInput {
   email: string;
   familyName: string;
   givenName: string;
-  institutionMember?: boolean;
   password?: string;
   username?: string;
 }
@@ -70,7 +69,6 @@ export const createUser = async (args: IUserCreateInput) => {
     email,
     familyName,
     givenName,
-    institutionMember,
     password,
     username
   } = args;
@@ -176,7 +174,6 @@ export const createUser = async (args: IUserCreateInput) => {
       createInstitutionUser(
         client,
         "Southern African Large Telescope",
-        !!institutionMember,
         authProviderUserId as string,
         userId
       );
@@ -632,23 +629,61 @@ export const ownsOutOfDataFiles = async (
   // Remove duplicate file ids
   const ids = Array.from(new Set(fileIds));
 
-  // Get the list of files owned by the user
-  const institution = getAuthProvider(user.authProvider).institution;
-  const sql = `
-  SELECT artifact_id
-  FROM observations.artifact a
-JOIN observations.plane p on a.plane_id = p.plane_id
-JOIN observations.observation o on p.observation_id = o.observation_id
-JOIN observations.proposal p2 on o.proposal_id = p2.proposal_id
-JOIN admin.proposal_investigator pi ON p2.proposal_id = pi.proposal_id
-JOIN observations.institution i ON p2.institution_id = i.institution_id
-WHERE pi.institution_user_id=$1 AND i.abbreviated_name=$2 AND a.artifact_id = ANY($3)
-  `;
-  const res: any = await ssdaPool.query(sql, [
-    user.institutionUserId,
-    institution,
+  // Get the list of files owned by the user as an investigator
+  const ownsAsInvestigator = await ownsOutOfFilesAsInvestigator(user, ids);
+  const ownsAsInstitutionMember = await ownsOutOfFilesAsInstitutionMember(
+    user,
     ids
+  );
+  return new Set([
+    ...Array.from(ownsAsInvestigator),
+    ...Array.from(ownsAsInstitutionMember)
   ]);
+};
+
+const ownsOutOfFilesAsInvestigator = async (
+  user: User,
+  ids: string[]
+): Promise<Set<string>> => {
+  const sql = `
+      SELECT artifact_id
+      FROM observations.artifact a
+      JOIN observations.plane p on a.plane_id = p.plane_id
+      JOIN observations.observation o on p.observation_id = o.observation_id
+      JOIN observations.proposal p2 on o.proposal_id = p2.proposal_id
+      JOIN observations.institution i ON p2.institution_id = i.institution_id
+      JOIN admin.proposal_investigator pi ON p2.proposal_id = pi.proposal_id
+      JOIN admin.proposal_access_rule par ON p2.proposal_id = par.proposal_id
+      JOIN admin.access_rule ar ON par.access_rule_id = ar.access_rule_id
+      WHERE ar.access_rule = 'Public Data or Investigator' AND pi.institution_user_id = $1 AND a.artifact_id = ANY($2)
+  `;
+  const res: any = await ssdaPool.query(sql, [user.institutionUserId, ids]);
+  const ownedIds = res.rows.map((row: any) => row.artifact_id);
+
+  return new Set(ownedIds);
+};
+
+const ownsOutOfFilesAsInstitutionMember = async (
+  user: User,
+  ids: string[]
+): Promise<Set<string>> => {
+  const sql = `
+      SELECT artifact_id
+      FROM observations.artifact a
+               JOIN observations.plane p on a.plane_id = p.plane_id
+               JOIN observations.observation_time ot on p.plane_id = ot.plane_id
+               JOIN observations.observation o on p.observation_id = o.observation_id
+               JOIN observations.proposal p2 on o.proposal_id = p2.proposal_id
+               JOIN observations.institution i ON p2.institution_id = i.institution_id
+               JOIN admin.institution_user iu ON i.institution_id = iu.institution_id
+               JOIN admin.institution_membership im ON iu.institution_user_id = im.institution_user_id
+               JOIN admin.proposal_access_rule par ON p2.proposal_id = par.proposal_id
+               JOIN admin.access_rule ar ON par.access_rule_id = ar.access_rule_id
+      WHERE ar.access_rule = 'Public Data or Institution Member'
+        AND iu.institution_user_id = $1
+        AND a.artifact_id=ANY($2)
+`;
+  const res: any = await ssdaPool.query(sql, [user.institutionUserId, ids]);
   const ownedIds = res.rows.map((row: any) => row.artifact_id);
 
   return new Set(ownedIds);
@@ -673,12 +708,11 @@ function checkPasswordStrength(password: string) {
 async function createInstitutionUser(
   client: PoolClient,
   institution: string,
-  institutionMember: boolean,
   userId: string,
   ssdaUserId: string
 ) {
   // Inserting a new record if the institution user does not exist.
-  // Update the ssda_user_id if the institution user already exosts.
+  // Update the ssda_user_id if the institution user already exists.
   const insertOrUpdateInstitutionUserSQL = `
     WITH institution_id (id) AS (
       SELECT institution_id FROM institution WHERE name=$1
