@@ -88,9 +88,22 @@ export const queryDataFiles = async (
      ORDER BY "observation_time.start_time" DESC
   `;
 
-  const results: any = (
-    await ssdaPool.query(sql, [...whereDetails.values, limit, startIndex])
-  ).rows;
+  let results: any;
+  const client = await ssdaPool.connect();
+  try {
+    // Set the configuration parameter for the currently logged in user.
+    // -424242 is an arbitrary number, which must not be used as an institution
+    // user id.
+    const institutionUserId = user ? user.institutionUserId : -424242;
+    await client.query(`SET my.institution_user_id = ${institutionUserId}`);
+
+    // Perform the search
+    results = (
+      await client.query(sql, [...whereDetails.values, limit, startIndex])
+    ).rows;
+  } finally {
+    client.release();
+  }
 
   // Due to the RIGHT JOIN in the SQL query, there is guaranteed to be at least one row.
   if (results[0].items_total === "0") {
