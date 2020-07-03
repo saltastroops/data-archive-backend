@@ -94,7 +94,12 @@ export const queryDataFiles = async (
     // Set the configuration parameter for the currently logged in user.
     // -424242 is an arbitrary number, which must not be used as an institution
     // user id.
-    const institutionUserId = user ? user.institutionUserId : -424242;
+    const institutionUserId =
+      user &&
+      user.institutionUserId !== null &&
+      user.institutionUserId !== undefined
+        ? user.institutionUserId
+        : -424242;
     await client.query(`SET my.institution_user_id = ${institutionUserId}`);
 
     // Perform the search
