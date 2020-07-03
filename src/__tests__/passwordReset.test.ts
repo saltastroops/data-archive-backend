@@ -8,12 +8,14 @@ import moment from "moment";
 import { ssdaPool } from "../db/postgresql_pool";
 import { resolvers } from "../resolvers";
 import { transporter } from "../util";
+import * as userUtil from "../util/user";
 
 beforeEach(() => {
   // Cleaning up
   (ssdaPool.query as any).mockReset();
   (ssdaPool.connect as any).mockReset();
   (transporter.sendMail as any).mockReset();
+  (userUtil.setUserToken as any) = jest.fn().mockReturnValueOnce(true);
 });
 
 describe("Request password reset", () => {
@@ -57,6 +59,8 @@ describe("Request password reset", () => {
       })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [] });
+
+    (userUtil.setUserToken as any) = jest.fn().mockReturnValueOnce(false);
 
     try {
       await resolvers.Mutation.requestPasswordReset(

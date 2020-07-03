@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import { validate } from "isemail";
 import { PoolClient } from "pg";
 import { v4 as uuid } from "uuid";
+import { sdbPool } from "../db/mysql_pool";
 import { ssdaPool } from "../db/postgresql_pool";
 import AuthProvider, {
   AuthProviderName,
@@ -36,7 +37,6 @@ export interface IUserCreateInput {
   email: string;
   familyName: string;
   givenName: string;
-  institutionMember?: boolean;
   password?: string;
   username?: string;
 }
@@ -69,7 +69,6 @@ export const createUser = async (args: IUserCreateInput) => {
     email,
     familyName,
     givenName,
-    institutionMember,
     password,
     username
   } = args;
@@ -175,7 +174,6 @@ export const createUser = async (args: IUserCreateInput) => {
       createInstitutionUser(
         client,
         "Southern African Large Telescope",
-        !!institutionMember,
         authProviderUserId as string,
         userId
       );
@@ -631,23 +629,61 @@ export const ownsOutOfDataFiles = async (
   // Remove duplicate file ids
   const ids = Array.from(new Set(fileIds));
 
-  // Get the list of files owned by the user
-  const institution = getAuthProvider(user.authProvider).institution;
-  const sql = `
-  SELECT artifact_id
-  FROM observations.artifact a
-JOIN observations.plane p on a.plane_id = p.plane_id
-JOIN observations.observation o on p.observation_id = o.observation_id
-JOIN observations.proposal p2 on o.proposal_id = p2.proposal_id
-JOIN admin.proposal_investigator pi ON p2.proposal_id = pi.proposal_id
-JOIN observations.institution i ON p2.institution_id = i.institution_id
-WHERE pi.institution_user_id=$1 AND i.abbreviated_name=$2 AND a.artifact_id = ANY($3)
-  `;
-  const res: any = await ssdaPool.query(sql, [
-    user.institutionUserId,
-    institution,
+  // Get the list of files owned by the user as an investigator
+  const ownsAsInvestigator = await ownsOutOfFilesAsInvestigator(user, ids);
+  const ownsAsInstitutionMember = await ownsOutOfFilesAsInstitutionMember(
+    user,
     ids
+  );
+  return new Set([
+    ...Array.from(ownsAsInvestigator),
+    ...Array.from(ownsAsInstitutionMember)
   ]);
+};
+
+const ownsOutOfFilesAsInvestigator = async (
+  user: User,
+  ids: string[]
+): Promise<Set<string>> => {
+  const sql = `
+      SELECT artifact_id
+      FROM observations.artifact a
+      JOIN observations.plane p on a.plane_id = p.plane_id
+      JOIN observations.observation o on p.observation_id = o.observation_id
+      JOIN observations.proposal p2 on o.proposal_id = p2.proposal_id
+      JOIN observations.institution i ON p2.institution_id = i.institution_id
+      JOIN admin.proposal_investigator pi ON p2.proposal_id = pi.proposal_id
+      JOIN admin.proposal_access_rule par ON p2.proposal_id = par.proposal_id
+      JOIN admin.access_rule ar ON par.access_rule_id = ar.access_rule_id
+      WHERE ar.access_rule = 'Public Data or Investigator' AND pi.institution_user_id = $1 AND a.artifact_id = ANY($2)
+  `;
+  const res: any = await ssdaPool.query(sql, [user.institutionUserId, ids]);
+  const ownedIds = res.rows.map((row: any) => row.artifact_id);
+
+  return new Set(ownedIds);
+};
+
+const ownsOutOfFilesAsInstitutionMember = async (
+  user: User,
+  ids: string[]
+): Promise<Set<string>> => {
+  const sql = `
+      SELECT artifact_id
+      FROM observations.artifact a
+               JOIN observations.plane p on a.plane_id = p.plane_id
+               JOIN observations.observation_time ot on p.plane_id = ot.plane_id
+               JOIN observations.observation o on p.observation_id = o.observation_id
+               JOIN observations.proposal p2 on o.proposal_id = p2.proposal_id
+               JOIN observations.institution i ON p2.institution_id = i.institution_id
+               JOIN admin.institution_user iu ON i.institution_id = iu.institution_id
+               JOIN admin.institution_membership im ON iu.institution_user_id = im.institution_user_id
+               JOIN admin.proposal_access_rule par ON p2.proposal_id = par.proposal_id
+               JOIN admin.access_rule ar ON par.access_rule_id = ar.access_rule_id
+      WHERE ar.access_rule = 'Public Data or Institution Member'
+        AND iu.institution_user_id = $1
+        AND a.artifact_id=ANY($2)
+`;
+  const res: any = await ssdaPool.query(sql, [user.institutionUserId, ids]);
   const ownedIds = res.rows.map((row: any) => row.artifact_id);
 
   return new Set(ownedIds);
@@ -672,29 +708,180 @@ function checkPasswordStrength(password: string) {
 async function createInstitutionUser(
   client: PoolClient,
   institution: string,
-  institutionMember: boolean,
-  institutionUserId: string,
+  userId: string,
   ssdaUserId: string
 ) {
-  const sql = `
-      WITH institution_id (id) AS (
-          SELECT institution_id FROM institution WHERE name=$1
-      )
-      INSERT INTO institution_user (
-          institution_id,
-          institution_member,
-          institution_user_id,
-          ssda_user_id)
-      VALUES (
-          (SELECT id FROM institution_id),
-          $2,
-          $3,
-          $4)
+  // Inserting a new record if the institution user does not exist.
+  // Update the ssda_user_id if the institution user already exists.
+  const insertOrUpdateInstitutionUserSQL = `
+    WITH institution_id (id) AS (
+      SELECT institution_id FROM institution WHERE name=$1
+    )
+    INSERT INTO institution_user (
+      institution_id,
+      user_id,
+      ssda_user_id
+    )
+    VALUES (
+      (SELECT id FROM institution_id),
+      $2,
+      $3
+    )
+    ON CONFLICT (user_id, institution_id) 
+    DO UPDATE
+    SET ssda_user_id=$4
+    RETURNING institution_user_id
   `;
-  await client.query(sql, [
+  const res: any = await client.query(insertOrUpdateInstitutionUserSQL, [
     institution,
-    institutionMember,
-    institutionUserId,
+    userId,
+    ssdaUserId,
     ssdaUserId
   ]);
+  const institutionUserId = res.rows[0].institution_user_id;
+
+  // Update the membership details for the user.
+  await updateInstitutionMembershipDetails(
+    institution,
+    institutionUserId,
+    userId
+  );
+}
+
+async function updateInstitutionMembershipDetails(
+  institution: string,
+  institutionUserId: string,
+  userId: string
+) {
+  if (institution === "Southern African Large Telescope") {
+    // TODO: This should be replaced with an improved version, getting the date
+    // intervals from the SDB
+    const partnerMembershipIntervals: Map<
+      string,
+      Array<[Date, Date]>
+    > = new Map([
+      ["AMNH", [[new Date(2011, 8, 1), new Date(2100, 0, 1)]]],
+      ["CMU", [[new Date(2011, 8, 1), new Date(2013, 3, 30)]]],
+      ["DC", [[new Date(2011, 8, 1), new Date(2100, 0, 1)]]],
+      ["DUR", [[new Date(2017, 4, 1), new Date(2019, 3, 30)]]],
+      [
+        "GU",
+        [
+          [new Date(2011, 8, 1), new Date(2015, 3, 30)],
+          [new Date(2016, 4, 1), new Date(2017, 9, 31)]
+        ]
+      ],
+      ["HET", [[new Date(2011, 8, 1), new Date(2015, 3, 30)]]],
+      ["IUCAA", [[new Date(2011, 8, 1), new Date(2100, 0, 1)]]],
+      ["POL", [[new Date(2011, 8, 1), new Date(2100, 0, 1)]]],
+      ["RSA", [[new Date(2011, 8, 1), new Date(2100, 0, 1)]]],
+      ["RU", [[new Date(2011, 8, 1), new Date(2100, 0, 1)]]],
+      [
+        "UC",
+        [
+          [new Date(2011, 8, 1), new Date(2014, 9, 31)],
+          [new Date(2015, 4, 1), new Date(2016, 9, 31)],
+          [new Date(2017, 4, 1), new Date(2019, 3, 30)]
+        ]
+      ],
+      ["UKSC", [[new Date(2011, 8, 1), new Date(2100, 0, 1)]]],
+      ["UNC", [[new Date(2011, 8, 1), new Date(2020, 3, 30)]]],
+      ["UW", [[new Date(2011, 8, 1), new Date(2100, 0, 1)]]]
+    ]);
+
+    // Get the user's partners from the SDB
+    const membershipIntervals = new Set<[Date, Date]>();
+    const partnerCodes = await saltUserPartners(userId);
+
+    // Collect the membership intervals
+    for (const partnerCode of Array.from(partnerCodes)) {
+      const intervals = partnerMembershipIntervals.get(partnerCode);
+      if (!intervals) {
+        throw new Error(`Unknown partner code: ${partnerCode}`);
+      }
+      for (const interval of intervals) {
+        if (!isDateIntervalInSet(interval, membershipIntervals)) {
+          membershipIntervals.add(interval);
+        }
+      }
+    }
+
+    // Insert the membership details
+    await updateInstitutionMemberships(institutionUserId, membershipIntervals);
+  }
+}
+
+function isDateIntervalInSet(
+  interval: [Date, Date],
+  intervals: Set<[Date, Date]>
+): boolean {
+  for (const i of Array.from(intervals)) {
+    if (
+      i[0].getTime() === interval[0].getTime() &&
+      i[1].getTime() === interval[1].getTime()
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+async function updateInstitutionMemberships(
+  institutionUserId: string,
+  institutionMemberships: Set<[Date, Date]>
+) {
+  await deleteInstitutionMemberships(institutionUserId);
+  await insertInstitutionMemberships(institutionUserId, institutionMemberships);
+}
+
+async function deleteInstitutionMemberships(institutionUserId: string) {
+  const sql = `
+  DELETE FROM institution_membership WHERE institution_user_id=$1
+  `;
+
+  await ssdaPool.query(sql, [institutionUserId]);
+}
+
+async function insertInstitutionMemberships(
+  institutionUserId: string,
+  institutionMemberships: Set<[Date, Date]>
+) {
+  const sql = `
+  INSERT INTO institution_membership (
+                                      institution_user_id,
+                                      membership_start,
+                                      membership_end
+                                      )
+  VALUES ($1, $2, $3)
+  `;
+
+  for (const institutionMembership of Array.from(institutionMemberships)) {
+    await ssdaPool.query(sql, [
+      institutionUserId,
+      institutionMembership[0],
+      institutionMembership[1]
+    ]);
+  }
+}
+
+/**
+ * Get the partner codes of the partners a SALT user is associated with.
+ */
+async function saltUserPartners(userId: string): Promise<Set<string>> {
+  const sql = `
+  SELECT Partner_Code
+  FROM PiptUser
+  JOIN Investigator ON PiptUser.PiptUser_Id = Investigator.PiptUser_Id
+  JOIN Institute ON Investigator.Institute_Id = Institute.Institute_Id
+  JOIN Partner ON Institute.Partner_Id = Partner.Partner_Id
+  WHERE PiptUser.PiptUser_Id=? AND Partner.Partner_Code != "OTH" AND Partner.Virtual = 0
+  `;
+  const result = await sdbPool.query(sql, [userId]);
+
+  const partnerCodes = new Set<string>();
+  for (const row of result[0] as any) {
+    partnerCodes.add(row.Partner_Code);
+  }
+  return partnerCodes;
 }

@@ -64,7 +64,7 @@ async function observation_calibrations(
   artifactIds: number[],
   calibrationTypes: Set<CalibrationType>
 ): Promise<Set<number>> {
-  // The SSDA expects names that differ from those for the CalibvrationType type
+  // The SSDA expects names that differ from those for the CalibrationType type
   const ssdaTypes = ssdaCalibrationTypes(calibrationTypes);
 
   // Find all non-science data files which belong to one of the observation
@@ -165,15 +165,19 @@ function ssdaCalibrationTypes(
   const ssdaTypes = new Set<string>();
   for (const calibrationType of Array.from(calibrationTypes)) {
     if (calibrationType === "ARC") {
-      ssdaTypes.add("Arc");
+      ssdaTypes.add("Arc - Calsys");
+      ssdaTypes.add("Arc - Internal");
     } else if (calibrationType === "BIAS") {
       ssdaTypes.add("Bias");
     } else if (calibrationType === "FLAT") {
-      ssdaTypes.add("Flat");
+      ssdaTypes.add("Imaging Flat - Lamp");
+      ssdaTypes.add("Imaging Flat - Twilight");
+      ssdaTypes.add("Spectroscopic Flat - Lamp");
+      ssdaTypes.add("Spectroscopic Flat - Twilight");
     } else if (calibrationType === "RADIAL_VELOCITY_STANDARD") {
-      ssdaTypes.add("Radial Velocity Standard");
+      ssdaTypes.add("Standard - Radial Velocity");
     } else if (calibrationType === "SPECTROPHOTOMETRIC_STANDARD") {
-      ssdaTypes.add("Spectrophotometric Standard");
+      ssdaTypes.add("Standard - Spectrophotometric");
     } else {
       throw new Error(`Unsupported calibration type: ${calibrationType}`);
     }
