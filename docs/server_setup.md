@@ -64,70 +64,6 @@ Verify that Git was installed successfully.
 git --version
 ```
 
-## Clone the repository
-
-```sh
-git clone https://github.com/saltastroops/data-archive-backend.git data-archive-backend
-```
-
-or using ssh
-
-```sh
-git clone git@github.com:saltastroops/data-archive-backend.git data-archive-backend
-```
-
-## Install packages
-
-```sh
-cd data-archive-backend
-yarn install
-```
-
-As mentioned above, you might have to install the build_essential package if the installation of bcrypt fails.
-
-## Install PM2
-
-In production, you should use a daemon process. For Node.js you can use [PM2](http://pm2.keymetrics.io/) to set this up.
-
-Install PM2 globally on the server.
-
-```
-yarn global add pm2
-```
-
-After pm2 is added glabaly, sometimes it is not recorgnized. If that is the case, the pm2 path need to be added to the system environment path.
-Using sudo privileges, open the file `/etc/environment` and the path below.
-
-```
-/home/myUser/.yarn/bin/
-```
-
-Make sure PM2 supports TypeScript and TS-Node.
-
-```
-pm2 install typescript
-```
-
-Typescript comes with TS-Node enabled, so no need to install it separate.
-
-The Data Archive API can be started by running. 
-
-```sh
-yarn start
-```
-
-This command uses PM2 to launch the server.
-
-To ensure that PM2 restarts your process after a server reboot and automatically respawns the process, execute the following commands after starting the server.
-
-```sh
-# generate an active startup script
-pm2 startup
-
-# freeze the process list for automatic respawn
-pm2 save
-```
-
 ## Install and configuring Nginx
 
 [Nginx](https://www.nginx.com/) should be used as the web server. It can be installed with apt.
@@ -242,3 +178,105 @@ Allow or deny (specific rules)
 sudo ufw allow <port>/<optional: protocol>
 sudo ufw deny <port>/<optional: protocol>
 ```
+
+## Clone the repository
+
+```sh
+git clone https://github.com/saltastroops/data-archive-backend.git data-archive-backend
+```
+
+or using ssh
+
+```sh
+git clone git@github.com:saltastroops/data-archive-backend.git data-archive-backend
+```
+
+## Install packages
+
+```sh
+cd data-archive-backend
+yarn install
+```
+
+As mentioned above, you might have to install the build_essential package if the installation of bcrypt fails.
+
+## Create a user for running the backend server
+
+There should be a dedicated user (called `archive` in the following) for running the server backend. This user should have read-only permissions for the FTS files, read-only permissions for the backend code and both read and write permissions for the data requests folder.
+
+Unless noted otherwise, the following steps have to be executed as that user.
+
+## Install PM2
+
+In production, you should use a daemon process. For Node.js you can use [PM2](http://pm2.keymetrics.io/) to set this up.
+
+Install PM2 globally on the server.
+
+```sh
+yarn global add pm2
+```
+
+You need to add the following to the `.bashrc` file to make `pm2` available as a command.
+
+```sh
+# make globally installed Node scripts available
+export PATH=/home/archive/.yarn/bin:$PATH
+```
+
+Make sure PM2 supports TypeScript.
+
+```sh
+pm2 install typescript
+```
+
+Typescript comes with TS-Node enabled, so there is no need to install it separately.
+
+The Data Archive API can be started by running
+
+```sh
+yarn start
+```
+
+in the root directory of the backend code. This command uses PM2 to launch the server.
+
+Check that the server is working.
+
+Now **temporarily** give the user sudo rights. **(Remember to revoke them again at the end!)**
+
+```sh
+sudo usermod -a -G sudo archive
+```
+
+As the `archive` user, get the command for installing the service for starting pm2 on rebooting.
+
+```sh
+pm2 startup
+```
+
+This will output a command, which you have to cut-and-paste and execute.
+
+You also must make sure that the backend server is started:
+
+```sh
+pm2 save
+```
+
+Afterwards **revoke the sudo rights from the `archive` user again**.
+
+```bash
+sudo deluser archive sudo
+```
+
+You can check that the service for starting pm2 has been installed:
+
+```bash
+systemctl cat pm2-archive
+```
+
+Finally, as a user with sudo permissions, reboot the server
+
+```bash
+sudo reboot
+```
+
+and check that all is working as expected.
