@@ -96,3 +96,7 @@ To run the tests, executes the usual yarn test command,
 ```bash
 yarn test
 ```
+
+## Deploying on a production server
+
+See [docs/server_setup.md](docs/server_setup.md) for instructions.
