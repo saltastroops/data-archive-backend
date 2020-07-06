@@ -85,6 +85,6 @@ jobs:
               yarn install &&
               yarn lint &&
               yarn test &&
-              ssh -o StrictHostKeyChecking=no -tt ${{ secrets.PROD_NON_ROOT_USER}}@${{ secrets.PROD_HOST}} -p ${{ secrets.PROD_PORT}} "pm2 restart data-archive-api"
+              echo ${{ secrets.PROD_USER_PASSWORD }} | sudo su - ${{ secrets.PROD_NON_ROOT_USER }} -c "/home/${{ secrets.PROD_NON_ROOT_USER }}/.yarn/bin/pm2 restart data-archive-api" &&
               exit
             """
