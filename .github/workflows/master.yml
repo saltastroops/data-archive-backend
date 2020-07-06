@@ -85,6 +85,10 @@ jobs:
               yarn install &&
               yarn lint &&
               yarn test &&
-              yarn restart &&
+              ssh -o StrictHostKeyChecking=no -tt ${{ secrets.PROD_NON_ROOT_USER}}@${{ secrets.PROD_HOST}} -p ${{ secrets.PROD_PORT}} """
+                set -eu
+                pm2 restart data-archive-api &&
+                exit
+              """ &&
               exit
             """
