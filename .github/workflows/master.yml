@@ -85,6 +85,6 @@ jobs:
               yarn install &&
               yarn lint &&
               yarn test &&
-              yarn restart &&
+              echo ${{ secrets.PROD_USER_PASSWORD }} | sudo su - ${{ secrets.PROD_NON_ROOT_USER }} -c "/home/${{ secrets.PROD_NON_ROOT_USER }}/.yarn/bin/pm2 restart data-archive-api" &&
               exit
             """
