@@ -9,6 +9,11 @@ const launchServer = async () => {
     return;
   }
 
+  // zip files
+  if (!process.env.DATA_REQUEST_BASE_DIR) {
+    throw new Error("The DATA_REQUEST_BASE_DIR environment variable has not been set.");
+  }
+
   // Check if the data request base directory exists
   if (!fs.existsSync(process.env.DATA_REQUEST_BASE_DIR || "")){
     throw new Error(
