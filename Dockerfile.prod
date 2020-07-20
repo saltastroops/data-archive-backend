@@ -1,0 +1,14 @@
+# Specify a base image.
+FROM node:12-alpine AS alpine
+
+# Project working directory.
+WORKDIR /data-archive-backend
+
+# Copy the contents of the project to the image
+COPY . .
+
+# install pm2
+RUN yarn global add pm2
+
+# Run 'yarn restart' when the container starts.
+CMD ["yarn", "restart"]
