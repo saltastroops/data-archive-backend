@@ -109,10 +109,10 @@ WHERE o.observation_group_id IN (SELECT id FROM obs_groups)
 async function telescope(artifactId: number): Promise<string> {
   const sql = `
       SELECT t.name
-      FROM artifact a
-               JOIN plane p ON a.plane_id = p.plane_id
-               JOIN observation o ON p.observation_id = o.observation_id
-               JOIN telescope t on o.telescope_id = t.telescope_id
+      FROM observations.artifact a
+               JOIN observations.plane p ON a.plane_id = p.plane_id
+               JOIN observations.observation o ON p.observation_id = o.observation_id
+               JOIN observations.telescope t on o.telescope_id = t.telescope_id
       WHERE a.artifact_id=$1
   `;
 
@@ -135,10 +135,10 @@ async function telescope(artifactId: number): Promise<string> {
 async function instrument(artifactId: number): Promise<string> {
   const sql = `
   SELECT i.name
-  FROM artifact a
-       JOIN plane p ON a.plane_id = p.plane_id
-       JOIN observation o ON p.observation_id = o.observation_id
-       JOIN instrument i on o.instrument_id = i.instrument_id
+  FROM observations.artifact a
+       JOIN observations.plane p ON a.plane_id = p.plane_id
+       JOIN observations.observation o ON p.observation_id = o.observation_id
+       JOIN observations.instrument i on o.instrument_id = i.instrument_id
   WHERE a.artifact_id=$1
   `;
 
