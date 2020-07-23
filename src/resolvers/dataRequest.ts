@@ -1,3 +1,4 @@
+import fs from "fs";
 import { titleCase } from "title-case";
 import { ssdaPool } from "../db/postgresql_pool";
 import {
@@ -14,6 +15,31 @@ async function asyncForEach(array: any, callback: any) {
   }
 }
 
+async function data_request_limit_size(
+  fileIds: string[],
+  requestedCalibrationLevels: Set<CalibrationLevel>
+) {
+  const sql = `SELECT (paths).raw,
+                      (paths).reduced 
+               FROM observations.artifact atf
+               WHERE artifact_id = ANY($1)`;
+  const res = await ssdaPool.query(sql, [fileIds]);
+  const artifacts = res.rows;
+
+  let filepath: string;
+  let fileSize = 0;
+  for (const df of artifacts) {
+    if (requestedCalibrationLevels.has("RAW")) {
+      filepath = process.env.FITS_BASE_DIR + df.raw;
+      fileSize += fs.statSync(filepath).size / 1000000;
+    }
+    if (requestedCalibrationLevels.has("REDUCED")) {
+      filepath = process.env.FITS_BASE_DIR + df.reduced;
+      fileSize += fs.statSync(filepath).size / 1000000;
+    }
+  }
+  return Math.round(fileSize);
+}
 export const createDataRequest = async (
   dataFiles: number[],
   requestedCalibrationLevels: Set<CalibrationLevel>,
@@ -39,6 +65,14 @@ export const createDataRequest = async (
   }
 
   const dataFileIdStrings = dataFiles.map(id => id.toString());
+  if (
+    (await data_request_limit_size(
+      dataFileIdStrings,
+      requestedCalibrationLevels
+    )) >= 5000
+  ) {
+    throw new Error("You are not allowed to to request files more than 5GB.");
+  }
   const requestedDataFileIdStrings = requestedDataFiles.map(id =>
     id.toString()
   );
