@@ -412,19 +412,6 @@ async function downloadDataRequest({
   req,
   res
 }: IDataRequestDownloadParameters) {
-  // Get the data request base path if it exists
-  // If not, raise an internal server error.
-  if (!process.env.DATA_REQUEST_BASE_DIR) {
-    const message =
-      "The environment variable DATA_REQUEST_BASE_DIR for the data request base directory has not been set.";
-    Sentry.captureMessage(message);
-    res.status(500).send({
-      message,
-      success: false
-    });
-    return;
-  }
-
   // Get the data request
   const notFound = {
     message: "The requested file does not exist.",
@@ -474,7 +461,7 @@ async function downloadDataRequest({
     return;
   }
 
-  const basePath = process.env.DATA_REQUEST_BASE_DIR;
+  const basePath = process.env.DATA_REQUEST_BASE_DIR || "";
 
   // Form a full path for the data request location
   const fullPath = path.join(basePath, relativePath);
