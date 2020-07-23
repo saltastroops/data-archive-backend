@@ -1,11 +1,15 @@
 # Specify a base image.
-FROM node:12-alpine AS alpine
+FROM node:12-slim AS slim
+
+# Update npm and install typescript and ts node.
+RUN npm update && \
+  npm i -g typescript ts-node
+
+# Add volume for the data request.
+VOLUME [ $"DATA_REQUEST_BASE_DIR" ]
 
 # Project working directory.
-WORKDIR /data-archive-backend
+WORKDIR /opt/data-archive-backend
 
-# install pm2
-RUN yarn global add pm2
-
-# Run 'yarn restart' when the container starts.
-CMD ["yarn", "restart"]
+# Run 'yarn dev' when the container starts.
+CMD ["yarn", "dev"]

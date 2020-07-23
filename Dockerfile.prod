@@ -1,14 +1,15 @@
 # Specify a base image.
-FROM node:12-alpine AS alpine
+FROM node:12-slim AS slim
+
+# Update npm and install pm2.
+RUN npm update && \
+  npm i -g typescript
 
 # Project working directory.
-WORKDIR /data-archive-backend
+WORKDIR /opt/data-archive-backend
 
 # Copy the contents of the project to the image
 COPY . .
 
-# install pm2
-RUN yarn global add pm2
-
 # Run 'yarn restart' when the container starts.
-CMD ["yarn", "restart"]
+CMD ["yarn", "start"]

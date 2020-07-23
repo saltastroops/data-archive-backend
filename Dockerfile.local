@@ -1,8 +1,0 @@
-# Specify a base image.
-FROM node:12-alpine AS alpine
-
-# Project working directory.
-WORKDIR /data-archive-backend
-
-# Run 'yarn dev' when the container starts.
-CMD ["yarn", "dev"]
