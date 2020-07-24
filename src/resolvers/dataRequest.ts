@@ -7,40 +7,28 @@ import {
   CalibrationType
 } from "../util/calibrations";
 import { mayViewAllOfDataFiles } from "../util/user";
-import { zipDataRequest } from "../util/zipDataRequest";
+import { files_to_be_zipped, zipDataRequest } from "../util/zipDataRequest";
 
 async function asyncForEach(array: any, callback: any) {
   for (let index = 0; index < array.length; index++) {
     await callback(array[index], index, array);
   }
 }
-// We get the files to be downloaded by the user based on their fileIds
-async function files_to_be_downloaded(fileIds: string[]) {
-  const sql = `SELECT (paths).raw,
-                      (paths).reduced 
-               FROM observations.artifact atf
-               WHERE artifact_id = ANY($1)`;
-  const res = await ssdaPool.query(sql, [fileIds]);
-  return res.rows;
-}
+
 // limiting the data request of the user 5GB or less, we return thr limit size in bytes
 async function data_request_limit_size(
   fileIds: string[],
   requestedCalibrationLevels: Set<CalibrationLevel>
 ) {
-  let filepath: string;
   let fileSize = 0;
-  const dataFiles = await files_to_be_downloaded(fileIds);
-  for (const datafile of dataFiles) {
-    if (requestedCalibrationLevels.has("RAW")) {
-      filepath = process.env.FITS_BASE_DIR + datafile.raw;
-      fileSize += fs.statSync(filepath).size;
-    }
-    if (requestedCalibrationLevels.has("REDUCED")) {
-      filepath = process.env.FITS_BASE_DIR + datafile.reduced;
-      fileSize += fs.statSync(filepath).size;
-    }
-  }
+  const dataFiles = await files_to_be_zipped(
+    fileIds,
+    requestedCalibrationLevels
+  );
+  dataFiles.map(file => {
+    const paths = process.env.FITS_BASE_DIR + file.filepath;
+    fileSize += fs.statSync(paths).size;
+  });
   return fileSize;
 }
 export const createDataRequest = async (
@@ -149,7 +137,7 @@ export const createDataRequest = async (
 
     await client.query("COMMIT");
 
-    zipDataRequest(
+    await zipDataRequest(
       dataFileIdStrings,
       dataRequestId,
       requestedCalibrationLevels
