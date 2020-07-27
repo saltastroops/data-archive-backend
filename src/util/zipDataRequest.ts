@@ -100,6 +100,10 @@ export const zipDataRequest = async (
       const filename = basename(filepath);
       const fileDescription = description;
 
+      if (df.observation_id === "SALT-") {
+        df.observation_id = "SALT";
+      }
+
       dataFiles.push({
         fileDescription,
         filename,
