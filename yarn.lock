@@ -637,7 +637,7 @@
   version "1.0.0"
   resolved "https://codeload.github.com/types/mysql2/tar.gz/b549352cda0b83fe8c4f4c11a1b4beb0b0cb0f5d"
   dependencies:
-    "@types/mysql" types/mysql
+    "@types/mysql" types/mysql#v2.0.0
 
 "@types/mysql@types/mysql":
   version "2.0.0"
@@ -4996,7 +4996,7 @@ registry-url@^3.0.3:
   dependencies:
     rc "^1.0.1"
 
-"rejection-tracker@github:garronej/rejection-tracker":
+rejection-tracker@garronej/rejection-tracker:
   version "0.2.1"
   resolved "https://codeload.github.com/garronej/rejection-tracker/tar.gz/8bea020baa72fc55bb915227f5386643845418dd"
   dependencies:
