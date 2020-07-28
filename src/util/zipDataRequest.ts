@@ -98,6 +98,14 @@ export async function filesToBeZipped(
       const filename = basename(filepath);
       const fileDescription = description;
 
+      if (df.observation_id === "SALT-") {
+        df.observation_id = "SALT";
+      }
+
+      if (df.observation_id.length > 13) {
+        df.observation_id = df.observation_id.substr(0, 13);
+      }
+
       dataFiles.push({
         fileDescription,
         filename,
