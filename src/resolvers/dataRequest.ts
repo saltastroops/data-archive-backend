@@ -15,7 +15,7 @@ async function asyncForEach(array: any, callback: any) {
   }
 }
 
-// we return the total file size for the download by the user
+// Return the total (unzipped) file size for the download request
 async function totalDataRequestSize(
   fileIds: string[],
   requestedCalibrationLevels: Set<CalibrationLevel>
@@ -23,8 +23,8 @@ async function totalDataRequestSize(
   let totalFileSize = 0;
   const dataFiles = await filesToBeZipped(fileIds, requestedCalibrationLevels);
   dataFiles.forEach(file => {
-    const paths = process.env.FITS_BASE_DIR + file.filepath;
-    totalFileSize += fs.statSync(paths).size;
+    const path = process.env.FITS_BASE_DIR + file.filepath;
+    totalFileSize += fs.statSync(path).size;
   });
   return totalFileSize;
 }
