@@ -48,7 +48,7 @@ const failToZipDataRequest = async (dataRequestId: string) => {
     }
   );
 };
-export async function files_to_be_zipped(
+export async function filesToBeZipped(
   fileIds: string[],
   requestedCalibrationLevels: Set<CalibrationLevel>
 ) {
@@ -118,10 +118,7 @@ export const zipDataRequest = async (
   dataRequestId: string,
   requestedCalibrationLevels: Set<CalibrationLevel>
 ) => {
-  const dataFiles = await files_to_be_zipped(
-    fileIds,
-    requestedCalibrationLevels
-  );
+  const dataFiles = await filesToBeZipped(fileIds, requestedCalibrationLevels);
   // zip files
   if (!process.env.DATA_REQUEST_BASE_DIR) {
     throw new Error("The DATA_REQUEST_BASE_DIR has not been set.");
