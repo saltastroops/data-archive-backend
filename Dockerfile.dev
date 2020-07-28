@@ -5,9 +5,6 @@ FROM node:12-slim AS slim
 RUN npm update && \
   npm i -g typescript ts-node
 
-# Add volume for the data request.
-VOLUME [ $"DATA_REQUEST_BASE_DIR" ]
-
 # Project working directory.
 WORKDIR /opt/data-archive-backend
 
