@@ -104,7 +104,7 @@ export const zipDataRequest = async (
         df.observation_id = "SALT";
       }
 
-      if (df.observation_id.length > 10) {
+      if (df.observation_id.length > 13) {
         df.observation_id = df.observation_id.substr(0, 13);
       }
 
