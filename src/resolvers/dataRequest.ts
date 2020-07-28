@@ -7,7 +7,7 @@ import {
   CalibrationType
 } from "../util/calibrations";
 import { mayViewAllOfDataFiles } from "../util/user";
-import { files_to_be_zipped, zipDataRequest } from "../util/zipDataRequest";
+import { filesToBeZipped, zipDataRequest } from "../util/zipDataRequest";
 
 async function asyncForEach(array: any, callback: any) {
   for (let index = 0; index < array.length; index++) {
@@ -15,21 +15,18 @@ async function asyncForEach(array: any, callback: any) {
   }
 }
 
-// limiting the data request of the user 5GB or less, we return thr limit size in bytes
-async function data_request_limit_size(
+// we return the total file size for the download by the user
+async function totalDataRequestSize(
   fileIds: string[],
   requestedCalibrationLevels: Set<CalibrationLevel>
 ) {
-  let fileSize = 0;
-  const dataFiles = await files_to_be_zipped(
-    fileIds,
-    requestedCalibrationLevels
-  );
-  dataFiles.map(file => {
+  let totalFileSize = 0;
+  const dataFiles = await filesToBeZipped(fileIds, requestedCalibrationLevels);
+  dataFiles.forEach(file => {
     const paths = process.env.FITS_BASE_DIR + file.filepath;
-    fileSize += fs.statSync(paths).size;
+    totalFileSize += fs.statSync(paths).size;
   });
-  return fileSize;
+  return totalFileSize;
 }
 export const createDataRequest = async (
   dataFiles: number[],
@@ -54,10 +51,10 @@ export const createDataRequest = async (
   if (requestedCalibrationTypes.size) {
     dataFiles = await addCalibrations(dataFiles, requestedCalibrationTypes);
   }
-  const MAX_SIZE = 5368709120; // 5GB
+  const MAX_SIZE = 5 * 1000 * 1000 * 1000; // 5GB
   const dataFileIdStrings = dataFiles.map(id => id.toString());
   if (
-    (await data_request_limit_size(
+    (await totalDataRequestSize(
       dataFileIdStrings,
       requestedCalibrationLevels
     )) >= MAX_SIZE
