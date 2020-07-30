@@ -1,9 +1,9 @@
 # Specify a base image.
 FROM node:12-slim AS slim
 
-# Update npm and install typescript and ts node.
+# Update npm and install typescript.
 RUN npm update && \
-  npm i -g typescript ts-node
+  npm i -g typescript
 
 # Project working directory.
 WORKDIR /opt/data-archive-backend
