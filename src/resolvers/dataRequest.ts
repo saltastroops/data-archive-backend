@@ -112,14 +112,15 @@ export const createDataRequest = async (
 
     await client.query("COMMIT");
 
-    zipDataRequest(
+    await zipDataRequest(
       dataFileIdStrings,
       dataRequestId,
       requestedCalibrationLevels
     );
 
     return {
-      message: "The data request was successfully requested",
+      dataRequestId,
+      message: "The data request was successfully requested.",
       status: true
     };
   } catch (e) {

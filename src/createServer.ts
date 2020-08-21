@@ -394,6 +394,35 @@ const createServer = async () => {
     }
   );
 
+  /**
+   * Endpoint for downloading the data for a full data request.
+   *
+   * The URL includes the following parameters.
+   *
+   * :dataRequestId
+   *     The id of the data request.
+   * :filename
+   *     The filename to use for the downloaded file. It is not used for
+   *     identifying the data file, but is used in the attachment HTTP header.
+   */
+  server.express.get(
+      "/downloads/data-requests-new/:dataRequestId",
+      async (req, res) => {
+        // Check if the user is logged in
+        if (!req.user) {
+          return res.status(401).send({
+            message: "You must be logged in.",
+            success: false
+          });
+        }
+
+        // Get all the params from the request
+        const { dataRequestId, filename } = req.params;
+        // Download the data file for the data request
+        return downloadDataRequest({ dataRequestId, filename, req, res });
+      }
+  );
+
   // Returning the server
   return server;
 };
@@ -427,7 +456,7 @@ async function downloadDataRequest({
     WHERE data_request_id=$1
   `;
   const queryResult: any = await ssdaPool.query(dataRequestsSQL, [
-    dataRequestId
+    parseInt(dataRequestId, 10)
   ]);
   const rows = queryResult.rows;
 

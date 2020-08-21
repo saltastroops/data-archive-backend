@@ -195,7 +195,7 @@ type Mutation {
     The calibration levels to include along with the requested files.
     """
     requestedCalibrationLevels: [CalibrationLevel!]!
-  ): Status!
+  ): CreateDataRequestStatus!
 }
 
 """
@@ -244,6 +244,22 @@ type User {
 }
 
 type Status {
+  """
+  Success status.
+  """
+  status: Boolean!
+
+  """
+  Status message.
+  """
+  message: String
+}
+
+type CreateDataRequestStatus {
+  """
+  Data request id.
+  """
+  dataRequestId: String!
   """
   Success status.
   """
