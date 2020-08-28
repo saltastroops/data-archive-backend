@@ -112,12 +112,6 @@ export const createDataRequest = async (
 
     await client.query("COMMIT");
 
-    await zipDataRequest(
-      dataFileIdStrings,
-      dataRequestId,
-      requestedCalibrationLevels
-    );
-
     return {
       dataRequestId,
       message: "The data request was successfully requested.",
