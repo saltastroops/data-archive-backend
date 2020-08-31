@@ -37,7 +37,7 @@ afterEach(() => {
   (ssdaPool.connect as any).mockReset();
 });
 
-describe("/downloads/data-requests/:dataRequestId/:filename", () => {
+describe("/downloads/data-requests/:dataRequestId", () => {
   it("should download the requested data file if the user owns it", async () => {
     // Mock the database querying
     // 1. & 2. Mocks get user by username of the user to authenticate.
@@ -52,12 +52,19 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
       .mockResolvedValueOnce({ rows: [{ id: 1 }] })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({
-        rows: [
-          {
-            path: "src/__tests__/data/data-file-request.zip",
-            ssda_user_id: 1
-          }
-        ]
+        rows: [{ calibration_level: "RAW" }]
+      })
+      .mockResolvedValueOnce({
+        rows: [{ artifact_id: 1 }]
+      })
+      .mockResolvedValueOnce({
+        rows: [{ calibration_level: "RAW" }]
+      })
+      .mockResolvedValueOnce({
+        rows: [{ calibration_level: "RAW" }]
+      })
+      .mockResolvedValueOnce({
+        rows: [{ calibration_level: "RAW" }]
       });
 
     // Mock the bcrypt password comparison to return true.
@@ -66,9 +73,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
     // Authenticate the user
     const agent = await createAuthenticatedAgent("test", "test", "SSDA");
 
-    const response = await agent.get(
-      "/downloads/data-requests/1/data-file-request.zip"
-    );
+    const response = await agent.get("/downloads/data-requests/1");
 
     // Expect that all went well
     expect(response.status).toEqual(200);
@@ -113,9 +118,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
     // Authenticate the user
     const agent = await createAuthenticatedAgent("test", "test", "SSDA");
 
-    const response = await agent.get(
-      "/downloads/data-requests/1/data-file-request.zip"
-    );
+    const response = await agent.get("/downloads/data-requests/1");
 
     // Expect that all went well
     expect(response.status).toEqual(200);
@@ -145,6 +148,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [{ id: 1 }] })
       .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({
         rows: [
           { ssda_user_id: 1, path: "path/to/no-longer-existing/data-request" }
@@ -157,7 +161,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
     // Authenticate the user
     const agent = await createAuthenticatedAgent("test", "test", "SSDA");
 
-    const response = await agent.get("/downloads/data-requests/1/filename.zip");
+    const response = await agent.get("/downloads/data-requests/1");
 
     // Expect the Not Found status code
     expect(response.status).toEqual(404);
@@ -193,7 +197,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
     const agent = await createAuthenticatedAgent("test", "test", "SSDA");
 
     const response = await agent.get(
-      "/downloads/data-requests/requested-data-file-id/filename.zip"
+      "/downloads/data-requests/requested-data-file-id"
     );
 
     // Expect the Forbidden status code
@@ -229,7 +233,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
     // Authenticate the user
     const agent = await createAuthenticatedAgent("test", "test", "SSDA");
 
-    const response = await agent.get("/downloads/data-requests/1/filename.zip");
+    const response = await agent.get("/downloads/data-requests/1");
 
     // Expect the user unauthenticated status code
     expect(response.status).toEqual(404);
@@ -247,7 +251,7 @@ describe("/downloads/data-requests/:dataRequestId/:filename", () => {
     const unauthenticatedAgent = request.agent(server);
 
     const response = await unauthenticatedAgent.get(
-      "/downloads/data-requests/1/filename.zip"
+      "/downloads/data-requests/1"
     );
 
     // Expect the Unauthorized status code
