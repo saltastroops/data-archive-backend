@@ -262,10 +262,10 @@ export const dataFilesToZip = async (
       let description: string;
 
       if (calibrationLevel === "RAW") {
-        filepath = process.env.DATA_REQUEST_BASE_DIR + "/" + df.raw;
+        filepath = process.env.FITS_BASE_DIR + "/" + df.raw;
         description = `Raw ${df.instrument_name} data`;
       } else if (calibrationLevel === "REDUCED") {
-        filepath = process.env.DATA_REQUEST_BASE_DIR + "/" + df.reduced;
+        filepath = process.env.FITS_BASE_DIR + "/" + df.reduced;
         description = `Reduced ${df.instrument_name} data`;
       } else {
         throw new Error(`Unsupported calibration level ${calibrationLevel}`);
