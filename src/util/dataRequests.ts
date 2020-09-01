@@ -42,20 +42,7 @@ export async function downloadDataRequest(req: Request, res: Response) {
   // Get all the params from the request
   const { dataRequestId } = req.params;
 
-  const calibrationLevelSQL = `
-SELECT calibration_level.calibration_level
-FROM admin.data_request_calibration_level
-JOIN admin.calibration_level ON data_request_calibration_level.calibration_level_id = calibration_level.calibration_level_id
-WHERE data_request_id = $1;
-        `;
-  const calibrationLevelsResults = await ssdaPool.query(calibrationLevelSQL, [
-    parseInt(dataRequestId, 10)
-  ]);
-  const calibrationLevels = new Set(
-    calibrationLevelsResults.rows.map(
-      calLevel => calLevel.calibration_level.toUpperCase() as CalibrationLevel
-    )
-  );
+  const _calibrationLevels = await calibrationLevels(dataRequestId);
 
   const artifactIdSQL = `SELECT artifact_id FROM admin.data_request_artifact WHERE data_request_id = $1; `;
   const artifactIdsResults = await ssdaPool.query(artifactIdSQL, [
@@ -65,8 +52,7 @@ WHERE data_request_id = $1;
     artId.artifact_id.toString()
   );
 
-  const dataFiles = await dataFilesToZip(artifactIds, calibrationLevels);
-  const readMeFileContent = await createReadMeContent(dataFiles);
+  const dataFiles = await dataFilesToZip(artifactIds, _calibrationLevels);
 
   res.set("Content-Type", "application/zip");
   res.set(
@@ -117,5 +103,22 @@ WHERE data_request_id = $1;
   }
   zip.pipe(res);
 
-  zip.finalize();
+  await zip.finalize();
+}
+
+async function calibrationLevels(dataRequestId: string) {
+  const calibrationLevelSQL = `
+SELECT calibration_level.calibration_level
+FROM admin.data_request_calibration_level
+JOIN admin.calibration_level ON data_request_calibration_level.calibration_level_id = calibration_level.calibration_level_id
+WHERE data_request_id = $1;
+        `;
+  const calibrationLevelsResults = await ssdaPool.query(calibrationLevelSQL, [
+    parseInt(dataRequestId, 10)
+  ]);
+  return new Set(
+    calibrationLevelsResults.rows.map(
+      calLevel => calLevel.calibration_level.toUpperCase() as CalibrationLevel
+    )
+  );
 }
