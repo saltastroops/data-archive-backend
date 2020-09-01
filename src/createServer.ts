@@ -32,6 +32,7 @@ import {
   failToZipDataRequest,
   successfullyZipDataRequest,
 } from "./util/zipDataRequest";
+import { downloadDataRequest } from "./util/dataRequests";
 
 // tslint:disable-next-line
 const pgSession = require("connect-pg-simple")(session);
@@ -384,79 +385,7 @@ const createServer = async () => {
    */
   server.express.get(
       "/downloads/data-requests/:dataRequestId",
-      async (req, res) => {
-        // Check if the user is logged in
-        if (!req.user) {
-          return res.status(401).send({
-            message: "You must be logged in.",
-            success: false
-          });
-        }
-        // Get all the params from the request
-        const { dataRequestId } = req.params;
-
-        const calibrationLevelSQL = `
-SELECT calibration_level.calibration_level
-FROM admin.data_request_calibration_level
-JOIN admin.calibration_level ON data_request_calibration_level.calibration_level_id = calibration_level.calibration_level_id
-WHERE data_request_id = $1;
-        `
-        const calibrationLevelsResults = await ssdaPool.query(calibrationLevelSQL, [parseInt(dataRequestId, 10)]);
-        const calibrationLevels = new Set(calibrationLevelsResults.rows.map( calLevel => calLevel.calibration_level.toUpperCase() as CalibrationLevel))
-
-        const artifactIdSQL = `SELECT artifact_id FROM admin.data_request_artifact WHERE data_request_id = $1; `
-        const artifactIdsResults = await ssdaPool.query(artifactIdSQL, [parseInt(dataRequestId, 10)]);
-        const artifactIds = artifactIdsResults.rows.map( artId => artId.artifact_id.toString())
-
-        const dataFiles =  await dataFilesToZip(artifactIds, calibrationLevels )
-        const readMeFileContent =  await createReadMeContent(dataFiles )
-
-        res.set('Content-Type', 'application/zip');
-        res.set('Content-Disposition', 'attachment; filename=DataRequest-' + moment().format("Y-MM-DD") + '.zip');
-
-        const zip = archiver("zip", {
-          gzip: true,
-          zlib: { level: 9 } // Sets the compression level.
-        });
-
-        let hasError = false;
-        // case archive raise a warning
-        zip.on("warning", async (err: any) => {
-          if (err.code === "ENOENT") {
-            // Update data request table with fail
-            await failToZipDataRequest(dataRequestId);
-            // Record that there has been a problem
-            hasError = true;
-          } else {
-            // Update data request table with fail
-            await failToZipDataRequest(dataRequestId);
-            // Record that there has been a problem
-            hasError = true;
-          }
-        });
-
-        // If ever there is an error raise it
-        zip.on("error", async (err: any) => {
-          // Update data request table with fail
-          await failToZipDataRequest(dataRequestId);
-          hasError = true;
-        });
-
-        await zip.append( await createReadMeContent(dataFiles), {name: "README.txt"});
-
-        await dataFiles.forEach((dataFile) => {
-          const source = fs.createReadStream(dataFile.filepath);
-          zip.append(source, {name: dataFile.filename});
-        })
-
-        // when zip have no error
-        if (!hasError) {
-          await successfullyZipDataRequest(dataRequestId);
-        }
-        zip.pipe(res);
-
-        zip.finalize();
-      }
+      downloadDataRequest
   );
 
   // Returning the server
@@ -469,81 +398,6 @@ interface IDataRequestDownloadParameters {
   filename: string;
   req: Request;
   res: Response;
-}
-
-async function downloadDataRequest({
-  dataRequestId,
-  filename,
-  req,
-  res
-}: IDataRequestDownloadParameters) {
-  // Get the data request
-  const notFound = {
-    message: "The requested file does not exist.",
-    success: false
-  };
-
-  // get the data requests
-  const dataRequestsSQL = `
-    SELECT data_request_id, path, status, made_at, ssda_user_id
-    FROM admin.data_request dr
-    JOIN admin.data_request_status drs
-    ON dr.data_request_status_id = drs.data_request_status_id
-    WHERE data_request_id=$1
-  `;
-  const queryResult: any = await ssdaPool.query(dataRequestsSQL, [
-    parseInt(dataRequestId, 10)
-  ]);
-  const rows = queryResult.rows;
-
-  if (!rows.length) {
-    return res.status(404).send(notFound);
-  }
-
-  const dataRequest = queryResult.rows[0];
-
-  // Check that the user may download content for the data request, either
-  // because they own the request or because they are an administrator.
-  const mayDownload =
-    ownsDataRequest(
-      { user: { id: dataRequest.ssda_user_id } },
-      req.user as User
-    ) || isAdmin(req.user as User);
-
-  if (!mayDownload) {
-    return res.status(403).send({
-      message: "You are not allowed to download the requested file.",
-      success: false
-    });
-  }
-
-  // Get the download URI
-  const relativePath = dataRequest.path;
-
-  // Handle a missing path
-  if (!relativePath) {
-    res.status(404).send(notFound);
-    return;
-  }
-
-  const basePath = process.env.DATA_REQUEST_BASE_DIR || "";
-
-  // Form a full path for the data request location
-  const fullPath = path.join(basePath, relativePath);
-
-  filename = `DataRequest-${moment().format("Y-MM-DD")}.zip`;
-
-  // Download the data request file
-  res.download(fullPath, filename, err => {
-    if (err) {
-      if (!res.headersSent) {
-        Sentry.captureMessage(notFound.message);
-        res.status(404).send(notFound);
-      } else {
-        res.end();
-      }
-    }
-  });
 }
 
 export default createServer;
