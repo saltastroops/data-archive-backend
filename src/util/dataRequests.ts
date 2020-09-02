@@ -2,6 +2,7 @@ import { ssdaPool } from "../db/postgresql_pool";
 import { CalibrationLevel } from "./calibrations";
 import {
   createReadMeContent,
+  createReadMeFile,
   dataFilesToZip,
   failToZipDataRequest,
   successfullyZipDataRequest
@@ -10,6 +11,7 @@ import moment from "moment";
 import archiver from "archiver";
 import fs from "fs";
 import { Request, Response } from "express";
+require("express-zip");
 
 /**
  * A function that return the user data requests
@@ -43,67 +45,17 @@ export async function downloadDataRequest(req: Request, res: Response) {
   const { dataRequestId } = req.params;
 
   const _calibrationLevels = await calibrationLevels(dataRequestId);
+  const _artifactIds = await artifactIds(dataRequestId);
 
-  const artifactIdSQL = `SELECT artifact_id FROM admin.data_request_artifact WHERE data_request_id = $1; `;
-  const artifactIdsResults = await ssdaPool.query(artifactIdSQL, [
-    parseInt(dataRequestId, 10)
-  ]);
-  const artifactIds = artifactIdsResults.rows.map(artId =>
-    artId.artifact_id.toString()
-  );
+  const dataFiles = await dataFilesToZip(_artifactIds, _calibrationLevels);
 
-  const dataFiles = await dataFilesToZip(artifactIds, _calibrationLevels);
-
-  res.set("Content-Type", "application/zip");
-  res.set(
-    "Content-Disposition",
-    "attachment; filename=DataRequest-" + moment().format("Y-MM-DD") + ".zip"
-  );
-
-  const zip = archiver("zip", {
-    gzip: true,
-    zlib: { level: 9 } // Sets the compression level.
-  });
-
-  let hasError = false;
-  // case archive raise a warning
-  zip.on("warning", async (err: any) => {
-    if (err.code === "ENOENT") {
-      // Update data request table with fail
-      await failToZipDataRequest(dataRequestId);
-      // Record that there has been a problem
-      hasError = true;
-    } else {
-      // Update data request table with fail
-      await failToZipDataRequest(dataRequestId);
-      // Record that there has been a problem
-      hasError = true;
-    }
-  });
-
-  // If ever there is an error raise it
-  zip.on("error", async (err: any) => {
-    // Update data request table with fail
-    await failToZipDataRequest(dataRequestId);
-    hasError = true;
-  });
-
-  await zip.append(await createReadMeContent(dataFiles), {
-    name: "README.txt"
-  });
-
-  await dataFiles.forEach(dataFile => {
-    const source = fs.createReadStream(dataFile.filepath);
-    zip.append(source, { name: dataFile.filename });
-  });
-
-  // when zip have no error
-  if (!hasError) {
-    await successfullyZipDataRequest(dataRequestId);
-  }
-  zip.pipe(res);
-
-  await zip.finalize();
+  const readmePath = createReadMeFile(dataFiles);
+  const files = [
+    { name: "README.txt", path: readmePath },
+    ...dataFiles.map(df => ({ name: df.filename, path: df.filepath }))
+  ];
+  const filename = "DataRequest-" + moment().format("Y-MM-DD") + ".zip";
+  (res as any).zip(files, filename);
 }
 
 async function calibrationLevels(dataRequestId: string) {
@@ -121,4 +73,12 @@ WHERE data_request_id = $1;
       calLevel => calLevel.calibration_level.toUpperCase() as CalibrationLevel
     )
   );
+}
+
+async function artifactIds(dataRequestId: string) {
+  const artifactIdSQL = `SELECT artifact_id FROM admin.data_request_artifact WHERE data_request_id = $1; `;
+  const artifactIdsResults = await ssdaPool.query(artifactIdSQL, [
+    parseInt(dataRequestId, 10)
+  ]);
+  return artifactIdsResults.rows.map(artId => artId.artifact_id.toString());
 }

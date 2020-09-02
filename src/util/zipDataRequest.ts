@@ -1,5 +1,7 @@
 import fs from "fs";
 import moment from "moment";
+import { nanoid } from "nanoid";
+import { tmpdir } from "os";
 import { basename, join } from "path";
 import { ssdaPool } from "../db/postgresql_pool";
 import { CalibrationLevel } from "./calibrations";
@@ -71,7 +73,14 @@ const collectArtifactsToZip = async (fileIds: string[]) => {
   return res.rows;
 };
 
-export const createReadMeContent = async (dataFiles: any[]) => {
+export const createReadMeFile = (dataFiles: any[]) => {
+  const readme = createReadMeContent(dataFiles);
+  const filepath = join(tmpdir(), nanoid());
+  fs.writeFileSync(filepath, readme);
+  return filepath;
+};
+
+export const createReadMeContent = (dataFiles: any[]) => {
   const fileNameHeading = "File name";
   const fileTypeHeading = "Type";
   const proposalCodeHeading = "Proposal code";
