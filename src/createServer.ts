@@ -1,38 +1,22 @@
 import * as Sentry from "@sentry/node";
-import archiver from "archiver";
 import bodyParser from "body-parser";
 import compression from "compression";
 import { Request, Response } from "express";
 import session from "express-session";
-import fs from "fs";
 import { GraphQLServer } from "graphql-yoga";
-import moment from "moment";
 import passport from "passport";
 import passportLocal from "passport-local";
 import * as path from "path";
 import { ssdaPool } from "./db/postgresql_pool";
 import { resolvers } from "./resolvers";
 import { getAuthProvider } from "./util/authProvider";
-import {CalibrationLevel} from "./util/calibrations";
 import {
   dataFileDataLoader,
   dataRequestDataLoader,
   userDataLoader
 } from "./util/loaders";
-import {
-  getUserById,
-  isAdmin,
-  mayViewDataFile,
-  ownsDataRequest,
-  User
-} from "./util/user";
-import {
-  createReadMeContent,
-  dataFilesToZip,
-  failToZipDataRequest,
-  successfullyZipDataRequest,
-} from "./util/zipDataRequest";
-import { downloadDataRequest } from "./util/dataRequests";
+import { getUserById, mayViewDataFile, User } from "./util/user";
+import { downloadZippedDataRequest } from "./util/zipDataRequest";
 
 // tslint:disable-next-line
 const pgSession = require("connect-pg-simple")(session);
@@ -384,8 +368,8 @@ const createServer = async () => {
    *     The id of the data request.
    */
   server.express.get(
-      "/downloads/data-requests/:dataRequestId",
-      downloadDataRequest
+    "/downloads/data-requests/:dataRequestId",
+    downloadZippedDataRequest
   );
 
   // Returning the server

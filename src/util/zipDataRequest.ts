@@ -5,50 +5,7 @@ import { tmpdir } from "os";
 import { basename, join } from "path";
 import { ssdaPool } from "../db/postgresql_pool";
 import { CalibrationLevel } from "./calibrations";
-
-export const successfullyZipDataRequest = async (dataRequestId: string) => {
-  // update data request with success status and download path
-  const path = `${dataRequestId.toString()}.zip`;
-  const sql = `
-  WITH success_status (id) AS (
-      SELECT data_request_status_id
-      FROM admin.data_request_status
-      WHERE status='Successful'
-  )
-  UPDATE admin.data_request
-  SET data_request_status_id=(SELECT id FROM success_status),
-      path=$1
-  WHERE data_request_id=$2 
-  `;
-  await ssdaPool.query(sql, [path, dataRequestId]);
-
-  // TODO send email to user when done.
-};
-
-export const failToZipDataRequest = async (dataRequestId: string) => {
-  // update data request with failure status
-  const sql = `
-  WITH failure_status (id) AS (
-      SELECT data_request_status_id
-      FROM admin.data_request_status
-      WHERE status='Failed'
-  )
-  UPDATE admin.data_request
-  SET data_request_status_id=(SELECT id FROM failure_status)
-  WHERE data_request_id=$1
-  `;
-  await ssdaPool.query(sql, [dataRequestId]);
-
-  // // delete file created by fs
-  fs.unlink(
-    `${process.env.DATA_REQUEST_BASE_DIR}/${dataRequestId.toString()}.zip`,
-    err => {
-      if (err) {
-        // do nothing if file not created
-      }
-    }
-  );
-};
+import { Request, Response } from "express";
 
 const collectArtifactsToZip = async (fileIds: string[]) => {
   // collect the files
@@ -306,3 +263,53 @@ export const dataFilesToZip = async (
 
   return dataFiles;
 };
+
+export async function downloadZippedDataRequest(req: Request, res: Response) {
+  // Check if the user is logged in
+  if (!req.user) {
+    return res.status(401).send({
+      message: "You must be logged in.",
+      success: false
+    });
+  }
+  // Get all the params from the request
+  const { dataRequestId } = req.params;
+
+  const _calibrationLevels = await calibrationLevels(dataRequestId);
+  const _artifactIds = await artifactIds(dataRequestId);
+
+  const dataFiles = await dataFilesToZip(_artifactIds, _calibrationLevels);
+
+  const readmePath = createReadMeFile(dataFiles);
+  const files = [
+    { name: "README.txt", path: readmePath },
+    ...dataFiles.map(df => ({ name: df.filename, path: df.filepath }))
+  ];
+  const filename = "DataRequest-" + moment().format("Y-MM-DD") + ".zip";
+  (res as any).zip(files, filename);
+}
+
+async function calibrationLevels(dataRequestId: string) {
+  const calibrationLevelSQL = `
+SELECT calibration_level.calibration_level
+FROM admin.data_request_calibration_level
+JOIN admin.calibration_level ON data_request_calibration_level.calibration_level_id = calibration_level.calibration_level_id
+WHERE data_request_id = $1;
+        `;
+  const calibrationLevelsResults = await ssdaPool.query(calibrationLevelSQL, [
+    parseInt(dataRequestId, 10)
+  ]);
+  return new Set(
+    calibrationLevelsResults.rows.map(
+      calLevel => calLevel.calibration_level.toUpperCase() as CalibrationLevel
+    )
+  );
+}
+
+async function artifactIds(dataRequestId: string) {
+  const artifactIdSQL = `SELECT artifact_id FROM admin.data_request_artifact WHERE data_request_id = $1; `;
+  const artifactIdsResults = await ssdaPool.query(artifactIdSQL, [
+    parseInt(dataRequestId, 10)
+  ]);
+  return artifactIdsResults.rows.map(artId => artId.artifact_id.toString());
+}
