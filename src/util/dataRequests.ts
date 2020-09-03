@@ -1,5 +1,4 @@
 import { ssdaPool } from "../db/postgresql_pool";
-require("express-zip");
 
 /**
  * A function that return the user data requests

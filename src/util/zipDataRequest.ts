@@ -1,3 +1,5 @@
+import { Request, Response } from "express";
+import "express-zip";
 import fs from "fs";
 import moment from "moment";
 import { nanoid } from "nanoid";
@@ -5,7 +7,6 @@ import { tmpdir } from "os";
 import { basename, join } from "path";
 import { ssdaPool } from "../db/postgresql_pool";
 import { CalibrationLevel } from "./calibrations";
-import { Request, Response } from "express";
 
 const collectArtifactsToZip = async (fileIds: string[]) => {
   // collect the files
@@ -275,10 +276,10 @@ export async function downloadZippedDataRequest(req: Request, res: Response) {
   // Get all the params from the request
   const { dataRequestId } = req.params;
 
-  const _calibrationLevels = await calibrationLevels(dataRequestId);
-  const _artifactIds = await artifactIds(dataRequestId);
+  const calibrationLevels = await findCalibrationLevels(dataRequestId);
+  const artifactIds = await findArtifactIds(dataRequestId);
 
-  const dataFiles = await dataFilesToZip(_artifactIds, _calibrationLevels);
+  const dataFiles = await dataFilesToZip(artifactIds, calibrationLevels);
 
   const readmePath = createReadMeFile(dataFiles);
   const files = [
@@ -289,7 +290,7 @@ export async function downloadZippedDataRequest(req: Request, res: Response) {
   (res as any).zip(files, filename);
 }
 
-async function calibrationLevels(dataRequestId: string) {
+async function findCalibrationLevels(dataRequestId: string) {
   const calibrationLevelSQL = `
 SELECT calibration_level.calibration_level
 FROM admin.data_request_calibration_level
@@ -306,7 +307,7 @@ WHERE data_request_id = $1;
   );
 }
 
-async function artifactIds(dataRequestId: string) {
+async function findArtifactIds(dataRequestId: string) {
   const artifactIdSQL = `SELECT artifact_id FROM admin.data_request_artifact WHERE data_request_id = $1; `;
   const artifactIdsResults = await ssdaPool.query(artifactIdSQL, [
     parseInt(dataRequestId, 10)
