@@ -51,7 +51,6 @@ SDB_DATABASE_PASSWORD | The sdb database host password | password
 SDB_DATABASE_USER | The sdb host user name | username
 PREVIEW_BASE_DIR | The preview base diractory | base/directory/to/previews
 FITS_BASE_DIR | The FITS file base directory | base/directory/to/fits
-DATA_REQUEST_BASE_DIR | The data request file base directory | base/directory/to/data_request
 MAIL_HOST | The mail server address | smtp.mail.host
 MAIL_USER | The mail server username | mail-username
 MAIL_PASSWORD | The mail server user password | mail-password

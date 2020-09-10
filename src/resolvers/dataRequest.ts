@@ -113,7 +113,6 @@ export const createDataRequest = async (
 
     return {
       dataRequestId,
-      message: "The data request was successfully requested.",
       status: true
     };
   } catch (e) {
