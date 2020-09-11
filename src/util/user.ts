@@ -577,9 +577,9 @@ export const mayViewAllOfDataFiles = async (
   // Get all the release dates
   const sql = `
       SELECT artifact_id, data_release
-      FROM artifact a
-      JOIN plane p on a.plane_id = p.plane_id
-      JOIN observation o on p.observation_id = o.observation_id
+      FROM observations.artifact a
+      JOIN observations.plane p on a.plane_id = p.plane_id
+      JOIN observations.observation o on p.observation_id = o.observation_id
       WHERE artifact_id = ANY($1)
   `;
   const results: any = await ssdaPool.query(sql, [ids]);
@@ -715,9 +715,9 @@ async function createInstitutionUser(
   // Update the ssda_user_id if the institution user already exists.
   const insertOrUpdateInstitutionUserSQL = `
     WITH institution_id (id) AS (
-      SELECT institution_id FROM institution WHERE name=$1
+      SELECT institution_id FROM observations.institution WHERE name=$1
     )
-    INSERT INTO institution_user (
+    INSERT INTO admin.institution_user (
       institution_id,
       user_id,
       ssda_user_id

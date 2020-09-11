@@ -48,12 +48,10 @@ const failToZipDataRequest = async (dataRequestId: string) => {
     }
   );
 };
-
-export const zipDataRequest = async (
+export async function filesToBeZipped(
   fileIds: string[],
-  dataRequestId: string,
   requestedCalibrationLevels: Set<CalibrationLevel>
-) => {
+) {
   // collect the files
   const sql = `SELECT         (paths).raw,
                               (paths).reduced,   
@@ -120,6 +118,15 @@ export const zipDataRequest = async (
       });
     }
   }
+  return dataFiles;
+}
+
+export const zipDataRequest = async (
+  fileIds: string[],
+  dataRequestId: string,
+  requestedCalibrationLevels: Set<CalibrationLevel>
+) => {
+  const dataFiles = await filesToBeZipped(fileIds, requestedCalibrationLevels);
   // zip files
   if (!process.env.DATA_REQUEST_BASE_DIR) {
     throw new Error("The DATA_REQUEST_BASE_DIR has not been set.");
