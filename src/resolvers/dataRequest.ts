@@ -64,7 +64,8 @@ export const createDataRequest = async (
     `;
 
     const res = await client.query(dataRequestSQL, [user.id]);
-    const dataRequestId = res.rows[0].data_request_id;
+    const resultsRow = res.rows[0];
+    const dataRequestId = resultsRow.data_request_id;
 
     const dataRequestArtifactSQL = `
         INSERT INTO admin.data_request_artifact (data_request_id, artifact_id)
@@ -112,8 +113,12 @@ export const createDataRequest = async (
     await client.query("COMMIT");
 
     return {
-      dataRequestId,
-      status: true
+      calibrationLevels: requestedCalibrationTypes,
+      calibrationTypes: requestedCalibrationTypes,
+      dataFiles,
+      id: dataRequestId,
+      madeAt: resultsRow.made_at,
+      user
     };
   } catch (e) {
     await client.query("ROLLBACK");
