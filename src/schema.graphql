@@ -355,7 +355,7 @@ type DataRequest {
   """
   user: User!
   """
-  file location fro download.
+  file location for download.
   """
   uri: String
   """
@@ -366,10 +366,6 @@ type DataRequest {
   The requested data files.
   """
   dataFiles: [DataRequestDataFile!]!
-  """
-  The status of the data request.
-  """
-  status: DataRequestStatus!
   """
   The calibration type.
   """
@@ -392,15 +388,6 @@ type DataRequestDataFile {
   Filename.
   """
   name: String!
-}
-
-"""
-The data request status.
-"""
-enum DataRequestStatus {
-  PENDING
-  FAILED
-  SUCCESSFUL
 }
 
 """

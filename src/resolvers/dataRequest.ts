@@ -118,6 +118,11 @@ export const createDataRequest = async (
       dataFiles,
       id: dataRequestId,
       madeAt: resultsRow.made_at,
+      uri: `${
+        process.env.BACKEND_URI
+          ? process.env.BACKEND_URI.replace(/\/+$/, "")
+          : ""
+      }/downloads/data-requests/${dataRequestId}`,
       user
     };
   } catch (e) {
