@@ -7,7 +7,7 @@ import {
   CalibrationType
 } from "../util/calibrations";
 import { mayViewAllOfDataFiles } from "../util/user";
-import { filesToBeZipped, zipDataRequest } from "../util/zipDataRequest";
+import { filesToBeZipped } from "../util/zipDataRequest";
 
 async function asyncForEach(array: any, callback: any) {
   for (let index = 0; index < array.length; index++) {
@@ -22,7 +22,7 @@ async function totalDataRequestSize(
 ) {
   let totalFileSize = 0;
   const dataFiles = await filesToBeZipped(fileIds, requestedCalibrationLevels);
-  dataFiles.forEach(file => {
+  dataFiles.forEach((file: any) => {
     const path = process.env.FITS_BASE_DIR + file.filepath;
     totalFileSize += fs.statSync(path).size;
   });
@@ -134,15 +134,18 @@ export const createDataRequest = async (
 
     await client.query("COMMIT");
 
-    await zipDataRequest(
-      dataFileIdStrings,
-      dataRequestId,
-      requestedCalibrationLevels
-    );
-
     return {
-      message: "The data request was successfully requested",
-      status: true
+      calibrationLevels: requestedCalibrationTypes,
+      calibrationTypes: requestedCalibrationTypes,
+      dataFiles,
+      id: dataRequestId,
+      madeAt: res.rows[0].made_at,
+      uri: `${
+        process.env.BACKEND_URI
+          ? process.env.BACKEND_URI.replace(/\/+$/, "")
+          : ""
+      }/downloads/data-requests/${dataRequestId}`,
+      user
     };
   } catch (e) {
     await client.query("ROLLBACK");

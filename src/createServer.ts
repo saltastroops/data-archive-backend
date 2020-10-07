@@ -23,6 +23,7 @@ import {
   ownsDataRequest,
   User
 } from "./util/user";
+import {downloadZippedDataRequest} from "./util/zipDataRequest";
 // tslint:disable-next-line
 const pgSession = require("connect-pg-simple")(session);
 
@@ -392,6 +393,18 @@ const createServer = async () => {
       // Download the data file for the data request
       return downloadDataRequest({ dataRequestId, filename, req, res });
     }
+  );
+  /**
+   * Endpoint for downloading the data for a full data request.
+   *
+   * The URL includes the following parameters.
+   *
+   * :dataRequestId
+   *     The id of the data request.
+   */
+  server.express.get(
+      "/downloads/data-requests/:dataRequestId",
+      downloadZippedDataRequest
   );
 
   // Returning the server
