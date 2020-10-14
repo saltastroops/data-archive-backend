@@ -14,6 +14,7 @@ import {
 } from "../util/user";
 import { createDataRequest } from "./dataRequest";
 import { requestPasswordReset, resetPassword } from "./resetPassword";
+import updateReleaseDates from "../util/updateReleaseDates";
 
 // Defining the context interface
 interface IContext {
@@ -248,7 +249,38 @@ const Mutation = {
       new Set(requestedCalibrationLevels as CalibrationLevel[]),
       new Set(requestedCalibrationTypes as CalibrationType[]),
       user
-    )
+    ),
+
+  /**
+   * Update data and metadata release date for the observations of a proposal.
+   */
+  async updateReleaseDates(
+    root: any,
+    {
+      proposalCode,
+      institution,
+      dataReleaseDate,
+      metadataReleaseDate,
+      apiKey
+    }: {
+      proposalCode: string;
+      institution: string;
+      dataReleaseDate: string;
+      metadataReleaseDate: string;
+      apiKey: string;
+    }
+  ): Promise<{ status: boolean }> {
+    if (process.env.API_KEY !== apiKey) {
+      throw new Error("Missing or incorrect API key");
+    }
+    await updateReleaseDates(
+      proposalCode,
+      institution,
+      dataReleaseDate,
+      metadataReleaseDate
+    );
+    return { status: true };
+  }
 };
 
 export { Mutation };

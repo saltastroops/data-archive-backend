@@ -637,11 +637,11 @@
   version "1.0.0"
   resolved "https://codeload.github.com/types/mysql2/tar.gz/b549352cda0b83fe8c4f4c11a1b4beb0b0cb0f5d"
   dependencies:
-    "@types/mysql" types/mysql#v2.0.0
+    "@types/mysql" types/mysql
 
-"@types/mysql@types/mysql":
+"@types/mysql@types/mysql#v2.0.0":
   version "2.0.0"
-  resolved "https://codeload.github.com/types/mysql/tar.gz/41e381415afbb79452c0501ca3cf220c2cd390bc"
+  resolved "https://codeload.github.com/types/mysql/tar.gz/da645a82afd66419ed439dddf174648aa68ba1f9"
 
 "@types/node@*":
   version "13.13.5"
@@ -1780,6 +1780,11 @@ date-fns@^1.27.2:
   version "1.30.1"
   resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-1.30.1.tgz#2e71bf0b119153dbb4cc4e88d9ea5acfb50dc05c"
   integrity sha512-hBSVCvSmWC+QypYObzwGOd9wqdDpOt+0wl0KbU+R+uuZBS1jN8VsD1ss3irQDknRj5NvxiTF6oj/nDRnN/UQNw==
+
+date-fns@^2.16.1:
+  version "2.16.1"
+  resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-2.16.1.tgz#05775792c3f3331da812af253e1a935851d3834b"
+  integrity sha512-sAJVKx/FqrLYHAQeN7VpJrPhagZc9R4ImZIWYRFZaaohR3KzmuK88touwsSwSVT8Qcbd4zoDsnGfX4GFB4imyQ==
 
 debug@2.6.9, debug@^2.2.0, debug@^2.3.3:
   version "2.6.9"

@@ -196,6 +196,36 @@ type Mutation {
     """
     requestedCalibrationLevels: [CalibrationLevel!]!
   ): Status!
+
+  """
+  Update the data and metadata release date for all observations in a proposal.
+  """
+  updateReleaseDates(
+    """
+    Institution to which the proposal was submitted.
+    """
+    institution: Institution!
+
+    """
+    Proposal code.
+    """
+    proposalCode: String!
+
+    """
+    Release date for the data, in the format YYYY-MM-DD (such as 2020-08-13).
+    """
+    dataReleaseDate: String!
+
+    """
+    Release date for the metadata, in the format YYYY-MM-DD (such as 2020-08-13).
+    """
+    metadataReleaseDate: String!
+
+    """
+    API key.
+    """
+    apiKey: String!
+  ): Status!
 }
 
 """
@@ -443,4 +473,9 @@ enum CalibrationType {
 enum CalibrationLevel {
   RAW
   REDUCED
+}
+
+enum Institution {
+  SAAO
+  SALT
 }
