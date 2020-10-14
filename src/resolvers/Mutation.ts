@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import { validate } from "isemail";
 import { AuthProviderName } from "../util/authProvider";
 import { CalibrationLevel, CalibrationType } from "../util/calibrations";
+import updateReleaseDates from "../util/updateReleaseDates";
 import {
   createUser,
   getUserByEmail,
@@ -14,7 +15,6 @@ import {
 } from "../util/user";
 import { createDataRequest } from "./dataRequest";
 import { requestPasswordReset, resetPassword } from "./resetPassword";
-import updateReleaseDates from "../util/updateReleaseDates";
 
 // Defining the context interface
 interface IContext {
