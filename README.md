@@ -39,6 +39,7 @@ FRONTEND_HOST | The host of the frontend accessing this server | https://ssda.sa
 TZ | The timezone, which must be UTC. | UTC
 SESSION_SECRET | The secret key for for signing the session ID cookie | anothertopsecretkey
 APP_SECRET | The secret key for this server | anothertopsecretkey
+API_KEY | The API key for authenticating API requests | yetanothersecretkey
 PORT | Port on which the server should be listening | 443
 SENTRY_DSN | The Sentry DSN (Data Source Name) | https://d6251ee8232d4au0b57cbhy38c059af6@sentry.io/237524
 SSDA_DATABASE_NAME | The ssda database name | ssda
