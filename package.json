@@ -53,6 +53,7 @@
     "compression": "^1.7.4",
     "connect-pg-simple": "^6.1.0",
     "dataloader": "^1.4.0",
+    "date-fns": "^2.16.1",
     "dotenv": "^6.2.0",
     "express": "^4.16.4",
     "express-session": "^1.15.6",
