@@ -226,6 +226,7 @@ type Mutation {
     """
     apiKey: String!
   ): Status!
+}
 
 """
 A data archive user.
