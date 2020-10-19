@@ -23,7 +23,7 @@ import {
   ownsDataRequest,
   User
 } from "./util/user";
-import {downloadZippedDataRequest} from "./util/zipDataRequest";
+import { downloadZippedDataRequest } from "./util/zipDataRequest";
 // tslint:disable-next-line
 const pgSession = require("connect-pg-simple")(session);
 
@@ -403,8 +403,8 @@ const createServer = async () => {
    *     The id of the data request.
    */
   server.express.get(
-      "/downloads/data-requests/:dataRequestId",
-      downloadZippedDataRequest
+    "/downloads/data-requests/:dataRequestId",
+    downloadZippedDataRequest
   );
 
   // Returning the server
