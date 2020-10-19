@@ -1,57 +1,14 @@
-import archiver from "archiver";
+import { Request, Response } from "express";
+import "express-zip";
 import fs from "fs";
 import moment from "moment";
+import { nanoid } from "nanoid";
+import { tmpdir } from "os";
 import { basename, join } from "path";
 import { ssdaPool } from "../db/postgresql_pool";
 import { CalibrationLevel } from "./calibrations";
 
-const successfullyZipDataRequest = async (dataRequestId: string) => {
-  // update data request with success status and download path
-  const path = `${dataRequestId.toString()}.zip`;
-  const sql = `
-  WITH success_status (id) AS (
-      SELECT data_request_status_id
-      FROM admin.data_request_status
-      WHERE status='Successful'
-  )
-  UPDATE admin.data_request
-  SET data_request_status_id=(SELECT id FROM success_status),
-      path=$1
-  WHERE data_request_id=$2 
-  `;
-  await ssdaPool.query(sql, [path, dataRequestId]);
-
-  // TODO send email to user when done.
-};
-
-const failToZipDataRequest = async (dataRequestId: string) => {
-  // update data request with failure status
-  const sql = `
-  WITH failure_status (id) AS (
-      SELECT data_request_status_id
-      FROM admin.data_request_status
-      WHERE status='Failed'
-  )
-  UPDATE admin.data_request
-  SET data_request_status_id=(SELECT id FROM failure_status)
-  WHERE data_request_id=$1
-  `;
-  await ssdaPool.query(sql, [dataRequestId]);
-
-  // // delete file created by fs
-  fs.unlink(
-    `${process.env.DATA_REQUEST_BASE_DIR}/${dataRequestId.toString()}.zip`,
-    err => {
-      if (err) {
-        // do nothing if file not created
-      }
-    }
-  );
-};
-export async function filesToBeZipped(
-  fileIds: string[],
-  requestedCalibrationLevels: Set<CalibrationLevel>
-) {
+const collectArtifactsToZip = async (fileIds: string[]) => {
   // collect the files
   const sql = `SELECT         (paths).raw,
                               (paths).reduced,   
@@ -71,108 +28,17 @@ export async function filesToBeZipped(
                WHERE artifact_id = ANY($1)
   `;
   const res = await ssdaPool.query(sql, [fileIds]);
-  const artifacts = res.rows;
+  return res.rows;
+};
 
-  const dataFiles: any[] = [];
+export const createReadMeFile = (dataFiles: any[]) => {
+  const readme = createReadMeContent(dataFiles);
+  const filepath = join(tmpdir(), nanoid());
+  fs.writeFileSync(filepath, readme);
+  return filepath;
+};
 
-  /*
-  For each requested file and calibration level we create the object to be used when
-  creating the rows of the table of files. This includes a description of the file(s)
-  based on the instrument and calibration level.
- */
-  for (const df of artifacts) {
-    for (const calibrationLevel of Array.from(requestedCalibrationLevels)) {
-      let filepath: string;
-      let description: string;
-
-      if (calibrationLevel === "RAW") {
-        filepath = df.raw;
-        description = `Raw ${df.instrument_name} data`;
-      } else if (calibrationLevel === "REDUCED") {
-        filepath = df.reduced;
-        description = `Reduced ${df.instrument_name} data`;
-      } else {
-        throw new Error(`Unsupported calibration level ${calibrationLevel}`);
-      }
-
-      const filename = basename(filepath);
-      const fileDescription = description;
-
-      if (df.observation_id === "SALT-") {
-        df.observation_id = "SALT";
-      }
-
-      if (df.observation_id.length > 13) {
-        df.observation_id = df.observation_id.substr(0, 13);
-      }
-
-      dataFiles.push({
-        fileDescription,
-        filename,
-        filepath,
-        instrument_name: df.instrument_name,
-        night: moment(df.night).format("YYYY-MM-DD"),
-        observation_id: df.observation_id ? df.observation_id : "",
-        proposal_code: df.proposal_code ? df.proposal_code : "",
-        type: df.type
-      });
-    }
-  }
-  return dataFiles;
-}
-
-export const zipDataRequest = async (
-  fileIds: string[],
-  dataRequestId: string,
-  requestedCalibrationLevels: Set<CalibrationLevel>
-) => {
-  const dataFiles = await filesToBeZipped(fileIds, requestedCalibrationLevels);
-  // zip files
-  if (!process.env.DATA_REQUEST_BASE_DIR) {
-    throw new Error("The DATA_REQUEST_BASE_DIR has not been set.");
-  }
-  const output = fs.createWriteStream(
-    `${process.env.DATA_REQUEST_BASE_DIR}/${dataRequestId.toString()}.zip`
-  );
-  const archive = archiver("zip", {
-    gzip: true,
-    zlib: { level: 9 } // Sets the compression level.
-  });
-  let hasError = false;
-  // case archive raise a warning
-  archive.on("warning", async (err: any) => {
-    if (err.code === "ENOENT") {
-      // Update data request table with fail
-      await failToZipDataRequest(dataRequestId);
-      // Record that there has been a problem
-      hasError = true;
-    } else {
-      // Update data request table with fail
-      await failToZipDataRequest(dataRequestId);
-      // Record that there has been a problem
-      hasError = true;
-    }
-  });
-
-  // If ever there is an error raise it
-  archive.on("error", async (err: any) => {
-    // Update data request table with fail
-    await failToZipDataRequest(dataRequestId);
-    hasError = true;
-  });
-
-  // when archive successfully run
-  output.on("finish", async () => {
-    // Update data request table with success (but only if there hasn't been an
-    // error!)
-    if (!hasError) {
-      await successfullyZipDataRequest(dataRequestId);
-    }
-  });
-
-  // pipe archive data to the output file
-  archive.pipe(output);
-
+export const createReadMeContent = (dataFiles: any[]) => {
   const fileNameHeading = "File name";
   const fileTypeHeading = "Type";
   const proposalCodeHeading = "Proposal code";
@@ -300,7 +166,7 @@ Arcs, flats and biases (if requested) are only included if they were taken as
 part of an observation. For spectrophotometric and radial velocity standards
 (if requested) the standard taken nearest to an observation is included.\n`;
   // The title of the table
-  const tableTitle = `The requested files\n===================\n`;
+  const tableTitle = `The requested files\n======================================================================\n`;
 
   // The table containing the data request file names and type of the product data contained by the file
   const table = tableHeader + tableBody + `\n`;
@@ -342,20 +208,182 @@ Pickering, T.E., Potter, S., Romero Colmenero, E., Vaisanen, P., Williams, T.,
 Zietsman, E., 2010. PySALT: the SALT Science Pipeline.
 SPIE Astronomical Instrumentation, 7737-82\n`;
 
-  // A read me file content
-  const readMeFileContent = tableTitle + calibrationsMessage + table + policy;
-  // append a file from string
-  archive.append(readMeFileContent, { name: "README.txt" });
-  // save files
-  dataFiles.forEach((file: { filepath: string; filename: string }) => {
-    if (process.env.FITS_BASE_DIR === undefined) {
-      throw new Error("The environment variable FITS_BASE_DIR must be set.");
-    }
-    const filepath = join(process.env.FITS_BASE_DIR, file.filepath);
-    archive.append(fs.createReadStream(filepath), {
-      name: file.filename
-    });
-  });
-
-  await archive.finalize();
+  return tableTitle + calibrationsMessage + table + policy;
 };
+
+export const dataFilesToZip = async (
+  fileIds: string[],
+  calibrationLevels: Set<CalibrationLevel>
+) => {
+  const artifacts = await collectArtifactsToZip(fileIds);
+
+  /*
+  For each requested file and calibration level we create the object to be used when
+  creating the rows of the table of files. This includes a description of the file(s)
+  based on the instrument and calibration level.
+ */
+  const dataFiles: any[] = [];
+  for (const df of artifacts) {
+    for (const calibrationLevel of Array.from(calibrationLevels)) {
+      let filepath: string;
+      let description: string;
+
+      if (calibrationLevel === "RAW") {
+        filepath = process.env.FITS_BASE_DIR + "/" + df.raw;
+        description = `Raw ${df.instrument_name} data`;
+      } else if (calibrationLevel === "REDUCED") {
+        filepath = process.env.FITS_BASE_DIR + "/" + df.reduced;
+        description = `Reduced ${df.instrument_name} data`;
+      } else {
+        throw new Error(`Unsupported calibration level ${calibrationLevel}`);
+      }
+
+      const filename = basename(filepath);
+      const fileDescription = description;
+
+      if (df.observation_id === "SALT-") {
+        df.observation_id = "SALT";
+      }
+
+      if (df.observation_id.length > 13) {
+        df.observation_id = df.observation_id.substr(0, 13);
+      }
+
+      dataFiles.push({
+        fileDescription,
+        filename,
+        filepath,
+        instrument_name: df.instrument_name,
+        night: moment(df.night).format("YYYY-MM-DD"),
+        observation_id: df.observation_id ? df.observation_id : "",
+        proposal_code: df.proposal_code ? df.proposal_code : "",
+        type: df.type
+      });
+    }
+  }
+
+  return dataFiles;
+};
+
+export async function downloadZippedDataRequest(req: Request, res: Response) {
+  // Check if the user is logged in
+  if (!req.user) {
+    return res.status(401).send({
+      message: "You must be logged in.",
+      success: false
+    });
+  }
+  // Get all the params from the request
+  const { dataRequestId } = req.params;
+
+  const calibrationLevels = await findCalibrationLevels(dataRequestId);
+  const artifactIds = await findArtifactIds(dataRequestId);
+
+  const dataFiles = await dataFilesToZip(artifactIds, calibrationLevels);
+
+  const readmePath = createReadMeFile(dataFiles);
+  const files = [
+    { name: "README.txt", path: readmePath },
+    ...dataFiles.map(df => ({ name: df.filename, path: df.filepath }))
+  ];
+  const filename = "DataRequest-" + moment().format("Y-MM-DD") + ".zip";
+  (res as any).zip(files, filename);
+}
+
+async function findCalibrationLevels(dataRequestId: string) {
+  const calibrationLevelSQL = `
+SELECT calibration_level.calibration_level
+FROM admin.data_request_calibration_level
+JOIN admin.calibration_level ON data_request_calibration_level.calibration_level_id = calibration_level.calibration_level_id
+WHERE data_request_id = $1;
+        `;
+  const calibrationLevelsResults = await ssdaPool.query(calibrationLevelSQL, [
+    parseInt(dataRequestId, 10)
+  ]);
+  return new Set(
+    calibrationLevelsResults.rows.map(
+      calLevel => calLevel.calibration_level.toUpperCase() as CalibrationLevel
+    )
+  );
+}
+
+async function findArtifactIds(dataRequestId: string) {
+  const artifactIdSQL = `SELECT artifact_id FROM admin.data_request_artifact WHERE data_request_id = $1; `;
+  const artifactIdsResults = await ssdaPool.query(artifactIdSQL, [
+    parseInt(dataRequestId, 10)
+  ]);
+  return artifactIdsResults.rows.map(artId => artId.artifact_id.toString());
+}
+
+export async function filesToBeZipped(
+  fileIds: string[],
+  requestedCalibrationLevels: Set<CalibrationLevel>
+) {
+  // collect the files
+  const sql = `SELECT         (paths).raw,
+                              (paths).reduced,   
+                              product_type AS type,
+                              proposal_code AS proposal_code,
+                              obs_group.name AS observation_id,
+                              ins.name AS instrument_name,
+                              night
+               FROM observations.artifact atf
+               LEFT OUTER JOIN observations.plane p ON p.plane_id = atf.plane_id
+               LEFT OUTER JOIN observations.observation_time obs_time ON obs_time.plane_id = p.plane_id
+               LEFT OUTER JOIN observations.observation obs ON p.observation_id = obs.observation_id
+               LEFT OUTER JOIN observations.product_type pt ON atf.product_type_id = pt.product_type_id
+               LEFT OUTER JOIN observations.proposal obsp ON obs.proposal_id = obsp.proposal_id
+               LEFT OUTER JOIN observations.instrument ins on obs.instrument_id = ins.instrument_id
+               LEFT OUTER JOIN observations.observation_group obs_group on obs_group.observation_group_id = obs.observation_group_id
+               WHERE artifact_id = ANY($1)
+  `;
+  const res = await ssdaPool.query(sql, [fileIds]);
+  const artifacts = res.rows;
+
+  const dataFiles: any[] = [];
+
+  /*
+    For each requested file and calibration level we create the object to be used when
+    creating the rows of the table of files. This includes a description of the file(s)
+    based on the instrument and calibration level.
+   */
+  for (const df of artifacts) {
+    for (const calibrationLevel of Array.from(requestedCalibrationLevels)) {
+      let filepath: string;
+      let description: string;
+
+      if (calibrationLevel === "RAW") {
+        filepath = df.raw;
+        description = `Raw ${df.instrument_name} data`;
+      } else if (calibrationLevel === "REDUCED") {
+        filepath = df.reduced;
+        description = `Reduced ${df.instrument_name} data`;
+      } else {
+        throw new Error(`Unsupported calibration level ${calibrationLevel}`);
+      }
+
+      const filename = basename(filepath);
+      const fileDescription = description;
+
+      if (df.observation_id === "SALT-") {
+        df.observation_id = "SALT";
+      }
+
+      if (df.observation_id.length > 13) {
+        df.observation_id = df.observation_id.substr(0, 13);
+      }
+
+      dataFiles.push({
+        fileDescription,
+        filename,
+        filepath,
+        instrument_name: df.instrument_name,
+        night: moment(df.night).format("YYYY-MM-DD"),
+        observation_id: df.observation_id ? df.observation_id : "",
+        proposal_code: df.proposal_code ? df.proposal_code : "",
+        type: df.type
+      });
+    }
+  }
+  return dataFiles;
+}
