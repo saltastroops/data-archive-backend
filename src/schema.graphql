@@ -195,6 +195,36 @@ type Mutation {
     The calibration levels to include along with the requested files.
     """
     requestedCalibrationLevels: [CalibrationLevel!]!
+  ): DataRequest!
+
+  """
+  Update the data and metadata release date for all observations in a proposal.
+  """
+  updateReleaseDates(
+    """
+    Institution to which the proposal was submitted.
+    """
+    institution: Institution!
+
+    """
+    Proposal code.
+    """
+    proposalCode: String!
+
+    """
+    Release date for the data, in the format YYYY-MM-DD (such as 2020-08-13).
+    """
+    dataReleaseDate: String!
+
+    """
+    Release date for the metadata, in the format YYYY-MM-DD (such as 2020-08-13).
+    """
+    metadataReleaseDate: String!
+
+    """
+    API key.
+    """
+    apiKey: String!
   ): Status!
 }
 
@@ -355,7 +385,7 @@ type DataRequest {
   """
   user: User!
   """
-  file location fro download.
+  file location for download.
   """
   uri: String
   """
@@ -366,10 +396,6 @@ type DataRequest {
   The requested data files.
   """
   dataFiles: [DataRequestDataFile!]!
-  """
-  The status of the data request.
-  """
-  status: DataRequestStatus!
   """
   The calibration type.
   """
@@ -392,15 +418,6 @@ type DataRequestDataFile {
   Filename.
   """
   name: String!
-}
-
-"""
-The data request status.
-"""
-enum DataRequestStatus {
-  PENDING
-  FAILED
-  SUCCESSFUL
 }
 
 """
@@ -443,4 +460,9 @@ enum CalibrationType {
 enum CalibrationLevel {
   RAW
   REDUCED
+}
+
+enum Institution {
+  SAAO
+  SALT
 }

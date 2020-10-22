@@ -23,6 +23,7 @@ import {
   ownsDataRequest,
   User
 } from "./util/user";
+import { downloadZippedDataRequest } from "./util/zipDataRequest";
 // tslint:disable-next-line
 const pgSession = require("connect-pg-simple")(session);
 
@@ -371,127 +372,13 @@ const createServer = async () => {
    *
    * :dataRequestId
    *     The id of the data request.
-   * :filename
-   *     The filename to use for the downloaded file. It is not used for
-   *     identifying the data file, but is used in the attachment HTTP header.
    */
   server.express.get(
-    "/?/downloads/data-requests/:dataRequestId/:filename",
-    async (req, res) => {
-      // Check if the user is logged in
-      if (!req.user) {
-        return res.status(401).send({
-          message: "You must be logged in.",
-          success: false
-        });
-      }
-
-      // Get all the params from the request
-      const { dataRequestId, filename } = req.params;
-
-      // Download the data file for the data request
-      return downloadDataRequest({ dataRequestId, filename, req, res });
-    }
+    "/?/downloads/data-requests/:dataRequestId",
+    downloadZippedDataRequest
   );
 
   // Returning the server
   return server;
 };
-
-interface IDataRequestDownloadParameters {
-  dataRequestId: string;
-  dataRequestPartId?: string;
-  filename: string;
-  req: Request;
-  res: Response;
-}
-
-async function downloadDataRequest({
-  dataRequestId,
-  filename,
-  req,
-  res
-}: IDataRequestDownloadParameters) {
-  // Get the data request base path if it exists
-  // If not, raise an internal server error.
-  if (!process.env.DATA_REQUEST_BASE_DIR) {
-    const message =
-      "The environment variable DATA_REQUEST_BASE_DIR for the data request base directory has not been set.";
-    Sentry.captureMessage(message);
-    res.status(500).send({
-      message,
-      success: false
-    });
-    return;
-  }
-
-  // Get the data request
-  const notFound = {
-    message: "The requested file does not exist.",
-    success: false
-  };
-
-  // get the data requests
-  const dataRequestsSQL = `
-    SELECT data_request_id, path, status, made_at, ssda_user_id
-    FROM admin.data_request dr
-    JOIN admin.data_request_status drs
-    ON dr.data_request_status_id = drs.data_request_status_id
-    WHERE data_request_id=$1
-  `;
-  const queryResult: any = await ssdaPool.query(dataRequestsSQL, [
-    dataRequestId
-  ]);
-  const rows = queryResult.rows;
-
-  if (!rows.length) {
-    return res.status(404).send(notFound);
-  }
-
-  const dataRequest = queryResult.rows[0];
-
-  // Check that the user may download content for the data request, either
-  // because they own the request or because they are an administrator.
-  const mayDownload =
-    ownsDataRequest(
-      { user: { id: dataRequest.ssda_user_id } },
-      req.user as User
-    ) || isAdmin(req.user as User);
-
-  if (!mayDownload) {
-    return res.status(403).send({
-      message: "You are not allowed to download the requested file.",
-      success: false
-    });
-  }
-
-  // Get the download URI
-  const relativePath = dataRequest.path;
-
-  // Handle a missing path
-  if (!relativePath) {
-    res.status(404).send(notFound);
-    return;
-  }
-
-  const basePath = process.env.DATA_REQUEST_BASE_DIR;
-
-  // Form a full path for the data request location
-  const fullPath = path.join(basePath, relativePath);
-
-  filename = `DataRequest-${moment().format("Y-MM-DD")}.zip`;
-
-  // Download the data request file
-  res.download(fullPath, filename, err => {
-    if (err) {
-      if (!res.headersSent) {
-        Sentry.captureMessage(notFound.message);
-        res.status(404).send(notFound);
-      } else {
-        res.end();
-      }
-    }
-  });
-}
-
 export default createServer;

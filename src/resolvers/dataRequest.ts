@@ -1,3 +1,4 @@
+import fs from "fs";
 import { titleCase } from "title-case";
 import { ssdaPool } from "../db/postgresql_pool";
 import {
@@ -6,7 +7,7 @@ import {
   CalibrationType
 } from "../util/calibrations";
 import { mayViewAllOfDataFiles } from "../util/user";
-import { zipDataRequest } from "../util/zipDataRequest";
+import { filesToBeZipped } from "../util/zipDataRequest";
 
 async function asyncForEach(array: any, callback: any) {
   for (let index = 0; index < array.length; index++) {
@@ -14,6 +15,19 @@ async function asyncForEach(array: any, callback: any) {
   }
 }
 
+// Return the total (unzipped) file size for the download request
+async function totalDataRequestSize(
+  fileIds: string[],
+  requestedCalibrationLevels: Set<CalibrationLevel>
+) {
+  let totalFileSize = 0;
+  const dataFiles = await filesToBeZipped(fileIds, requestedCalibrationLevels);
+  dataFiles.forEach((file: any) => {
+    const path = process.env.FITS_BASE_DIR + file.filepath;
+    totalFileSize += fs.statSync(path).size;
+  });
+  return totalFileSize;
+}
 export const createDataRequest = async (
   dataFiles: number[],
   requestedCalibrationLevels: Set<CalibrationLevel>,
@@ -37,8 +51,16 @@ export const createDataRequest = async (
   if (requestedCalibrationTypes.size) {
     dataFiles = await addCalibrations(dataFiles, requestedCalibrationTypes);
   }
-
+  const MAX_SIZE = 5 * 1000 * 1000 * 1000; // 5GB
   const dataFileIdStrings = dataFiles.map(id => id.toString());
+  if (
+    (await totalDataRequestSize(
+      dataFileIdStrings,
+      requestedCalibrationLevels
+    )) >= MAX_SIZE
+  ) {
+    throw new Error("The total file size for your data request exceeds 5 GB.");
+  }
   const requestedDataFileIdStrings = requestedDataFiles.map(id =>
     id.toString()
   );
@@ -112,15 +134,18 @@ export const createDataRequest = async (
 
     await client.query("COMMIT");
 
-    zipDataRequest(
-      dataFileIdStrings,
-      dataRequestId,
-      requestedCalibrationLevels
-    );
-
     return {
-      message: "The data request was successfully requested",
-      status: true
+      calibrationLevels: requestedCalibrationTypes,
+      calibrationTypes: requestedCalibrationTypes,
+      dataFiles,
+      id: dataRequestId,
+      madeAt: res.rows[0].made_at,
+      uri: `${
+        process.env.BACKEND_URI
+          ? process.env.BACKEND_URI.replace(/\/+$/, "")
+          : ""
+      }/downloads/data-requests/${dataRequestId}`,
+      user
     };
   } catch (e) {
     await client.query("ROLLBACK");

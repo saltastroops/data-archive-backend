@@ -363,9 +363,9 @@ async function bcamCalibrations(
 async function findInstrument(artifactId: number): Promise<string> {
   const instrumentSQL = `
   SELECT i.name FROM instrument i
-    JOIN observation o on i.instrument_id = o.instrument_id
-    JOIN plane p on o.observation_id = p.observation_id
-    JOIN artifact a on p.plane_id = a.plane_id
+    JOIN observations.observation o on i.instrument_id = o.instrument_id
+    JOIN observations.plane p on o.observation_id = p.observation_id
+    JOIN observations.artifact a on p.plane_id = a.plane_id
   WHERE a.artifact_id=$1
   `;
   const instrumentRes = await ssdaPool.query(instrumentSQL, [artifactId]);
@@ -392,7 +392,7 @@ async function findInstrument(artifactId: number): Promise<string> {
 async function findFileDataId(artifactId: number): Promise<number> {
   // Find the (file) name of the artifact.
   const artifactNameSQL = `
-  SELECT name FROM artifact WHERE artifact_id=$1
+  SELECT name FROM observations.artifact WHERE artifact_id=$1
   `;
   const artifactNameRes = await ssdaPool.query(artifactNameSQL, [artifactId]);
   if (artifactNameRes.rowCount === 0) {
@@ -439,10 +439,10 @@ async function findArtifactId(fileDataId: number): Promise<number> {
 
   // Find the artifact id for that file name.
   const artifactIdSQL = `
-  SELECT artifact_id FROM artifact a
-      JOIN plane p on a.plane_id = p.plane_id
-      JOIN observation o on p.observation_id = o.observation_id
-      JOIN telescope t on o.telescope_id = t.telescope_id
+  SELECT artifact_id FROM observations.artifact a
+      JOIN observations.plane p on a.plane_id = p.plane_id
+      JOIN observations.observation o on p.observation_id = o.observation_id
+      JOIN observations.telescope t on o.telescope_id = t.telescope_id
   WHERE t.name='SALT' AND a.name=$1
   `;
   const artifactIdRes = await ssdaPool.query(artifactIdSQL, [filename]);
