@@ -76,7 +76,7 @@ export const createDataRequest = async (
     const dataRequestSQL = `
     INSERT INTO admin.data_request (made_at,
                                     ssda_user_id)
-    VALUES (now(), $1, (SELECT id FROM pending_id))
+    VALUES (now(), $1)
     RETURNING data_request_id
     `;
 
