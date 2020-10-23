@@ -8,10 +8,8 @@ import { ownsOutOfDataFiles, Role, User } from "./user";
 export async function batchGetDataRequests(ids: number[]) {
   // get the data requests
   const dataRequestsSQL = `
-    SELECT data_request_id, path, status, made_at, ssda_user_id
+    SELECT data_request_id, made_at, ssda_user_id
     FROM admin.data_request dr
-    JOIN admin.data_request_status drs
-    ON dr.data_request_status_id = drs.data_request_status_id
     WHERE data_request_id = ANY ($1)
 
   `;
@@ -87,8 +85,7 @@ export async function batchGetDataRequests(ids: number[]) {
     dataFiles: dataRequestArtifacts.get(d.data_request_id),
     id: d.data_request_id,
     madeAt: d.made_at.toISOString(),
-    status: d.status.toUpperCase(),
-    uri: d.path,
+    uri: "TBD", // TODO: should be proper URI
     user: d.ssda_user_id
   }));
   return e;
