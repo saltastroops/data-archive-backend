@@ -74,14 +74,8 @@ export const createDataRequest = async (
     await client.query("BEGIN");
 
     const dataRequestSQL = `
-    WITH pending_id (id) AS (
-        SELECT data_request_status_id
-        FROM admin.data_request_status
-        WHERE status='Pending'
-    )
     INSERT INTO admin.data_request (made_at,
-                                    ssda_user_id,
-                                    data_request_status_id)
+                                    ssda_user_id)
     VALUES (now(), $1, (SELECT id FROM pending_id))
     RETURNING data_request_id
     `;
