@@ -232,6 +232,10 @@ export const dataFilesToZip = async (
         filepath = process.env.FITS_BASE_DIR + "/" + df.raw;
         description = `Raw ${df.instrument_name} data`;
       } else if (calibrationLevel === "REDUCED") {
+        if (!df.reduced || df.reduced.length < 5) {
+          // exclude NULL and "None"
+          continue;
+        }
         filepath = process.env.FITS_BASE_DIR + "/" + df.reduced;
         description = `Reduced ${df.instrument_name} data`;
       } else {
@@ -362,6 +366,10 @@ export async function filesToBeZipped(
         throw new Error(`Unsupported calibration level ${calibrationLevel}`);
       }
 
+      if (!filepath || filepath.length < 5) {
+        // exclude NULL and "None"
+        continue;
+      }
       const filename = basename(filepath);
       const fileDescription = description;
 
