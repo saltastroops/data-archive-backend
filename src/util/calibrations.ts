@@ -76,7 +76,7 @@ WITH obs_groups (id) AS (
              JOIN observations.observation o ON og.observation_group_id = o.observation_group_id
              JOIN observations.plane p ON o.observation_id = p.observation_id
              JOIN observations.artifact a ON p.plane_id = a.plane_id
-    WHERE artifact_id = ANY($1)
+    WHERE artifact_id = ANY($1) AND og.group_identifier != '' AND og.group_identifier IS NOT NULL
 )
 SELECT a.artifact_id
 FROM observations.artifact a
