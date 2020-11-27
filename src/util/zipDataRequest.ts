@@ -7,6 +7,7 @@ import { tmpdir } from "os";
 import { basename, join } from "path";
 import { ssdaPool } from "../db/postgresql_pool";
 import { CalibrationLevel } from "./calibrations";
+import { mayViewAllOfDataFiles, User } from "./user";
 
 const collectArtifactsToZip = async (fileIds: string[]) => {
   // collect the files
@@ -277,13 +278,34 @@ export async function downloadZippedDataRequest(req: Request, res: Response) {
       success: false
     });
   }
+
   // Get all the params from the request
   const { dataRequestId } = req.params;
+
+  // Check that this is the user's request
+  const user: User = req.user as User;
+  const userMadeRequest = await didUserMakeDataRequest(
+    user as User,
+    dataRequestId
+  );
+  if (!userMadeRequest) {
+    return res.status(403).send({
+      message: "You do not own this data request.",
+      success: false
+    });
+  }
 
   const calibrationLevels = await findCalibrationLevels(dataRequestId);
   const artifactIds = await findArtifactIds(dataRequestId);
 
   const dataFiles = await dataFilesToZip(artifactIds, calibrationLevels);
+
+  // Check that the user may download all the files
+  const dataFileIdStrings = dataFiles.map(df => df.id.toString());
+  const mayRequest = await mayViewAllOfDataFiles(user, dataFileIdStrings);
+  if (!mayRequest) {
+    throw new Error("You are not allowed to request some of the files");
+  }
 
   const readmePath = createReadMeFile(dataFiles);
   const files = [
@@ -394,4 +416,15 @@ export async function filesToBeZipped(
     }
   }
   return dataFiles;
+}
+
+async function didUserMakeDataRequest(
+  user: User,
+  dataRequestId: string
+): Promise<boolean> {
+  const sql = `SELECT data_request_id
+                FROM admin.data_request
+                WHERE data_request_id=$1 and ssda_user_id=$2`;
+  const res = await ssdaPool.query(sql, [dataRequestId, user.id]);
+  return res.rowCount > 0;
 }
