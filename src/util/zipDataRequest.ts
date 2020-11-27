@@ -301,8 +301,7 @@ export async function downloadZippedDataRequest(req: Request, res: Response) {
   const dataFiles = await dataFilesToZip(artifactIds, calibrationLevels);
 
   // Check that the user may download all the files
-  const dataFileIdStrings = dataFiles.map(df => df.id.toString());
-  const mayRequest = await mayViewAllOfDataFiles(user, dataFileIdStrings);
+  const mayRequest = await mayViewAllOfDataFiles(user, artifactIds);
   if (!mayRequest) {
     throw new Error("You are not allowed to request some of the files");
   }
