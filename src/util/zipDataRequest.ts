@@ -1,13 +1,19 @@
 import { Request, Response } from "express";
 import "express-zip";
 import fs from "fs";
+import { sync } from "glob";
 import moment from "moment";
 import { nanoid } from "nanoid";
 import { tmpdir } from "os";
-import { basename, join } from "path";
+import { basename, dirname, join } from "path";
 import { ssdaPool } from "../db/postgresql_pool";
 import { CalibrationLevel } from "./calibrations";
 import { mayViewAllOfDataFiles, User } from "./user";
+
+type AdditionalFile = {
+  filepath: string;
+  description: string;
+};
 
 const collectArtifactsToZip = async (fileIds: string[]) => {
   // collect the files
@@ -264,6 +270,21 @@ export const dataFilesToZip = async (
         proposal_code: df.proposal_code ? df.proposal_code : "",
         type: df.type
       });
+
+      if (calibrationLevel === "REDUCED") {
+        additionalFiles(filepath).forEach(f => {
+          dataFiles.push({
+            fileDescription: f.description,
+            filename: basename(f.filepath),
+            filepath: f.filepath,
+            instrument_name: df.instrument_name,
+            night: moment(df.night).format("YYYY-MM-DD"),
+            observation_id: df.observation_id ? df.observation_id : "",
+            proposal_code: df.proposal_code ? df.proposal_code : "",
+            type: df.type
+          });
+        });
+      }
     }
   }
 
@@ -412,9 +433,57 @@ export async function filesToBeZipped(
         proposal_code: df.proposal_code ? df.proposal_code : "",
         type: df.type
       });
+
+      if (calibrationLevel === "REDUCED") {
+        additionalFiles(filepath).forEach(f => {
+          dataFiles.push({
+            fileDescription: f.description,
+            filename: basename(f.filepath),
+            filepath: f.filepath,
+            instrument_name: df.instrument_name,
+            night: moment(df.night).format("YYYY-MM-DD"),
+            observation_id: df.observation_id ? df.observation_id : "",
+            proposal_code: df.proposal_code ? df.proposal_code : "",
+            type: df.type
+          });
+        });
+      }
     }
   }
   return dataFiles;
+}
+
+export function additionalFiles(filepath: string): Set<AdditionalFile> {
+  const filename = basename(filepath);
+  const m = /^[a-z]*([A-Z]).*/.exec(filename);
+  if (!m) {
+    throw new Error(
+      `The filename does not contain an instrument letter: ${filename}`
+    );
+  }
+  switch (m[1]) {
+    case "R":
+    case "H":
+      return additionalHrsFiles(filepath);
+    default:
+      return new Set();
+  }
+}
+
+function additionalHrsFiles(filepath: string): Set<AdditionalFile> {
+  const filename = basename(filepath);
+  const parentDir = dirname(dirname(filepath));
+  const m = /^[a-z]*([RH].*)\.fits$/.exec(filename);
+  if (!m) {
+    throw new Error(`Could not parse filename: ${filename}`);
+  }
+  const additional = sync(`${parentDir}/MID_RED/m*${m[1]}_*.fits`);
+  return new Set(
+    additional.map(f => ({
+      filepath: f,
+      description: "MIDAS reduction file"
+    }))
+  );
 }
 
 async function didUserMakeDataRequest(
