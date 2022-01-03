@@ -477,7 +477,7 @@ function additionalHrsFiles(filepath: string): Set<AdditionalFile> {
   if (!m) {
     throw new Error(`Could not parse filename: ${filename}`);
   }
-  const additional = sync(`${parentDir}/MID_RED/m*${m[1]}_*.fits`);
+  const additional = sync(`${parentDir}/MID_red/m*${m[1]}_*.fits`);
   return new Set(
     additional.map(f => ({
       filepath: f,
