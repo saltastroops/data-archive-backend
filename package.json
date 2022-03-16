@@ -7,8 +7,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "start": "pm2 start src/index.ts --name data-archive-api --node-args='-r dotenv/config'",
-    "restart": "pm2 restart data-archive-api --node-args='-r dotenv/config'",
+    "start": "ts-node -r dotenv/config src/index.ts",
     "dev": " export DEBUG=\"nodemon\"; nodemon -e ts,graphql -x ts-node -r dotenv/config src/index.ts",
     "test": "NODE_ENV=test jest --detectOpenHandles",
     "test:coverage": "jest --coverage",

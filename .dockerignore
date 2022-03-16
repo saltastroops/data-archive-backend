@@ -1,0 +1,10 @@
+# testing
+/coverage
+
+# IDE
+.idea
+
+# VSCode
+.vscode
+
+yarn-error.log

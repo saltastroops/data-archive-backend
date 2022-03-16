@@ -1,0 +1,15 @@
+# Specify a base image.
+FROM node:12-slim AS slim
+
+# Update npm and install typescript.
+RUN npm update && \
+  npm i -g typescript
+
+# Project working directory.
+WORKDIR /opt/data-archive-backend
+
+# Copy the contents of the project to the image
+COPY . .
+
+# Run 'yarn start' when the container starts.
+CMD ["yarn", "start"]
